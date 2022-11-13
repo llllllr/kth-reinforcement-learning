@@ -1,6 +1,6 @@
 from pathlib import Path
-from maze import Maze
-from dynamic_programming import DynamicProgrammingAgent
+from el2805.lab0.envs import Maze
+from el2805.lab0.agents import DynamicProgrammingAgent
 
 # map_filepath = Path(__file__).parent.parent / "data" / "maze.txt"
 map_filepath = Path(__file__).parent.parent / "data" / "maze_delay.txt"

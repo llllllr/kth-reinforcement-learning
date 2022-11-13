@@ -2,8 +2,8 @@ import gym
 import numpy as np
 from pathlib import Path
 from enum import Enum, IntEnum
-from mdp import MDP
 from gym.utils.seeding import np_random
+from el2805.lab0.envs.mdp import MDP
 
 
 class Cell(Enum):
@@ -88,12 +88,11 @@ class Maze(MDP):
     def step(self, action: int) -> tuple[np.ndarray, float, bool, dict]:
         # update state
         previous_state = self._player_position
-        action = Move(action)
         new_state = self._next_state(previous_state, action)
         self._player_position = new_state
 
         # calculate reward
-        reward = self.reward(previous_state, action, new_state)
+        reward = self.reward(previous_state, action)
 
         # check time horizon
         self._n_steps += 1
@@ -213,19 +212,20 @@ class Maze(MDP):
         return self._valid_states
 
     def _next_state(self, state, action):
+        action = Move(action)
         if action not in self.valid_actions(state):
             raise ValueError(f"Invalid action {action}")
 
         x, y = state
-        if action is Move.UP:
+        if action == Move.UP:
             x -= 1
-        elif action is Move.DOWN:
+        elif action == Move.DOWN:
             x += 1
-        elif action is Move.LEFT:
+        elif action == Move.LEFT:
             y -= 1
-        elif action is Move.RIGHT:
+        elif action == Move.RIGHT:
             y += 1
-        elif action is Move.NOP:
+        elif action == Move.NOP:
             pass
         else:
             raise ValueError(f"Invalid move {action}")

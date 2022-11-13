@@ -1,11 +1,12 @@
 import numpy as np
-from mdp import MDP
+from el2805.lab0.envs import MDP
 
 
 class DynamicProgrammingAgent:
     def __init__(self, env: MDP):
         self.env = env
         self.policy = None
+        assert self.env.horizon < np.inf
 
     def solve(self):
         states = self.env.valid_states
