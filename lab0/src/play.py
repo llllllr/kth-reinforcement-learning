@@ -1,5 +1,5 @@
 from pathlib import Path
-from maze import Maze
+from envs.maze import Maze
 
 map_filepath = Path(__file__).parent.parent / "data" / "maze.txt"
 
