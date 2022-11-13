@@ -5,12 +5,16 @@ from typing import Optional
 
 
 class MDP(gym.Env, ABC):
-    def __init__(self, horizon: Optional[int] = None):
+    def __init__(self, horizon: Optional[int] = None, discount: Optional[float] = None):
         """
         :param horizon: time horizon, if None then the MDP has infinite horizon
         :type horizon: int, optional
+        :param discount: discount factor, must be provided if horizon=None (infinite-horizon MDPs)
+        :type discount: float, optional
         """
         self.horizon = horizon
+        self.discount = discount if discount is not None else 1
+        assert self.horizon is not None or discount < 1     # either finite or infinite horizon
 
     @property
     @abstractmethod

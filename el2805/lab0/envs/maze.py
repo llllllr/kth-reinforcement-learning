@@ -2,6 +2,7 @@ import gym
 import numpy as np
 from pathlib import Path
 from enum import Enum, IntEnum
+from typing import Optional
 from gym.utils.seeding import np_random
 from el2805.lab0.envs.mdp import MDP
 
@@ -65,11 +66,10 @@ class Maze(MDP):
     _REWARD_GOAL = 1
     _DELAY_PROBABILITY = 0.5
 
-    def __init__(self, map_filepath: Path, horizon: int):
-        super().__init__(horizon)
+    def __init__(self, map_filepath: Path, horizon: Optional[int] = None, discount: Optional[float] = None):
+        super().__init__(horizon, discount)
 
         self.maze, self.player_start = self._load_maze(map_filepath)
-        self.horizon = horizon
         self.observation_space = gym.spaces.MultiDiscrete(self.maze.shape)
 
         self._player_position = None
