@@ -7,10 +7,12 @@ from mdp import MDP
 
 
 class Cell(Enum):
-    EMPTY = "o"
+    EMPTY = "0"
     WALL = "#"
     START = "A"
     GOAL = "B"
+    DELAY_6 = "6"
+    DELAY_1 = "1"
 
     def __str__(self):
         return self.value
@@ -63,6 +65,7 @@ class Maze(MDP):
         self._player_position = self._next_state(self._player_position, action)
 
         # check time horizon
+        # TODO: n_steps should be incresed more in the case of delay
         self._n_steps += 1
         done = self._n_steps >= self.horizon
 
@@ -99,7 +102,8 @@ class Maze(MDP):
             print()
         print("=" * 2 * self.maze.shape[0])
 
-    def reward(self, state: np.ndarray, action: Union[Move, int]) -> float:
+    def reward(self, state: np.ndarray, action: Union[Move, int], mean: bool = False) -> float:
+        assert action in self.valid_actions(state)
         x, y = state
         x_next, y_next = self._next_state(state, action)
 
@@ -107,8 +111,14 @@ class Maze(MDP):
         # otherwise, if we give a penalty, then with T=10 the agent is not incentivize to reach the goal
         # indeed, the total reward of reaching the goal (without staying there for at least 1 timestep) would be equal
         # to the reward of not reaching the goal.
-        if (self.maze[x, y] is Cell.GOAL and action == Move.NOP) or self.maze[x_next, y_next] is Cell.GOAL:
+        if self.maze[x, y] is Cell.GOAL or self.maze[x_next, y_next] is Cell.GOAL:
             reward = 0
+        elif self.maze[x, y] is Cell.DELAY_1 or Cell.DELAY_6:
+            delay = int(self.maze[x, y].value)
+            if mean:
+                reward = 0.5 * (1 + delay) * self._REWARD_STEP
+            else:
+                reward = self._REWARD_STEP if np.random.uniform() > 0.5 else delay * self._REWARD_STEP
         else:
             reward = self._REWARD_STEP
         return reward

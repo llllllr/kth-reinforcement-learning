@@ -12,7 +12,7 @@ class MDP(gym.Env, ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def reward(self, state: np.ndarray, action: int) -> float:
+    def reward(self, state: np.ndarray, action: int, mean: bool = False) -> float:
         raise NotImplementedError
 
     @abstractmethod

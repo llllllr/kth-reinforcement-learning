@@ -1,6 +1,6 @@
-Ao#oooo
-oo#oooo
-oo#oooo
-ooooooo
-o#####o
-oooooBo
+A0#0000
+00#0000
+00#0000
+0000001
+0#####0
+60000B0

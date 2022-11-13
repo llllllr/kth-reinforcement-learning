@@ -15,7 +15,8 @@ class DynamicProgrammingAgent:
         # t = T
         for s, state in enumerate(states):
             # Q(s,a)
-            q_s = np.asarray([self.env.reward(state, action) for action in self.env.valid_actions(state)])
+            # note that we ask for the mean reward instead of a reward sample, so as to support probabilistic rewards
+            q_s = np.asarray([self.env.reward(state, action, mean=True) for action in self.env.valid_actions(state)])
 
             # u*(s)
             u[s] = max(q_s)
@@ -29,7 +30,7 @@ class DynamicProgrammingAgent:
                 for a, action in enumerate(valid_actions):
                     next_states, transition_probabilities = self.env.next_states(state, action)
                     s_next = [self.env.state_to_index(next_state) for next_state in next_states]
-                    q_s[a] = self.env.reward(state, action) + transition_probabilities.dot(u[s_next])
+                    q_s[a] = self.env.reward(state, action, mean=True) + transition_probabilities.dot(u[s_next])
 
                 # u*(s)
                 u[s] = max(q_s)
