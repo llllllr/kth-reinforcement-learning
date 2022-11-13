@@ -4,14 +4,7 @@ from abc import ABC, abstractmethod
 
 
 class MDP(gym.Env, ABC):
-    """Interface of a Markov Decision Process. Unlike reinforcement learning environments, it exposes the transition
-     probabilities and reward function."""
-
-    def __init__(self, horizon: int):
-        """
-        :param horizon: time horizon
-        :type horizon: int
-        """
+    def __init__(self, horizon):
         self.horizon = horizon
 
     @property
@@ -29,7 +22,6 @@ class MDP(gym.Env, ABC):
             self,
             state: np.ndarray,
             action: int,
-            next_state: np.ndarray,
             mean: bool = False
     ) -> float:
         """Returns reward received by taking a certain action in a certain state.
@@ -38,8 +30,6 @@ class MDP(gym.Env, ABC):
         :type state: ndarray
         :param action: action taken in the current state
         :type action: int
-        :param next_state: next state
-        :type next_state: ndarray
         :param mean: if True, returns the mean reward instead of sampling a reward (effect only with random rewards)
         :type mean: bool, optional
         :return: reward sample (if mean=False) or mean reward (if mean=True)

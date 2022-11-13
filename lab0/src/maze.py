@@ -3,6 +3,7 @@ import numpy as np
 from pathlib import Path
 from enum import Enum, IntEnum
 from mdp import MDP
+from gym.utils.seeding import np_random
 
 
 class Cell(Enum):
@@ -43,12 +44,26 @@ class Move(IntEnum):
             return False
 
     def __str__(self):
-        return self.name.lower()
+        if self is Move.UP:
+            s = "\u2191"
+        elif self is Move.DOWN:
+            s = "\u2193"
+        elif self is Move.LEFT:
+            s = "\u2190"
+        elif self is Move.RIGHT:
+            s = "\u2192"
+        elif self is Move.NOP:
+            s = "X"
+        else:
+            raise ValueError
+        return s
 
 
 class Maze(MDP):
     action_space = gym.spaces.Discrete(len(Move))
     _REWARD_STEP = -1
+    _REWARD_GOAL = 1
+    _DELAY_PROBABILITY = 0.5
 
     def __init__(self, map_filepath: Path, horizon: int):
         super().__init__(horizon)
@@ -59,11 +74,16 @@ class Maze(MDP):
 
         self._player_position = None
         self._n_steps = None
+        self._rng = None
+        self.seed()
 
-        self._valid_states = [np.asarray((x, y)) for x in range(self.maze.shape[0]) for y in range(self.maze.shape[1])
-                              if self.maze[x, y] is not Cell.WALL]
-        self._state_to_index = {tuple(state): s
-                                for state, s in zip(self._valid_states, np.arange(len(self._valid_states)))}
+        self._valid_states = [
+            np.asarray((x, y)) for x in range(self.maze.shape[0]) for y in range(self.maze.shape[1])
+            if self.maze[x, y] is not Cell.WALL
+        ]
+        self._state_to_index = {
+            tuple(state): s for state, s in zip(self._valid_states, np.arange(len(self._valid_states)))
+        }
 
     def step(self, action: int) -> tuple[np.ndarray, float, bool, dict]:
         # update state
@@ -101,7 +121,7 @@ class Maze(MDP):
                 state = self.valid_states[s]
                 action = Move(action)
                 x, y = state
-                maze[x, y] = str(action)[0]
+                maze[x, y] = str(action)
         else:
             raise ValueError
 
@@ -112,31 +132,49 @@ class Maze(MDP):
             print()
         print("=" * 4 * self.maze.shape[0])
 
+    def seed(self, seed=None):
+        self._rng, seed = np_random(seed)
+        return [seed]
+
     def reward(
             self,
             state: np.ndarray,
             action: int,
-            next_state: np.ndarray,
             mean: bool = False
     ) -> float:
         assert action in self.valid_actions(state)
         x, y = state
         x_next, y_next = self._next_state(state, action)
 
-        # pay attention: the reward when the next state is the goal must be 0
-        # Otherwise, if we give a penalty, then with T=10 the agent is not encouraged to reach the goal.
-        # Indeed, the total reward of reaching the goal (without staying there for at least 1 timestep) would be equal
-        # to the reward of not reaching the goal.
-        if self.maze[x, y] is Cell.GOAL or self.maze[x_next, y_next] is Cell.GOAL:
+        if self.maze[x, y] is Cell.GOAL:
             reward = 0
-        elif self.maze[x, y] is Cell.DELAY_R2 or Cell.DELAY_R1:
-            delay = self.maze[x, y].delay
-            if mean:
-                reward = 0.5 * (1 + delay) * self._REWARD_STEP
-            else:
-                reward = self._REWARD_STEP if np.random.uniform() > 0.5 else delay * self._REWARD_STEP
+            # pay attention: the reward when the goal is initially reached must be greater than the other cases
+            # Otherwise, with T corresponding to the shortest path, the agent is not encouraged to reach the goal.
+            # Indeed, the total reward of reaching the goal (without staying there for at least 1 timestep) would be
+            # equal to the reward of not reaching the goal.
+            if self.maze[x_next, y_next] is Cell.GOAL:
+                reward += self._REWARD_GOAL
         else:
-            reward = self._REWARD_STEP
+            delay = self.maze[x, y].delay
+            reward_no_delay = self._REWARD_STEP
+            reward_delay = (1 + delay) * self._REWARD_STEP
+
+            # pay attention: the reward when the goal is initially reached must be greater than the other cases
+            # Otherwise, with T corresponding to the shortest path, the agent is not encouraged to reach the goal.
+            # Indeed, the total reward of reaching the goal (without staying there for at least 1 timestep) would be
+            # equal to the reward of not reaching the goal.
+            if self.maze[x_next, y_next] is Cell.GOAL:
+                reward_no_delay += self._REWARD_GOAL
+                reward_delay += self._REWARD_GOAL
+
+            if mean:
+                reward = self._DELAY_PROBABILITY * reward_delay + (1 - self._DELAY_PROBABILITY) * reward_no_delay
+            else:
+                reward = self._rng.choice(
+                    a=[reward_delay, reward_no_delay],
+                    p=[self._DELAY_PROBABILITY, 1-self._DELAY_PROBABILITY]
+                )
+
         return reward
 
     def valid_actions(self, state: np.ndarray) -> list[int]:

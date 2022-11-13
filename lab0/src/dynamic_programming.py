@@ -15,7 +15,7 @@ class DynamicProgrammingAgent:
         # t = T
         for s, state in enumerate(states):
             # Q(s,a)
-            # note that we ask for the mean reward instead of a reward sample, so as to support probabilistic rewards
+            # note that we ask for the mean reward instead of a reward sample, so as to support random rewards
             q_s = np.asarray([self.env.reward(state, action, mean=True) for action in self.env.valid_actions(state)])
 
             # u*(s)
