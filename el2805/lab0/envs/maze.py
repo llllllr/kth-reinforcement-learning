@@ -90,13 +90,13 @@ class Maze(MDP):
         previous_state = self._player_position
         new_state = self._next_state(previous_state, action)
         self._player_position = new_state
+        self._n_steps += 1
 
         # calculate reward
         reward = self.reward(previous_state, action)
 
-        # check time horizon
-        self._n_steps += 1
-        done = self._n_steps >= self.horizon
+        # check end of episode
+        done = self._episode_end()
 
         # additional info
         info = {}
@@ -231,6 +231,12 @@ class Maze(MDP):
             raise ValueError(f"Invalid move {action}")
         state = np.asarray((x, y))
         return state
+
+    def _episode_end(self):
+        x, y = self._player_position
+        goal_reached = self.maze[x, y] is Cell.GOAL
+        horizon_reached = self._n_steps >= self.horizon if self.horizon is not None else False
+        return goal_reached or horizon_reached
 
     @staticmethod
     def _load_maze(filepath):
