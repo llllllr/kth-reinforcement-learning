@@ -1,12 +1,20 @@
 import numpy as np
+from el2805.lab0.agents.agent import Agent
 from el2805.lab0.envs import MDP
 
 
-class DynamicProgrammingAgent:
+class DynamicProgrammingAgent(Agent):
     def __init__(self, env: MDP):
-        self.env = env
+        super().__init__(env)
+        self.env = env  # redundant but avoids warning below when accessing horizon
         self.policy = None
-        assert self.env.horizon < np.inf
+        assert self.env.horizon is not None
+
+    def compute_action(self, state: np.ndarray):
+        assert self.policy is not None
+        s = self.env.state_to_index(state)
+        action = self.policy[s]
+        return action
 
     def solve(self):
         states = self.env.valid_states
@@ -42,9 +50,3 @@ class DynamicProgrammingAgent:
                 if t == 1:
                     a_s = q_s.argmax()  # index for valid actions in this state
                     self.policy[s] = valid_actions[a_s]
-
-    def compute_action(self, state: np.ndarray):
-        assert self.policy is not None
-        s = self.env.state_to_index(state)
-        action = self.policy[s]
-        return action

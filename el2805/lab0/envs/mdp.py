@@ -1,10 +1,15 @@
 import gym
 import numpy as np
 from abc import ABC, abstractmethod
+from typing import Optional
 
 
 class MDP(gym.Env, ABC):
-    def __init__(self, horizon):
+    def __init__(self, horizon: Optional[int] = None):
+        """
+        :param horizon: time horizon, if None then the MDP has infinite horizon
+        :type horizon: int, optional
+        """
         self.horizon = horizon
 
     @property
