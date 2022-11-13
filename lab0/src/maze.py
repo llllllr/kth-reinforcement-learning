@@ -1,8 +1,7 @@
 import gym
 import numpy as np
-from enum import Enum
-from typing import Union
 from pathlib import Path
+from enum import Enum, IntEnum
 from mdp import MDP
 
 
@@ -11,14 +10,24 @@ class Cell(Enum):
     WALL = "#"
     START = "A"
     GOAL = "B"
-    DELAY_6 = "6"
-    DELAY_1 = "1"
+    DELAY_R1 = "R1"
+    DELAY_R2 = "R2"
+
+    @property
+    def delay(self) -> int:
+        if self is Cell.DELAY_R1:
+            delay = 6
+        elif self is Cell.DELAY_R2:
+            delay = 1
+        else:
+            delay = 0
+        return delay
 
     def __str__(self):
         return self.value
 
 
-class Move(Enum):
+class Move(IntEnum):
     UP = 0
     DOWN = 1
     RIGHT = 2
@@ -41,7 +50,7 @@ class Maze(MDP):
     action_space = gym.spaces.Discrete(len(Move))
     _REWARD_STEP = -1
 
-    def __init__(self, map_filepath: Union[str, Path], horizon: int):
+    def __init__(self, map_filepath: Path, horizon: int):
         super().__init__(horizon)
 
         self.maze, self.player_start = self._load_maze(map_filepath)
@@ -56,16 +65,17 @@ class Maze(MDP):
         self._state_to_index = {tuple(state): s
                                 for state, s in zip(self._valid_states, np.arange(len(self._valid_states)))}
 
-    def step(self, action: Union[Move, int]) -> tuple[np.ndarray, float, bool, dict]:
-        # calculate reward
-        reward = self.reward(self._player_position, action)
-
+    def step(self, action: int) -> tuple[np.ndarray, float, bool, dict]:
         # update state
+        previous_state = self._player_position
         action = Move(action)
-        self._player_position = self._next_state(self._player_position, action)
+        new_state = self._next_state(previous_state, action)
+        self._player_position = new_state
+
+        # calculate reward
+        reward = self.reward(previous_state, action, new_state)
 
         # check time horizon
-        # TODO: n_steps should be incresed more in the case of delay
         self._n_steps += 1
         done = self._n_steps >= self.horizon
 
@@ -79,7 +89,7 @@ class Maze(MDP):
         self._n_steps = 0
         return self._player_position
 
-    def render(self, mode: str = "human", policy: dict[int, Union[Move, int]] = None) -> None:
+    def render(self, mode: str = "human", policy: dict[int, int] = None) -> None:
         assert mode == "human" or (mode == "policy" and policy is not None)
         maze = self.maze.copy()
 
@@ -95,26 +105,32 @@ class Maze(MDP):
         else:
             raise ValueError
 
-        print("=" * 2 * self.maze.shape[0])
+        print("=" * 4 * self.maze.shape[0])
         for i in range(self.maze.shape[0]):
             for j in range(self.maze.shape[1]):
-                print(maze[i, j], end=" ")
+                print(maze[i, j], end="\t")
             print()
-        print("=" * 2 * self.maze.shape[0])
+        print("=" * 4 * self.maze.shape[0])
 
-    def reward(self, state: np.ndarray, action: Union[Move, int], mean: bool = False) -> float:
+    def reward(
+            self,
+            state: np.ndarray,
+            action: int,
+            next_state: np.ndarray,
+            mean: bool = False
+    ) -> float:
         assert action in self.valid_actions(state)
         x, y = state
         x_next, y_next = self._next_state(state, action)
 
         # pay attention: the reward when the next state is the goal must be 0
-        # otherwise, if we give a penalty, then with T=10 the agent is not incentivize to reach the goal
-        # indeed, the total reward of reaching the goal (without staying there for at least 1 timestep) would be equal
+        # Otherwise, if we give a penalty, then with T=10 the agent is not encouraged to reach the goal.
+        # Indeed, the total reward of reaching the goal (without staying there for at least 1 timestep) would be equal
         # to the reward of not reaching the goal.
         if self.maze[x, y] is Cell.GOAL or self.maze[x_next, y_next] is Cell.GOAL:
             reward = 0
-        elif self.maze[x, y] is Cell.DELAY_1 or Cell.DELAY_6:
-            delay = int(self.maze[x, y].value)
+        elif self.maze[x, y] is Cell.DELAY_R2 or Cell.DELAY_R1:
+            delay = self.maze[x, y].delay
             if mean:
                 reward = 0.5 * (1 + delay) * self._REWARD_STEP
             else:
@@ -123,7 +139,7 @@ class Maze(MDP):
             reward = self._REWARD_STEP
         return reward
 
-    def valid_actions(self, state):
+    def valid_actions(self, state: np.ndarray) -> list[int]:
         valid_moves = [Move.NOP]
 
         x, y = state
@@ -183,11 +199,11 @@ class Maze(MDP):
         with open(filepath) as f:
             lines = f.readlines()
 
-        symbol_to_cell = {e.value: e for e in Cell}
-        maze = np.asarray([[symbol_to_cell[symbol] for symbol in line[:-1]] for line in lines])
-
+        maze = np.asarray([[Cell(symbol) for symbol in line[:-1].split("\t")] for line in lines])
         player_start = np.asarray(maze == Cell.START).nonzero()
-        maze[player_start] = Cell.EMPTY
-        player_start = np.asarray((player_start[0][0], player_start[1][0]))
+        player_start = np.asarray((player_start[0][0], player_start[1][0]))     # format as a state
+
+        x, y = player_start
+        maze[x, y] = Cell.EMPTY
 
         return maze, player_start

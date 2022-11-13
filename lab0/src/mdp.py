@@ -4,7 +4,14 @@ from abc import ABC, abstractmethod
 
 
 class MDP(gym.Env, ABC):
-    def __init__(self, horizon):
+    """Interface of a Markov Decision Process. Unlike reinforcement learning environments, it exposes the transition
+     probabilities and reward function."""
+
+    def __init__(self, horizon: int):
+        """
+        :param horizon: time horizon
+        :type horizon: int
+        """
         self.horizon = horizon
 
     @property
