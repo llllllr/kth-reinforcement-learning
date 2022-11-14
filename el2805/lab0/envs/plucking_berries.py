@@ -30,8 +30,8 @@ class PluckingBerries(GridWorld):
             mean: bool = False
     ) -> float:
         assert action in self.valid_actions(state)
-        x, y = state
-        symbol = self._map[x, y]
+        x_next, y_next = self._next_state(state, action)
+        symbol = self._map[x_next, y_next]
         reward = np.iinfo(np.int32).min if symbol == "#" else int(symbol)
         return reward
 
