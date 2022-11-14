@@ -15,12 +15,11 @@ class DynamicProgrammingAgent(MDPAgent):
         return action
 
     def solve(self):
-        states = self.env.valid_states
-        u = np.zeros(len(states))
+        u = np.zeros(len(self.env.states))
         self.policy = {}
 
         # t = T
-        for s, state in enumerate(states):
+        for s, state in enumerate(self.env.states):
             # Q(s,a) for each a in A_s
             q = np.asarray([self.env.reward(state, action, mean=True) for action in self.env.valid_actions(state)])
 
@@ -29,7 +28,7 @@ class DynamicProgrammingAgent(MDPAgent):
 
         # 1 <= t < T (backward)
         for t in range(self.env.horizon-1, 0, -1):
-            for s, state in enumerate(states):
+            for s, state in enumerate(self.env.states):
                 # Q(s,a) for each a in A_s
                 valid_actions = self.env.valid_actions(state)
                 q = np.asarray([self.q(state, action, u) for action in valid_actions])
@@ -38,7 +37,7 @@ class DynamicProgrammingAgent(MDPAgent):
                 u[s] = max(q)
 
                 # t=1 => store policy
-                # here we assume homogeneous MDPs, so the policy does not depend on the time and we can read it from
+                # here we assume homogeneous MDPs, so the policy does not depend on the time, and we can read it from
                 # the value function and Q-function (t=1)
                 if t == 1:
                     a_best = q.argmax()     # index of best action for valid actions in this state
