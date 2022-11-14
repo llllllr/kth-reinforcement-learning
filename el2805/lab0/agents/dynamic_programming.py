@@ -28,10 +28,11 @@ class DynamicProgrammingAgent(MDPAgent):
 
         # 1 <= t < T (backward)
         for t in range(self.env.horizon-1, 0, -1):
+            u_next = u.copy()   # u_{t+1}, at the next time step
             for s, state in enumerate(self.env.states):
                 # Q(s,a) for each a in A_s
                 valid_actions = self.env.valid_actions(state)
-                q = np.asarray([self.q(state, action, u) for action in valid_actions])
+                q = np.asarray([self.q(state, action, u_next) for action in valid_actions])
 
                 # u*(s)
                 u[s] = max(q)
