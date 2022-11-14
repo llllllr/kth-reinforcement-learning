@@ -31,7 +31,8 @@ class PluckingBerries(GridWorld):
     ) -> float:
         assert action in self.valid_actions(state)
         x, y = state
-        reward = self._map[x, y]
+        symbol = self._map[x, y]
+        reward = np.iinfo(np.int32).min if symbol == "#" else int(symbol)
         return reward
 
     def valid_actions(self, state: np.ndarray) -> list[int]:
@@ -68,8 +69,4 @@ class PluckingBerries(GridWorld):
     def _load_map(self, filepath):
         with open(filepath) as f:
             lines = f.readlines()
-
-        min_ = np.iinfo(np.int32).min
-        self._map = np.asarray([
-            [min_ if symbol == "#" else int(symbol) for symbol in line[:-1].split("\t")] for line in lines
-        ])
+        self._map = np.asarray([[symbol for symbol in line[:-1].split("\t")] for line in lines])
