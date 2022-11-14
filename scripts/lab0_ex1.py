@@ -26,7 +26,7 @@ def main():
         env = Maze(map_filepath=map_filepath, discount=.99)
         agent = ValueIterationAgent(env)
         agent.solve()
-        env.render(mode="policy", policy=agent.policy)
+        env.render(mode="policy", policy=agent._policy)
         print()
 
 

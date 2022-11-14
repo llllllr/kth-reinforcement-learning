@@ -2,7 +2,7 @@ import numpy as np
 from pathlib import Path
 from enum import Enum
 from typing import Optional
-from el2805.lab0.envs.grid_world import GridWorld, Move
+from el2805.lab0.envs.grid_world import GridWorld, Move, Position
 
 
 class Cell(Enum):
@@ -36,7 +36,7 @@ class Maze(GridWorld):
         super().__init__(map_filepath, horizon, discount)
 
         self._states = [
-            np.asarray((x, y)) for x in range(self._map.shape[0]) for y in range(self._map.shape[1])
+            (x, y) for x in range(self._map.shape[0]) for y in range(self._map.shape[1])
             if self._map[x, y] is not Cell.WALL
         ]
         self._state_to_index = {
@@ -45,7 +45,7 @@ class Maze(GridWorld):
 
     def reward(
             self,
-            state: np.ndarray,
+            state: Position,
             action: int,
             mean: bool = False
     ) -> float:
@@ -84,7 +84,7 @@ class Maze(GridWorld):
 
         return reward
 
-    def valid_actions(self, state: np.ndarray) -> list[int]:
+    def valid_actions(self, state: Position) -> list[int]:
         valid_moves = [Move.NOP]
 
         x, y = state
@@ -107,7 +107,7 @@ class Maze(GridWorld):
 
         return valid_moves
 
-    def state_to_index(self, state: np.ndarray) -> int:
+    def state_to_index(self, state: Position) -> int:
         state = tuple(state)
         return self._state_to_index[state]
 
@@ -123,7 +123,7 @@ class Maze(GridWorld):
 
         self._map = np.asarray([[Cell(symbol) for symbol in line[:-1].split("\t")] for line in lines])
         self._player_start = np.asarray(self._map == Cell.START).nonzero()
-        self._player_start = np.asarray((self._player_start[0][0], self._player_start[1][0]))   # format as a state
+        self._player_start = (self._player_start[0][0], self._player_start[1][0])   # format as a state
 
         x, y = self._player_start
         self._map[x, y] = Cell.EMPTY

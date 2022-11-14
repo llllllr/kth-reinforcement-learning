@@ -1,7 +1,7 @@
 import gym
 import numpy as np
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Optional, Any
 from gym.utils.seeding import np_random
 
 
@@ -24,25 +24,25 @@ class MDP(gym.Env, ABC):
 
     @property
     @abstractmethod
-    def states(self) -> list[np.ndarray]:
+    def states(self) -> list[Any]:
         """Returns the list of (valid) states in the state space. The invalid states are not included.
 
         :return: list of valid states
-        :rtype: list[ndarray]
+        :rtype: list[any]
         """
         raise NotImplementedError
 
     @abstractmethod
     def reward(
             self,
-            state: np.ndarray,
+            state: Any,
             action: int,
             mean: bool = False
     ) -> float:
         """Returns reward received by taking a certain action in a certain state.
 
         :param state: current state
-        :type state: ndarray
+        :type state: any
         :param action: action taken in the current state
         :type action: int
         :param mean: if True, returns the mean reward instead of sampling a reward (effect only with random rewards)
@@ -53,23 +53,23 @@ class MDP(gym.Env, ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def valid_actions(self, state: np.ndarray) -> list[int]:
+    def valid_actions(self, state: Any) -> list[int]:
         """Returns the valid actions in a certain state.
 
         :param state: state for which to calculate the valid actions
-        :type state: ndarray
+        :type state: any
         :return: valid actions in the specified state
         :rtype: list[int]
         """
         raise NotImplementedError
 
     @abstractmethod
-    def next_states(self, state: np.ndarray, action: int) -> tuple[np.ndarray, np.ndarray]:
+    def next_states(self, state: Any, action: int) -> tuple[np.ndarray, np.ndarray]:
         """Returns the list of next states which can be reached from a certain state and their corresponding transition
         probabilities.
 
         :param state: current state
-        :type state: ndarray
+        :type state: any
         :param action: action taken in the current state
         :type action: int
         :return: (next states, transition probabilities)
@@ -78,7 +78,7 @@ class MDP(gym.Env, ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def state_to_index(self, state: np.ndarray) -> int:
+    def state_to_index(self, state: Any) -> int:
         """Returns the index of a certain state in the list of valid states.
 
         :param state: state for which the index is desired

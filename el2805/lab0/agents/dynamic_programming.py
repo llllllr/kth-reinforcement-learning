@@ -1,4 +1,5 @@
 import numpy as np
+from typing import Any
 from el2805.lab0.agents.mdp_agent import MDPAgent
 from el2805.lab0.envs import MDP
 
@@ -36,7 +37,7 @@ class DynamicProgrammingAgent(MDPAgent):
                 a_best = q.argmax()     # index of best action for valid actions in this state
                 self._policy[t, s] = valid_actions[a_best]
 
-    def compute_action(self, state: np.ndarray, time_step: int) -> int:
+    def compute_action(self, state: Any, time_step: int) -> int:
         assert self._policy is not None
         s = self.env.state_to_index(state)
         action = self._policy[time_step, s]

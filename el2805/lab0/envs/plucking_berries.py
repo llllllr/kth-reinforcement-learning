@@ -1,7 +1,7 @@
 import numpy as np
 from pathlib import Path
 from typing import Optional
-from el2805.lab0.envs.grid_world import GridWorld, Move
+from el2805.lab0.envs.grid_world import GridWorld, Move, Position
 
 
 class Cell:
@@ -30,11 +30,11 @@ class PluckingBerries(GridWorld):
         super().__init__(map_filepath, horizon, discount)
         self._player_position = None
         self._n_steps = None
-        self._states = [np.asarray((x, y)) for x in range(self._map.shape[0]) for y in range(self._map.shape[1])]
+        self._states = [(x, y) for x in range(self._map.shape[0]) for y in range(self._map.shape[1])]
 
     def reward(
             self,
-            state: np.ndarray,
+            state: Position,
             action: int,
             mean: bool = False
     ) -> float:
@@ -43,7 +43,7 @@ class PluckingBerries(GridWorld):
         reward = self._map[x_next, y_next].reward
         return reward
 
-    def valid_actions(self, state: np.ndarray) -> list[int]:
+    def valid_actions(self, state: Position) -> list[int]:
         valid_moves = [Move.NOP]
         x, y = state
 
@@ -65,7 +65,7 @@ class PluckingBerries(GridWorld):
 
         return valid_moves
 
-    def state_to_index(self, state: np.ndarray) -> int:
+    def state_to_index(self, state: Position) -> int:
         x, y = state
         index = x * self._map.shape[1] + y   # think about row-major matrix in memory (e.g., C programming language)
         return index
@@ -82,6 +82,6 @@ class PluckingBerries(GridWorld):
         for x in range(self._map.shape[0]):
             for y in range(self._map.shape[1]):
                 if self._map[x, y].is_start:
-                    self._player_start = np.asarray((x, y))
+                    self._player_start = (x, y)
                     break
         assert self._player_start is not None

@@ -30,6 +30,9 @@ class Move(IntEnum):
         return s
 
 
+Position = tuple[int, int]
+
+
 class GridWorld(MDP, ABC):
     action_space = gym.spaces.Discrete(len(Move))
 
@@ -44,7 +47,7 @@ class GridWorld(MDP, ABC):
         assert isinstance(self._map, np.ndarray)
         self.observation_space = gym.spaces.MultiDiscrete(self._map.shape)
 
-    def step(self, action: int) -> tuple[np.ndarray, float, bool, dict]:
+    def step(self, action: int) -> tuple[Position, float, bool, dict]:
         # update state
         previous_state = self._player_position
         new_state = self._next_state(previous_state, action)
@@ -62,7 +65,7 @@ class GridWorld(MDP, ABC):
 
         return self._player_position, reward, done, info
 
-    def reset(self) -> np.ndarray:
+    def reset(self) -> Position:
         self._player_position = self._player_start
         self._n_steps = 0
         return self._player_position
@@ -90,11 +93,11 @@ class GridWorld(MDP, ABC):
             print()
         print("=" * 4 * map_.shape[0])
 
-    def next_states(self, state: np.ndarray, action: int) -> tuple[np.ndarray, np.ndarray]:
+    def next_states(self, state: Position, action: int) -> tuple[list[Position], np.ndarray]:
         next_state = self._next_state(state, action)
-        return np.asarray([next_state]), np.asarray([1])
+        return ([next_state]), np.asarray([1])
 
-    def _next_state(self, state, action):
+    def _next_state(self, state: Position, action: int) -> Position:
         action = Move(action)
         if action not in self.valid_actions(state):
             raise ValueError(f"Invalid action {action}")
@@ -112,11 +115,11 @@ class GridWorld(MDP, ABC):
             pass
         else:
             raise ValueError(f"Invalid move {action}")
-        state = np.asarray((x, y))
+        state = (x, y)
         return state
 
     @property
-    def states(self) -> list[np.ndarray]:
+    def states(self) -> list[Position]:
         return self._states
 
     @abstractmethod
