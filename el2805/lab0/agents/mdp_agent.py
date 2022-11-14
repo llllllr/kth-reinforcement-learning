@@ -17,18 +17,9 @@ class MDPAgent(ABC):
         """Calculates the optimal policy for the MDP."""
         raise NotImplementedError
 
-    def compute_action(self, state: np.ndarray) -> int:
-        """Calculates the best action in a certain state according to the agent's policy.
-
-        :param state: state for which the best action is desired
-        :type state: ndarray
-        :return: best action according to the agent's policy
-        :rtype: int
-        """
-        assert self.policy is not None
-        s = self.env.state_to_index(state)
-        action = self.policy[s]
-        return action
+    @abstractmethod
+    def compute_action(self, state, time_step):
+        raise NotImplementedError
 
     def q(self, state, action, v):
         # note that we ask for the mean reward instead of a reward sample, so as to support random rewards

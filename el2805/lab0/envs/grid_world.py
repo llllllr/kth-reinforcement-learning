@@ -12,14 +12,6 @@ class Move(IntEnum):
     LEFT = 3
     NOP = 4
 
-    def __eq__(self, other):
-        if isinstance(other, Move):
-            return self.value == other.value
-        elif isinstance(other, int):
-            return self.value == other
-        else:
-            return False
-
     def __str__(self):
         if self is Move.UP:
             s = "\u2191"
@@ -42,8 +34,9 @@ class GridWorld(MDP, ABC):
     def __init__(self, map_filepath, horizon=None, discount=None):
         super().__init__(horizon, discount)
         self._states = None
-        self._player_position = None
         self._n_steps = None
+        self._player_position = None
+        self._player_start = None
         self._map = None
         self._load_map(map_filepath)
         assert isinstance(self._map, np.ndarray)
@@ -67,15 +60,20 @@ class GridWorld(MDP, ABC):
 
         return self._player_position, reward, done, info
 
-    def render(self, mode: str = "human", policy: dict[int, int] = None) -> None:
+    def reset(self) -> np.ndarray:
+        self._player_position = self._player_start
+        self._n_steps = 0
+        return self._player_position
+
+    def render(self, mode: str = "human", policy: np.ndarray = None) -> None:
         assert mode == "human" or (mode == "policy" and policy is not None)
-        map_ = self._map.astype(np.str)
+        map_ = self._map.copy()
 
         if mode == "human":
             x, y = self._player_position
             map_[x, y] = "P"
         elif mode == "policy":
-            for s, action in policy.items():
+            for s, action in enumerate(policy):
                 state = self.states[s]
                 action = Move(action)
                 x, y = state

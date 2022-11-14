@@ -1,4 +1,3 @@
-import gym
 import numpy as np
 from pathlib import Path
 from enum import Enum
@@ -18,12 +17,12 @@ class Cell(Enum):
     @property
     def delay(self) -> int:
         if self is Cell.DELAY_R1:
-            delay = 6
+            d = 6
         elif self is Cell.DELAY_R2:
-            delay = 1
+            d = 1
         else:
-            delay = 0
-        return delay
+            d = 0
+        return d
 
     def __str__(self):
         return self.value
@@ -44,11 +43,6 @@ class Maze(GridWorld):
         self._state_to_index = {
             tuple(state): s for state, s in zip(self._states, np.arange(len(self._states)))
         }
-
-    def reset(self) -> np.ndarray:
-        self._player_position = self._player_start
-        self._n_steps = 0
-        return self._player_position
 
     def seed(self, seed=None):
         self._rng, seed = np_random(seed)

@@ -5,6 +5,8 @@ from typing import Optional
 
 
 class MDP(gym.Env, ABC):
+    """Interface for a homogeneous Markov Decision Process."""
+
     def __init__(self, horizon: Optional[int] = None, discount: Optional[float] = None):
         """
         :param horizon: time horizon, if None then the MDP has infinite horizon
@@ -14,7 +16,7 @@ class MDP(gym.Env, ABC):
         """
         self.horizon = horizon
         self.discount = discount if discount is not None else 1
-        assert self.horizon is not None or discount < 1     # either finite or infinite horizon
+        assert self.finite_horizon() or self.infinite_horizon()
 
         self._rng = None
         self.seed()
@@ -84,3 +86,20 @@ class MDP(gym.Env, ABC):
         :rtype: int
         """
         raise NotImplementedError
+
+    def finite_horizon(self) -> bool:
+        """Returns whether the MDP is finite horizon or not.
+
+        :return: True if the MDP is finite horizon.
+        :rtype: bool
+        """
+        return self.horizon is not None and self.discount == 1
+
+    def infinite_horizon(self) -> bool:
+        """Returns whether the MDP is infinite horizon (and discounted) or not.
+
+        :return: True if the MDP is infinite horizon (discounted).
+        :rtype: bool
+        """
+        return self.horizon is None and 0 < self.discount < 1
+

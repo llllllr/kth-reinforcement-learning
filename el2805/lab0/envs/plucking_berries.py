@@ -5,19 +5,33 @@ from gym.utils.seeding import np_random
 from el2805.lab0.envs.grid_world import GridWorld, Move
 
 
+class Cell:
+    _PLAYER_START = "A"
+    _MINUS_INF = "#"
+
+    def __init__(self, symbol):
+        self.is_start = symbol == self._PLAYER_START
+        if symbol == self._MINUS_INF:
+            self.reward = np.iinfo(np.int32).min
+        elif symbol == self._PLAYER_START:
+            self.reward = 0
+        else:
+            self.reward = int(symbol)
+
+    def __str__(self):
+        if self.reward == np.iinfo(np.int32).min:
+            s = "-\u221e"
+        else:
+            s = self.reward
+        return s
+
+
 class PluckingBerries(GridWorld):
     def __init__(self, map_filepath: Path, horizon: Optional[int] = None, discount: Optional[float] = None):
         super().__init__(map_filepath, horizon, discount)
         self._player_position = None
         self._n_steps = None
         self._states = [np.asarray((x, y)) for x in range(self._map.shape[0]) for y in range(self._map.shape[1])]
-
-    def reset(self) -> np.ndarray:
-        x = self._rng.randint(low=0, high=self._map.shape[0])
-        y = self._rng.randint(low=0, high=self._map.shape[1])
-        self._player_position = np.asarray((x, y))
-        self._n_steps = 0
-        return self._player_position
 
     def seed(self, seed=None):
         self._rng, seed = np_random(seed)
@@ -31,8 +45,7 @@ class PluckingBerries(GridWorld):
     ) -> float:
         assert action in self.valid_actions(state)
         x_next, y_next = self._next_state(state, action)
-        symbol = self._map[x_next, y_next]
-        reward = np.iinfo(np.int32).min if symbol == "#" else int(symbol)
+        reward = self._map[x_next, y_next].reward
         return reward
 
     def valid_actions(self, state: np.ndarray) -> list[int]:
@@ -69,4 +82,11 @@ class PluckingBerries(GridWorld):
     def _load_map(self, filepath):
         with open(filepath) as f:
             lines = f.readlines()
-        self._map = np.asarray([[symbol for symbol in line[:-1].split("\t")] for line in lines])
+        self._map = np.asarray([[Cell(symbol) for symbol in line[:-1].split("\t")] for line in lines])
+
+        for x in range(self._map.shape[0]):
+            for y in range(self._map.shape[1]):
+                if self._map[x, y].is_start:
+                    self._player_start = np.asarray((x, y))
+                    break
+        assert self._player_start is not None
