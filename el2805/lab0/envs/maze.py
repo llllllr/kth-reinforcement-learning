@@ -2,7 +2,6 @@ import numpy as np
 from pathlib import Path
 from enum import Enum
 from typing import Optional
-from gym.utils.seeding import np_random
 from el2805.lab0.envs.grid_world import GridWorld, Move
 
 
@@ -43,10 +42,6 @@ class Maze(GridWorld):
         self._state_to_index = {
             tuple(state): s for state, s in zip(self._states, np.arange(len(self._states)))
         }
-
-    def seed(self, seed=None):
-        self._rng, seed = np_random(seed)
-        return [seed]
 
     def reward(
             self,
@@ -116,13 +111,13 @@ class Maze(GridWorld):
         state = tuple(state)
         return self._state_to_index[state]
 
-    def _episode_end(self):
+    def _episode_end(self) -> bool:
         x, y = self._player_position
         goal_reached = self._map[x, y] is Cell.GOAL
         horizon_reached = self._n_steps >= self.horizon if self.horizon is not None else False
         return goal_reached or horizon_reached
 
-    def _load_map(self, filepath):
+    def _load_map(self, filepath: Path) -> None:
         with open(filepath) as f:
             lines = f.readlines()
 

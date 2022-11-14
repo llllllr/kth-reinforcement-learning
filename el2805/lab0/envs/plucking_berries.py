@@ -1,7 +1,6 @@
 import numpy as np
 from pathlib import Path
 from typing import Optional
-from gym.utils.seeding import np_random
 from el2805.lab0.envs.grid_world import GridWorld, Move
 
 
@@ -32,10 +31,6 @@ class PluckingBerries(GridWorld):
         self._player_position = None
         self._n_steps = None
         self._states = [np.asarray((x, y)) for x in range(self._map.shape[0]) for y in range(self._map.shape[1])]
-
-    def seed(self, seed=None):
-        self._rng, seed = np_random(seed)
-        return [seed]
 
     def reward(
             self,
@@ -75,11 +70,11 @@ class PluckingBerries(GridWorld):
         index = x * self._map.shape[1] + y   # think about row-major matrix in memory (e.g., C programming language)
         return index
 
-    def _episode_end(self):
+    def _episode_end(self) -> bool:
         horizon_reached = self._n_steps >= self.horizon if self.horizon is not None else False
         return horizon_reached
 
-    def _load_map(self, filepath):
+    def _load_map(self, filepath: Path) -> None:
         with open(filepath) as f:
             lines = f.readlines()
         self._map = np.asarray([[Cell(symbol) for symbol in line[:-1].split("\t")] for line in lines])

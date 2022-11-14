@@ -2,6 +2,7 @@ import gym
 import numpy as np
 from abc import ABC, abstractmethod
 from typing import Optional
+from gym.utils.seeding import np_random
 
 
 class MDP(gym.Env, ABC):
@@ -103,3 +104,6 @@ class MDP(gym.Env, ABC):
         """
         return self.horizon is None and 0 < self.discount < 1
 
+    def seed(self, seed: Optional[int] = None):
+        self._rng, seed = np_random(seed)
+        return [seed]

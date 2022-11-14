@@ -1,6 +1,8 @@
 import numpy as np
 import gym
 from abc import ABC, abstractmethod
+from typing import Optional
+from pathlib import Path
 from enum import IntEnum
 from el2805.lab0.envs.mdp import MDP
 
@@ -31,7 +33,7 @@ class Move(IntEnum):
 class GridWorld(MDP, ABC):
     action_space = gym.spaces.Discrete(len(Move))
 
-    def __init__(self, map_filepath, horizon=None, discount=None):
+    def __init__(self, map_filepath: Path, horizon: Optional[int] = None, discount: Optional[float] = None):
         super().__init__(horizon, discount)
         self._states = None
         self._n_steps = None
@@ -118,9 +120,9 @@ class GridWorld(MDP, ABC):
         return self._states
 
     @abstractmethod
-    def _episode_end(self):
+    def _episode_end(self) -> bool:
         raise NotImplementedError
 
     @abstractmethod
-    def _load_map(self, filepath):
+    def _load_map(self, filepath: Path) -> None:
         raise NotImplementedError
