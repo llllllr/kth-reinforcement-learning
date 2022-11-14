@@ -1,10 +1,10 @@
 import gym
 import numpy as np
 from pathlib import Path
-from enum import Enum, IntEnum
+from enum import Enum
 from typing import Optional
 from gym.utils.seeding import np_random
-from el2805.lab0.envs.mdp import MDP
+from el2805.lab0.envs.grid_world import GridWorld, Move
 
 
 class Cell(Enum):
@@ -29,107 +29,26 @@ class Cell(Enum):
         return self.value
 
 
-class Move(IntEnum):
-    UP = 0
-    DOWN = 1
-    RIGHT = 2
-    LEFT = 3
-    NOP = 4
-
-    def __eq__(self, other):
-        if isinstance(other, Move):
-            return self.value == other.value
-        elif isinstance(other, int):
-            return self.value == other
-        else:
-            return False
-
-    def __str__(self):
-        if self is Move.UP:
-            s = "\u2191"
-        elif self is Move.DOWN:
-            s = "\u2193"
-        elif self is Move.LEFT:
-            s = "\u2190"
-        elif self is Move.RIGHT:
-            s = "\u2192"
-        elif self is Move.NOP:
-            s = "X"
-        else:
-            raise ValueError
-        return s
-
-
-class Maze(MDP):
-    action_space = gym.spaces.Discrete(len(Move))
+class Maze(GridWorld):
     _REWARD_STEP = -1
     _REWARD_GOAL = 1
     _DELAY_PROBABILITY = 0.5
 
     def __init__(self, map_filepath: Path, horizon: Optional[int] = None, discount: Optional[float] = None):
-        super().__init__(horizon, discount)
+        super().__init__(map_filepath, horizon, discount)
 
-        self.maze, self.player_start = self._load_maze(map_filepath)
-        self.observation_space = gym.spaces.MultiDiscrete(self.maze.shape)
-
-        self._player_position = None
-        self._n_steps = None
-        self._rng = None
-        self.seed()
-
-        self._valid_states = [
-            np.asarray((x, y)) for x in range(self.maze.shape[0]) for y in range(self.maze.shape[1])
-            if self.maze[x, y] is not Cell.WALL
+        self._states = [
+            np.asarray((x, y)) for x in range(self._map.shape[0]) for y in range(self._map.shape[1])
+            if self._map[x, y] is not Cell.WALL
         ]
         self._state_to_index = {
-            tuple(state): s for state, s in zip(self._valid_states, np.arange(len(self._valid_states)))
+            tuple(state): s for state, s in zip(self._states, np.arange(len(self._states)))
         }
 
-    def step(self, action: int) -> tuple[np.ndarray, float, bool, dict]:
-        # update state
-        previous_state = self._player_position
-        new_state = self._next_state(previous_state, action)
-        self._player_position = new_state
-        self._n_steps += 1
-
-        # calculate reward
-        reward = self.reward(previous_state, action)
-
-        # check end of episode
-        done = self._episode_end()
-
-        # additional info
-        info = {}
-
-        return self._player_position, reward, done, info
-
     def reset(self) -> np.ndarray:
-        self._player_position = self.player_start
+        self._player_position = self._player_start
         self._n_steps = 0
         return self._player_position
-
-    def render(self, mode: str = "human", policy: dict[int, int] = None) -> None:
-        assert mode == "human" or (mode == "policy" and policy is not None)
-        maze = self.maze.copy()
-
-        if mode == "human":
-            x, y = self._player_position
-            maze[x, y] = "P"
-        elif mode == "policy":
-            for s, action in policy.items():
-                state = self.valid_states[s]
-                action = Move(action)
-                x, y = state
-                maze[x, y] = str(action)
-        else:
-            raise ValueError
-
-        print("=" * 4 * self.maze.shape[0])
-        for i in range(self.maze.shape[0]):
-            for j in range(self.maze.shape[1]):
-                print(maze[i, j], end="\t")
-            print()
-        print("=" * 4 * self.maze.shape[0])
 
     def seed(self, seed=None):
         self._rng, seed = np_random(seed)
@@ -145,16 +64,16 @@ class Maze(MDP):
         x, y = state
         x_next, y_next = self._next_state(state, action)
 
-        if self.maze[x, y] is Cell.GOAL:
+        if self._map[x, y] is Cell.GOAL:
             reward = 0
             # pay attention: the reward when the goal is initially reached must be greater than the other cases
             # Otherwise, with T corresponding to the shortest path, the agent is not encouraged to reach the goal.
             # Indeed, the total reward of reaching the goal (without staying there for at least 1 timestep) would be
             # equal to the reward of not reaching the goal.
-            if self.maze[x_next, y_next] is Cell.GOAL:
+            if self._map[x_next, y_next] is Cell.GOAL:
                 reward += self._REWARD_GOAL
         else:
-            delay = self.maze[x, y].delay
+            delay = self._map[x, y].delay
             reward_no_delay = self._REWARD_STEP
             reward_delay = (1 + delay) * self._REWARD_STEP
 
@@ -162,7 +81,7 @@ class Maze(MDP):
             # Otherwise, with T corresponding to the shortest path, the agent is not encouraged to reach the goal.
             # Indeed, the total reward of reaching the goal (without staying there for at least 1 timestep) would be
             # equal to the reward of not reaching the goal.
-            if self.maze[x_next, y_next] is Cell.GOAL:
+            if self._map[x_next, y_next] is Cell.GOAL:
                 reward_no_delay += self._REWARD_GOAL
                 reward_delay += self._REWARD_GOAL
 
@@ -180,74 +99,42 @@ class Maze(MDP):
         valid_moves = [Move.NOP]
 
         x, y = state
-        if self.maze[x, y] is not Cell.GOAL:
+        if self._map[x, y] is not Cell.GOAL:
             x_tmp = x - 1
-            if x_tmp >= 0 and self.maze[x_tmp, y] is not Cell.WALL:
+            if x_tmp >= 0 and self._map[x_tmp, y] is not Cell.WALL:
                 valid_moves.append(Move.UP)
 
             x_tmp = x + 1
-            if x_tmp < self.maze.shape[0] and self.maze[x_tmp, y] is not Cell.WALL:
+            if x_tmp < self._map.shape[0] and self._map[x_tmp, y] is not Cell.WALL:
                 valid_moves.append(Move.DOWN)
 
             y_tmp = y - 1
-            if y_tmp >= 0 and self.maze[x, y_tmp] is not Cell.WALL:
+            if y_tmp >= 0 and self._map[x, y_tmp] is not Cell.WALL:
                 valid_moves.append(Move.LEFT)
 
             y_tmp = y + 1
-            if y_tmp < self.maze.shape[1] and self.maze[x, y_tmp] is not Cell.WALL:
+            if y_tmp < self._map.shape[1] and self._map[x, y_tmp] is not Cell.WALL:
                 valid_moves.append(Move.RIGHT)
 
         return valid_moves
-
-    def next_states(self, state: np.ndarray, action: int) -> tuple[np.ndarray, np.ndarray]:
-        next_state = self._next_state(state, action)
-        return np.asarray([next_state]), np.asarray([1])
 
     def state_to_index(self, state: np.ndarray) -> int:
         state = tuple(state)
         return self._state_to_index[state]
 
-    @property
-    def valid_states(self) -> list[np.ndarray]:
-        return self._valid_states
-
-    def _next_state(self, state, action):
-        action = Move(action)
-        if action not in self.valid_actions(state):
-            raise ValueError(f"Invalid action {action}")
-
-        x, y = state
-        if action == Move.UP:
-            x -= 1
-        elif action == Move.DOWN:
-            x += 1
-        elif action == Move.LEFT:
-            y -= 1
-        elif action == Move.RIGHT:
-            y += 1
-        elif action == Move.NOP:
-            pass
-        else:
-            raise ValueError(f"Invalid move {action}")
-        state = np.asarray((x, y))
-        return state
-
     def _episode_end(self):
         x, y = self._player_position
-        goal_reached = self.maze[x, y] is Cell.GOAL
+        goal_reached = self._map[x, y] is Cell.GOAL
         horizon_reached = self._n_steps >= self.horizon if self.horizon is not None else False
         return goal_reached or horizon_reached
 
-    @staticmethod
-    def _load_maze(filepath):
+    def _load_map(self, filepath):
         with open(filepath) as f:
             lines = f.readlines()
 
-        maze = np.asarray([[Cell(symbol) for symbol in line[:-1].split("\t")] for line in lines])
-        player_start = np.asarray(maze == Cell.START).nonzero()
-        player_start = np.asarray((player_start[0][0], player_start[1][0]))     # format as a state
+        self._map = np.asarray([[Cell(symbol) for symbol in line[:-1].split("\t")] for line in lines])
+        self._player_start = np.asarray(self._map == Cell.START).nonzero()
+        self._player_start = np.asarray((self._player_start[0][0], self._player_start[1][0]))   # format as a state
 
-        x, y = player_start
-        maze[x, y] = Cell.EMPTY
-
-        return maze, player_start
+        x, y = self._player_start
+        self._map[x, y] = Cell.EMPTY

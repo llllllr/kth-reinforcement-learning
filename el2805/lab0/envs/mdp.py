@@ -16,9 +16,12 @@ class MDP(gym.Env, ABC):
         self.discount = discount if discount is not None else 1
         assert self.horizon is not None or discount < 1     # either finite or infinite horizon
 
+        self._rng = None
+        self.seed()
+
     @property
     @abstractmethod
-    def valid_states(self) -> list[np.ndarray]:
+    def states(self) -> list[np.ndarray]:
         """Returns the list of (valid) states in the state space. The invalid states are not included.
 
         :return: list of valid states
