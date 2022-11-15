@@ -12,6 +12,6 @@ def best_path(env, agent):
         s = env.state_to_index(state)
         action = agent.compute_action(state, time_step)
         best_path_[s] = Move(action)
-        state, reward, done, _ = env.step(action)
+        state, _, done, _ = env.step(action)
         time_step += 1
     return best_path_
