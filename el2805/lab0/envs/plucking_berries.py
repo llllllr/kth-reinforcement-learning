@@ -70,7 +70,7 @@ class PluckingBerries(GridWorld):
         index = x * self._map.shape[1] + y   # think about row-major matrix in memory (e.g., C programming language)
         return index
 
-    def _episode_end(self) -> bool:
+    def _done(self) -> bool:
         horizon_reached = self._n_steps >= self.horizon if self.horizon is not None else False
         return horizon_reached
 

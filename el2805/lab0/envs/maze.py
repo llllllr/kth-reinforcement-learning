@@ -111,7 +111,7 @@ class Maze(GridWorld):
         state = tuple(state)
         return self._state_to_index[state]
 
-    def _episode_end(self) -> bool:
+    def _done(self) -> bool:
         x, y = self._current_state
         goal_reached = self._map[x, y] is Cell.GOAL
         horizon_reached = self._n_steps >= self.horizon if self.horizon is not None else False

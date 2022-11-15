@@ -48,6 +48,9 @@ class GridWorld(MDP, ABC):
         self.observation_space = gym.spaces.MultiDiscrete(self._map.shape)
 
     def step(self, action: Move) -> tuple[Position, float, bool, dict]:
+        if self._done():
+            print("Warning: episode is already complete")
+
         # update state
         previous_state = self._current_state
         new_state = self._next_state(previous_state, action)
@@ -58,7 +61,7 @@ class GridWorld(MDP, ABC):
         reward = self.reward(previous_state, action)
 
         # check end of episode
-        done = self._episode_end()
+        done = self._done()
 
         # additional info
         info = {}
@@ -122,7 +125,7 @@ class GridWorld(MDP, ABC):
         return self._states
 
     @abstractmethod
-    def _episode_end(self) -> bool:
+    def _done(self) -> bool:
         raise NotImplementedError
 
     @abstractmethod
