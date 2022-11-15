@@ -11,6 +11,7 @@ class ValueIterationAgent(MDPAgent):
         self._policy = None
         assert self.env.infinite_horizon()
 
+    @property
     def policy(self) -> np.ndarray:
         return self._policy
 

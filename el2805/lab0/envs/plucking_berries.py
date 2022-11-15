@@ -21,7 +21,7 @@ class Cell:
         if self.reward == np.iinfo(np.int32).min:
             s = "-\u221e"
         else:
-            s = self.reward
+            s = str(self.reward)
         return s
 
 
@@ -35,7 +35,7 @@ class PluckingBerries(GridWorld):
     def reward(
             self,
             state: Position,
-            action: int,
+            action: Move,
             mean: bool = False
     ) -> float:
         assert action in self.valid_actions(state)
@@ -43,7 +43,7 @@ class PluckingBerries(GridWorld):
         reward = self._map[x_next, y_next].reward
         return reward
 
-    def valid_actions(self, state: Position) -> list[int]:
+    def valid_actions(self, state: Position) -> list[Move]:
         valid_moves = [Move.NOP]
         x, y = state
 
@@ -82,6 +82,6 @@ class PluckingBerries(GridWorld):
         for x in range(self._map.shape[0]):
             for y in range(self._map.shape[1]):
                 if self._map[x, y].is_start:
-                    self._player_start = (x, y)
+                    self._initial_state = (x, y)
                     break
-        assert self._player_start is not None
+        assert self._initial_state is not None

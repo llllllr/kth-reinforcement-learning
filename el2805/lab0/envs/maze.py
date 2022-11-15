@@ -46,7 +46,7 @@ class Maze(GridWorld):
     def reward(
             self,
             state: Position,
-            action: int,
+            action: Move,
             mean: bool = False
     ) -> float:
         assert action in self.valid_actions(state)
@@ -84,7 +84,7 @@ class Maze(GridWorld):
 
         return reward
 
-    def valid_actions(self, state: Position) -> list[int]:
+    def valid_actions(self, state: Position) -> list[Move]:
         valid_moves = [Move.NOP]
 
         x, y = state
@@ -112,7 +112,7 @@ class Maze(GridWorld):
         return self._state_to_index[state]
 
     def _episode_end(self) -> bool:
-        x, y = self._player_position
+        x, y = self._current_state
         goal_reached = self._map[x, y] is Cell.GOAL
         horizon_reached = self._n_steps >= self.horizon if self.horizon is not None else False
         return goal_reached or horizon_reached
@@ -122,8 +122,5 @@ class Maze(GridWorld):
             lines = f.readlines()
 
         self._map = np.asarray([[Cell(symbol) for symbol in line[:-1].split("\t")] for line in lines])
-        self._player_start = np.asarray(self._map == Cell.START).nonzero()
-        self._player_start = (self._player_start[0][0], self._player_start[1][0])   # format as a state
-
-        x, y = self._player_start
-        self._map[x, y] = Cell.EMPTY
+        self._initial_state = np.asarray(self._map == Cell.START).nonzero()
+        self._initial_state = (self._initial_state[0][0], self._initial_state[1][0])   # format as a state

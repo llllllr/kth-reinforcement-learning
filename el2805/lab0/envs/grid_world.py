@@ -40,18 +40,18 @@ class GridWorld(MDP, ABC):
         super().__init__(horizon, discount)
         self._states = None
         self._n_steps = None
-        self._player_position = None
-        self._player_start = None
+        self._current_state = None
+        self._initial_state = None
         self._map = None
         self._load_map(map_filepath)
         assert isinstance(self._map, np.ndarray)
         self.observation_space = gym.spaces.MultiDiscrete(self._map.shape)
 
-    def step(self, action: int) -> tuple[Position, float, bool, dict]:
+    def step(self, action: Move) -> tuple[Position, float, bool, dict]:
         # update state
-        previous_state = self._player_position
+        previous_state = self._current_state
         new_state = self._next_state(previous_state, action)
-        self._player_position = new_state
+        self._current_state = new_state
         self._n_steps += 1
 
         # calculate reward
@@ -63,19 +63,19 @@ class GridWorld(MDP, ABC):
         # additional info
         info = {}
 
-        return self._player_position, reward, done, info
+        return self._current_state, reward, done, info
 
     def reset(self) -> Position:
-        self._player_position = self._player_start
+        self._current_state = self._initial_state
         self._n_steps = 0
-        return self._player_position
+        return self._current_state
 
     def render(self, mode: str = "human", policy: np.ndarray = None) -> None:
         assert mode == "human" or (mode == "policy" and policy is not None)
         map_ = self._map.copy()
 
         if mode == "human":
-            x, y = self._player_position
+            x, y = self._current_state
             map_[x, y] = "P"
         elif mode == "policy":
             for s, action in enumerate(policy):
@@ -93,12 +93,11 @@ class GridWorld(MDP, ABC):
             print()
         print("=" * 4 * map_.shape[0])
 
-    def next_states(self, state: Position, action: int) -> tuple[list[Position], np.ndarray]:
+    def next_states(self, state: Position, action: Move) -> tuple[list[Position], np.ndarray]:
         next_state = self._next_state(state, action)
         return ([next_state]), np.asarray([1])
 
-    def _next_state(self, state: Position, action: int) -> Position:
-        action = Move(action)
+    def _next_state(self, state: Position, action: Move) -> Position:
         if action not in self.valid_actions(state):
             raise ValueError(f"Invalid action {action}")
 

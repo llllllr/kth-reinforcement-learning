@@ -27,7 +27,7 @@ def main():
     env = PluckingBerries(map_filepath=map_filepath, discount=.99)
     agent = ValueIterationAgent(env)
     agent.solve()
-    env.render(mode="policy", policy=agent._policy)
+    env.render(mode="policy", policy=agent.policy)
     print()
 
 
