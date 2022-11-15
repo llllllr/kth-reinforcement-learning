@@ -35,7 +35,7 @@ class PluckingBerries(GridWorld):
     def reward(
             self,
             state: Position,
-            action: Move,
+            action: int,
             mean: bool = False
     ) -> float:
         assert action in self.valid_actions(state)

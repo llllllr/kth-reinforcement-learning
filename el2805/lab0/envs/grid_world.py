@@ -47,7 +47,7 @@ class GridWorld(MDP, ABC):
         assert isinstance(self._map, np.ndarray)
         self.observation_space = gym.spaces.MultiDiscrete(self._map.shape)
 
-    def step(self, action: Move) -> tuple[Position, float, bool, dict]:
+    def step(self, action: int) -> tuple[Position, float, bool, dict]:
         if self._done():
             print("Warning: episode is already complete")
 
@@ -96,11 +96,11 @@ class GridWorld(MDP, ABC):
             print()
         print("=" * 4 * map_.shape[0])
 
-    def next_states(self, state: Position, action: Move) -> tuple[list[Position], np.ndarray]:
+    def next_states(self, state: Position, action: int) -> tuple[list[Position], np.ndarray]:
         next_state = self._next_state(state, action)
         return ([next_state]), np.asarray([1])
 
-    def _next_state(self, state: Position, action: Move) -> Position:
+    def _next_state(self, state: Position, action: int) -> Position:
         if action not in self.valid_actions(state):
             raise ValueError(f"Invalid action {action}")
 
