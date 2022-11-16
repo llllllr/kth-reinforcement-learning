@@ -12,13 +12,23 @@ State = tuple[Position, Position]       # (player position, minotaur position)
 
 class MazeMinotaur(Maze):
     _REWARD_EATEN = -1
+    _PROBABILITY_POISON_DEATH = 1/30
 
-    def __init__(self, map_filepath: Path, horizon: int | None = None, discount: float | None = None):
+    def __init__(
+            self,
+            map_filepath: Path,
+            horizon: int | None = None,
+            discount: float | None = None,
+            minotaur_nop: bool = False,
+            poisoned: bool = False
+    ):
         super().__init__(map_filepath, horizon, discount)
         self.observation_space = gym.spaces.Tuple((
             gym.spaces.MultiDiscrete(self._map.shape),  # player
             gym.spaces.MultiDiscrete(self._map.shape)   # minotaur
         ))
+        self.minotaur_nop = minotaur_nop
+        self.poisoned = poisoned
 
         minotaur_states = [(x, y) for x in range(self._map.shape[0]) for y in range(self._map.shape[1])]
         player_states = [(x, y) for x, y in minotaur_states if self._map[x, y] is not Cell.WALL]
@@ -91,7 +101,7 @@ class MazeMinotaur(Maze):
 
     def won(self):
         player_position, minotaur_position = self._current_state
-        exited = self._map[player_position] is Cell.EXIT and player_position is not minotaur_position
+        exited = self._map[player_position] is Cell.EXIT and player_position != minotaur_position
         return exited
 
     def _next_state(self, state: State, action: Move) -> State:
@@ -127,6 +137,14 @@ class MazeMinotaur(Maze):
                 reward += self._REWARD_EXIT
         return reward
 
+    def _done(self) -> bool:
+        if self.poisoned:
+            done = self._rng.choice(
+                a=[True, False],
+                p=[self._PROBABILITY_POISON_DEATH, 1 - self._PROBABILITY_POISON_DEATH]
+            )
+        return super()._done()
+
     def _terminal_state(self, state: State = None) -> bool:
         player_position, minotaur_position = state
         exited = super()._terminal_state(player_position)
@@ -137,11 +155,12 @@ class MazeMinotaur(Maze):
         player_position, minotaur_position = state
         valid_moves = []
 
-        x_player, y_player = player_position
-        if self._map[x_player, y_player] is Cell.EXIT or player_position == minotaur_position:
+        if self._map[player_position] is Cell.EXIT or player_position == minotaur_position:
             valid_moves.append(Move.NOP)
         else:
             x_minotaur, y_minotaur = minotaur_position
+            if self.minotaur_nop:
+                valid_moves.append(Move.NOP)
             if x_minotaur - 1 >= 0:
                 valid_moves.append(Move.UP)
             if x_minotaur + 1 < self._map.shape[0]:
