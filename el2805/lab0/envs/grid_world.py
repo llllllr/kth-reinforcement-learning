@@ -1,9 +1,10 @@
 import numpy as np
 import gym
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Any
 from pathlib import Path
 from enum import IntEnum
+from termcolor import colored
 from el2805.lab0.envs.mdp import MDP
 
 
@@ -36,7 +37,7 @@ Position = tuple[int, int]
 class GridWorld(MDP, ABC):
     action_space = gym.spaces.Discrete(len(Move))
 
-    def __init__(self, map_filepath: Path, horizon: Optional[int] = None, discount: Optional[float] = None):
+    def __init__(self, map_filepath: Path, horizon: int | None = None, discount: float | None = None):
         super().__init__(horizon, discount)
         self._states = None
         self._n_steps = None
@@ -46,6 +47,14 @@ class GridWorld(MDP, ABC):
         self._load_map(map_filepath)
         assert isinstance(self._map, np.ndarray)
         self.observation_space = gym.spaces.MultiDiscrete(self._map.shape)
+
+    @property
+    def states(self) -> list[Position]:
+        return self._states
+
+    @abstractmethod
+    def _load_map(self, filepath: Path) -> None:
+        raise NotImplementedError
 
     def step(self, action: int) -> tuple[Position, float, bool, dict]:
         if self._done():
@@ -76,9 +85,8 @@ class GridWorld(MDP, ABC):
     def render(self, mode: str = "human", policy: np.ndarray = None) -> None:
         assert mode == "human" or (mode == "policy" and policy is not None)
         map_ = self._map.copy()
-
         if mode == "human":
-            map_[self._current_state] = "P"
+            map_[self._current_state] = colored("P", color="blue")
         elif mode == "policy":
             for s, action in enumerate(policy):
                 state = self.states[s]
@@ -86,13 +94,7 @@ class GridWorld(MDP, ABC):
                 map_[state] = str(action)
         else:
             raise ValueError
-
-        print("=" * 4 * map_.shape[0])
-        for i in range(map_.shape[0]):
-            for j in range(map_.shape[1]):
-                print(map_[i, j], end="\t")
-            print()
-        print("=" * 4 * map_.shape[0])
+        self._render(map_)
 
     def next_states(self, state: Position, action: int) -> tuple[list[Position], np.ndarray]:
         next_state = self._next_state(state, action)
@@ -115,14 +117,18 @@ class GridWorld(MDP, ABC):
         state = (x, y)
         return state
 
-    @property
-    def states(self) -> list[Position]:
-        return self._states
+    @staticmethod
+    def _render(map_):
+        print("=" * 4 * map_.shape[0])
+        for i in range(map_.shape[0]):
+            for j in range(map_.shape[1]):
+                print(map_[i, j], end="\t")
+            print()
+        print("=" * 4 * map_.shape[0])
 
-    @abstractmethod
-    def _done(self) -> bool:
-        raise NotImplementedError
-
-    @abstractmethod
-    def _load_map(self, filepath: Path) -> None:
-        raise NotImplementedError
+    def _done(self, state: Any = None) -> bool:
+        if state is None:
+            horizon_reached = self._n_steps >= self.horizon if self.horizon is not None else False
+        else:
+            horizon_reached = False
+        return horizon_reached

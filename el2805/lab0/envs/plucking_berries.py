@@ -1,6 +1,5 @@
 import numpy as np
 from pathlib import Path
-from typing import Optional
 from el2805.lab0.envs.grid_world import GridWorld, Move, Position
 
 
@@ -26,7 +25,7 @@ class Cell:
 
 
 class PluckingBerries(GridWorld):
-    def __init__(self, map_filepath: Path, horizon: Optional[int] = None, discount: Optional[float] = None):
+    def __init__(self, map_filepath: Path, horizon: int | None = None, discount: float | None = None):
         super().__init__(map_filepath, horizon, discount)
         self._player_position = None
         self._n_steps = None

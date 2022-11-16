@@ -1,7 +1,6 @@
 import numpy as np
 from pathlib import Path
 from enum import Enum
-from typing import Optional
 from el2805.lab0.envs.grid_world import GridWorld, Move, Position
 
 
@@ -32,7 +31,7 @@ class Maze(GridWorld):
     _REWARD_EXIT = 1
     _DELAY_PROBABILITY = 0.5
 
-    def __init__(self, map_filepath: Path, horizon: Optional[int] = None, discount: Optional[float] = None):
+    def __init__(self, map_filepath: Path, horizon: int | None = None, discount: float | None = None):
         super().__init__(map_filepath, horizon, discount)
 
         self._states = [
@@ -102,10 +101,11 @@ class Maze(GridWorld):
         state = tuple(state)
         return self._state_to_index[state]
 
-    def _done(self) -> bool:
-        exit_reached = self._map[self._current_state] is Cell.EXIT
-        horizon_reached = self._n_steps >= self.horizon if self.horizon is not None else False
-        return exit_reached or horizon_reached
+    def _done(self, state: Position = None) -> bool:
+        if state is None:   # check current state
+            state = self._current_state
+        goal_reached = self._map[state] is Cell.EXIT
+        return super()._done(state) or goal_reached
 
     def _load_map(self, filepath: Path) -> None:
         with open(filepath) as f:

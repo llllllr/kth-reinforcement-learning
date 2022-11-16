@@ -10,6 +10,7 @@ class DynamicProgrammingAgent(MDPAgent):
         self._policy = None
         assert self.env.finite_horizon()
 
+    @property
     def policy(self) -> np.ndarray:
         return self._policy
 
