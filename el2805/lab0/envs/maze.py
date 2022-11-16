@@ -51,7 +51,8 @@ class Maze(GridWorld):
         # already terminated: nothing happens
         if self._terminal_state(state):
             reward = 0
-        #
+        # main objective: minimize the time to exit <=> maximize the negative time to exit
+        # => negative reward (penalty) at each step
         else:
             delay = self._map[state].delay
             reward_no_delay = self._REWARD_STEP
