@@ -78,14 +78,12 @@ class GridWorld(MDP, ABC):
         map_ = self._map.copy()
 
         if mode == "human":
-            x, y = self._current_state
-            map_[x, y] = "P"
+            map_[self._current_state] = "P"
         elif mode == "policy":
             for s, action in enumerate(policy):
                 state = self.states[s]
                 action = Move(action)
-                x, y = state
-                map_[x, y] = str(action)
+                map_[state] = str(action)
         else:
             raise ValueError
 
@@ -101,9 +99,6 @@ class GridWorld(MDP, ABC):
         return ([next_state]), np.asarray([1])  # deterministic
 
     def _next_state(self, state: Position, action: int) -> Position:
-        if action not in self.valid_actions(state):
-            raise ValueError(f"Invalid action {action}")
-
         x, y = state
         if action == Move.UP:
             x -= 1
