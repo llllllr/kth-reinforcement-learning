@@ -11,6 +11,8 @@ State = tuple[Position, Position]       # (player position, minotaur position)
 
 
 class MazeMinotaur(Maze):
+    _REWARD_EATEN = -1
+
     def __init__(self, map_filepath: Path, horizon: int | None = None, discount: float | None = None):
         super().__init__(map_filepath, horizon, discount)
         self.observation_space = gym.spaces.Tuple((
@@ -102,13 +104,13 @@ class MazeMinotaur(Maze):
         return state
 
     def _reward(self, state: State, next_state: State) -> float:
-        player_position, _ = state
-        x_player, y_player = player_position
+        player_position, minotaur_position = state
         player_position_next, minotaur_position_next = next_state
-        x_player_next, y_player_next = player_position_next
 
-        if self._map[x_player, y_player] is Cell.EXIT:
+        if self._map[player_position] is Cell.EXIT:
             reward = 0
+            if player_position != minotaur_position:
+                reward += self._REWARD_EATEN
         else:
             reward = self._REWARD_STEP
 
@@ -116,12 +118,13 @@ class MazeMinotaur(Maze):
             # cases. Otherwise, with T corresponding to the shortest path, the agent is not encouraged to
             # exit the maze. Indeed, the total reward of exiting the maze (without staying there for at least
             # 1 timestep) would be equal to the reward of not exiting the maze.
-            if self._map[x_player_next, y_player_next] is Cell.EXIT and \
-                    player_position_next != minotaur_position_next:
+            if self._map[player_position_next] is Cell.EXIT:
                 reward += self._REWARD_EXIT
+            if player_position_next != minotaur_position_next:
+                reward += self._REWARD_EATEN
         return reward
 
-    def _done(self, state: Position = None) -> bool:
+    def _done(self, state: State = None) -> bool:
         if state is None:   # check current state
             state = self._current_state
         player_position, _ = state
