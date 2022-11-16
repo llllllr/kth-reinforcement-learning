@@ -28,7 +28,7 @@ class ValueIterationAgent(MDPAgent):
                 v[s] = max(q)
 
             # calculate value improvement
-            delta = max(v - v_old)
+            delta = np.linalg.norm(v - v_old, ord=np.inf)
 
         # store eps-optimal policy
         self._policy = np.zeros(n_states, dtype=np.int32)    # eps-optimal policy (stationary)

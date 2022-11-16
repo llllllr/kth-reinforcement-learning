@@ -39,9 +39,7 @@ class Maze(GridWorld):
             (x, y) for x in range(self._map.shape[0]) for y in range(self._map.shape[1])
             if self._map[x, y] is not Cell.WALL
         ]
-        self._state_to_index = {
-            tuple(state): s for state, s in zip(self._states, np.arange(len(self._states)))
-        }
+        self._state_to_index = {state: s for state, s in zip(self._states, np.arange(len(self._states)))}
 
     def reward(
             self,
@@ -50,17 +48,10 @@ class Maze(GridWorld):
             mean: bool = False
     ) -> float:
         assert action in self.valid_actions(state)
-        x, y = state
-        x_next, y_next = self._next_state(state, action)
 
-        if self._map[x, y] is Cell.GOAL:
+        x, y = state
+        if self._map[x, y] is Cell.GOAL:    # already in goal
             reward = 0
-            # pay attention: the reward when the goal is initially reached must be greater than the other cases
-            # Otherwise, with T corresponding to the shortest path, the agent is not encouraged to reach the goal.
-            # Indeed, the total reward of reaching the goal (without staying there for at least 1 timestep) would be
-            # equal to the reward of not reaching the goal.
-            if self._map[x_next, y_next] is Cell.GOAL:
-                reward += self._REWARD_GOAL
         else:
             delay = self._map[x, y].delay
             reward_no_delay = self._REWARD_STEP
@@ -70,6 +61,7 @@ class Maze(GridWorld):
             # Otherwise, with T corresponding to the shortest path, the agent is not encouraged to reach the goal.
             # Indeed, the total reward of reaching the goal (without staying there for at least 1 timestep) would be
             # equal to the reward of not reaching the goal.
+            x_next, y_next = self._next_state(state, action)
             if self._map[x_next, y_next] is Cell.GOAL:
                 reward_no_delay += self._REWARD_GOAL
                 reward_delay += self._REWARD_GOAL

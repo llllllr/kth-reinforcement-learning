@@ -98,7 +98,7 @@ class GridWorld(MDP, ABC):
 
     def next_states(self, state: Position, action: int) -> tuple[list[Position], np.ndarray]:
         next_state = self._next_state(state, action)
-        return ([next_state]), np.asarray([1])
+        return ([next_state]), np.asarray([1])  # deterministic
 
     def _next_state(self, state: Position, action: int) -> Position:
         if action not in self.valid_actions(state):
