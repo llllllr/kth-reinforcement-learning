@@ -101,9 +101,12 @@ class Maze(GridWorld):
         state = tuple(state)
         return self._state_to_index[state]
 
+    def won(self):
+        return self._terminal_state(self._current_state)
+
     def _terminal_state(self, state: Position) -> bool:
-        exit_reached = self._map[state] is Cell.EXIT
-        return exit_reached
+        exited = self._map[state] is Cell.EXIT
+        return exited
 
     def _load_map(self, filepath: Path) -> None:
         with open(filepath) as f:

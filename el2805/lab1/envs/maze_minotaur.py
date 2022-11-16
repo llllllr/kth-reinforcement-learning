@@ -89,6 +89,11 @@ class MazeMinotaur(Maze):
 
         return next_states, transition_probabilities
 
+    def won(self):
+        player_position, minotaur_position = self._current_state
+        exited = self._map[player_position] is Cell.EXIT and player_position is not minotaur_position
+        return exited
+
     def _next_state(self, state: State, action: Move) -> State:
         player_position, minotaur_position = state
 
@@ -123,8 +128,10 @@ class MazeMinotaur(Maze):
         return reward
 
     def _terminal_state(self, state: State = None) -> bool:
-        player_position, _ = state
-        return super()._terminal_state(player_position)
+        player_position, minotaur_position = state
+        exited = super()._terminal_state(player_position)
+        eaten = player_position == minotaur_position
+        return exited or eaten
 
     def _valid_minotaur_moves(self, state: State) -> list[Move]:
         player_position, minotaur_position = state

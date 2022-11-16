@@ -1,7 +1,6 @@
 import numpy as np
 import gym
 from abc import ABC, abstractmethod
-from typing import Any
 from pathlib import Path
 from enum import IntEnum
 from termcolor import colored
@@ -128,9 +127,10 @@ class GridWorld(MDP, ABC):
 
     @staticmethod
     def _render(map_):
-        print("=" * 4 * map_.shape[0])
+        print("=" * 8 * map_.shape[0])
         for i in range(map_.shape[0]):
             for j in range(map_.shape[1]):
                 print(map_[i, j], end="\t")
             print()
-        print("=" * 4 * map_.shape[0])
+            print()
+        print("=" * 8 * map_.shape[0])
