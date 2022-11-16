@@ -69,9 +69,9 @@ class PluckingBerries(GridWorld):
         index = x * self._map.shape[1] + y   # think about row-major matrix in memory (e.g., C programming language)
         return index
 
-    def _done(self) -> bool:
-        horizon_reached = self._n_steps >= self.horizon if self.horizon is not None else False
-        return horizon_reached
+    def _terminal_state(self, state: Position) -> bool:
+        _ = state   # no terminal state
+        return False
 
     def _load_map(self, filepath: Path) -> None:
         with open(filepath) as f:

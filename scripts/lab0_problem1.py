@@ -10,6 +10,8 @@ def main():
         Path(__file__).parent.parent / "data" / "maze.txt",
         Path(__file__).parent.parent / "data" / "maze_delay.txt",
     ]:
+        print(f"Map file: {map_filepath}")
+
         env = Maze(map_filepath=map_filepath, horizon=horizon)
         agent = DynamicProgrammingAgent(env)
         agent.solve()
@@ -20,7 +22,6 @@ def main():
 
         print("Dynamic programming - Shortest path")
         env.render(mode="policy", policy=best_path(env, agent))
-        print()
 
         print("Value iteration - Stationary policy")
         env = Maze(map_filepath=map_filepath, discount=.99)

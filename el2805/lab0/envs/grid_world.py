@@ -60,7 +60,7 @@ class GridWorld(MDP, ABC):
         raise NotImplementedError
 
     def step(self, action: int) -> tuple[Position, float, bool, dict]:
-        assert not self._done()
+        assert not self._horizon_reached()
 
         # update state
         previous_state = self._current_state
@@ -72,10 +72,7 @@ class GridWorld(MDP, ABC):
         reward = self.reward(previous_state, action)
 
         # check end of episode
-        if self.horizon is not None:
-            done = self._n_steps >= self.horizon
-        else:
-            done = self._terminal_state(self._current_state)
+        done = self._horizon_reached() or self._terminal_state(self._current_state)
 
         # additional info
         info = {}
@@ -122,8 +119,9 @@ class GridWorld(MDP, ABC):
         state = (x, y)
         return state
 
-    def _done(self) -> bool:
-        return self._n_steps >= self.horizon if self.horizon is not None else False
+    def _horizon_reached(self):
+        horizon_reached = self._n_steps >= self.horizon
+        return horizon_reached
 
     @staticmethod
     def _render(map_):
@@ -131,6 +129,5 @@ class GridWorld(MDP, ABC):
         for i in range(map_.shape[0]):
             for j in range(map_.shape[1]):
                 print(map_[i, j], end="\t")
-            print()
             print()
         print("=" * 8 * map_.shape[0])

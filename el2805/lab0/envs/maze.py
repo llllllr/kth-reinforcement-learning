@@ -28,7 +28,7 @@ class Cell(Enum):
 
 class Maze(GridWorld):
     _REWARD_STEP = -1
-    _REWARD_EXIT = 1
+    _REWARD_EXIT = -_REWARD_STEP
     _DELAY_PROBABILITY = 0.5
 
     def __init__(self, map_filepath: Path, horizon: int | None = None, discount: float | None = None):
@@ -48,22 +48,24 @@ class Maze(GridWorld):
     ) -> float:
         assert action in self.valid_actions(state)
 
-        if self._map[state] is Cell.EXIT:    # already exit
+        # already terminated: nothing happens
+        if self._terminal_state(state):
             reward = 0
+        #
         else:
             delay = self._map[state].delay
             reward_no_delay = self._REWARD_STEP
             reward_delay = (1 + delay) * self._REWARD_STEP
 
-            # Pay attention: the reward when the exit is initially reached must be greater than the other cases.
-            # Otherwise, with T corresponding to the shortest path, the agent is not encouraged to exit the maze.
+            # exit!
+            # Pay attention: the reward when the exit is reached must be greater than the another walk step.
+            # Otherwise, with T corresponding to the shortest path length, the agent is not encouraged to exit the maze.
             # Indeed, the total reward of exiting the maze (without staying there for at least 1 timestep) would be
             # equal to the reward of not exiting the maze.
-            x_next, y_next = self._next_state(state, action)
-            if self._map[x_next, y_next] is Cell.EXIT:
+            next_state = self._next_state(state, action)
+            if self._terminal_state(next_state):
                 reward_no_delay += self._REWARD_EXIT
                 reward_delay += self._REWARD_EXIT
-
             if mean:
                 reward = self._DELAY_PROBABILITY * reward_delay + (1 - self._DELAY_PROBABILITY) * reward_no_delay
             else:
