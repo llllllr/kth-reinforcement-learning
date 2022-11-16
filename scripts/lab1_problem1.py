@@ -1,6 +1,6 @@
 from pathlib import Path
 from el2805.lab1.envs import MazeMinotaur
-from el2805.lab0.agents import DynamicProgrammingAgent
+from el2805.lab0.agents import DynamicProgrammingAgent, ValueIterationAgent
 
 
 def main():
@@ -18,9 +18,16 @@ def main():
     env.render()
     while not done:
         action = agent.compute_action(state, time_step)
-        state, _, done, _ = env.step(action)
+        state, reward, done, _ = env.step(action)
         time_step += 1
         env.render()
+    print()
+
+    print("Value iteration - Stationary policy")
+    env = MazeMinotaur(map_filepath=map_filepath, discount=29/30)
+    agent = ValueIterationAgent(env)
+    agent.solve()
+    env.render(mode="policy", policy=agent._policy)
     print()
 
 

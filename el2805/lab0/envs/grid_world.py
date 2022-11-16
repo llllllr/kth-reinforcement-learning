@@ -53,12 +53,15 @@ class GridWorld(MDP, ABC):
         return self._states
 
     @abstractmethod
+    def _terminal_state(self, state: Position) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
     def _load_map(self, filepath: Path) -> None:
         raise NotImplementedError
 
     def step(self, action: int) -> tuple[Position, float, bool, dict]:
-        if self._done():
-            print("Warning: episode is already complete")
+        assert not self._done()
 
         # update state
         previous_state = self._current_state
@@ -70,7 +73,10 @@ class GridWorld(MDP, ABC):
         reward = self.reward(previous_state, action)
 
         # check end of episode
-        done = self._done()
+        if self.horizon is not None:
+            done = self._n_steps >= self.horizon
+        else:
+            done = self._terminal_state(self._current_state)
 
         # additional info
         info = {}
@@ -117,6 +123,9 @@ class GridWorld(MDP, ABC):
         state = (x, y)
         return state
 
+    def _done(self) -> bool:
+        return self._n_steps >= self.horizon if self.horizon is not None else False
+
     @staticmethod
     def _render(map_):
         print("=" * 4 * map_.shape[0])
@@ -125,10 +134,3 @@ class GridWorld(MDP, ABC):
                 print(map_[i, j], end="\t")
             print()
         print("=" * 4 * map_.shape[0])
-
-    def _done(self, state: Any = None) -> bool:
-        if state is None:
-            horizon_reached = self._n_steps >= self.horizon if self.horizon is not None else False
-        else:
-            horizon_reached = False
-        return horizon_reached

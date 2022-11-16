@@ -118,17 +118,13 @@ class MazeMinotaur(Maze):
             # cases. Otherwise, with T corresponding to the shortest path, the agent is not encouraged to
             # exit the maze. Indeed, the total reward of exiting the maze (without staying there for at least
             # 1 timestep) would be equal to the reward of not exiting the maze.
-            if self._map[player_position_next] is Cell.EXIT:
+            if self._map[player_position_next] is Cell.EXIT and player_position_next != minotaur_position_next:
                 reward += self._REWARD_EXIT
-            if player_position_next != minotaur_position_next:
-                reward += self._REWARD_EATEN
         return reward
 
-    def _done(self, state: State = None) -> bool:
-        if state is None:   # check current state
-            state = self._current_state
+    def _terminal_state(self, state: State = None) -> bool:
         player_position, _ = state
-        return super()._done(player_position)
+        return super()._terminal_state(player_position)
 
     def _valid_minotaur_moves(self, state: State) -> list[Move]:
         player_position, minotaur_position = state
