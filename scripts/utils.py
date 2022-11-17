@@ -17,7 +17,7 @@ def best_path(env, agent):
     return best_path_
 
 
-def print_write_line(filepath, output):
+def print_and_write_line(filepath, output, mode):
     print(output)
-    with open(filepath, mode="a") as f:
+    with open(filepath, mode=mode) as f:
         f.write(output + "\n")

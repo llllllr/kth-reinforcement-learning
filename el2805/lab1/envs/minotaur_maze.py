@@ -11,9 +11,8 @@ State = tuple[Position, Position]       # (player position, minotaur position)
 
 
 class MinotaurMaze(Maze):
-    _REWARD_STEP = None     # do not use this
-    _REWARD_EXIT = 1
-    _PROBABILITY_POISON_DEATH = 1/30
+    _reward_exit = 1
+    _probability_poison_death = 1 / 30
 
     def __init__(
             self,
@@ -35,7 +34,7 @@ class MinotaurMaze(Maze):
             # important: since this is an additional objective, the worst-case penalty should be much lower than the
             # exit reward. Otherwise, the player might prioritize minimizing the average time to exit, resulting in a
             # lower probability of exiting alive.
-            self._reward_step = - self._REWARD_EXIT / (100*self.horizon)
+            self._reward_step = - 0.0001
         else:
             # for discounted MDPs, we do not need this reward (see self._reward())
             self._reward_step = None
@@ -139,7 +138,7 @@ class MinotaurMaze(Maze):
         # <=> maximize reward by collecting the exit reward
         # => positive reward for exiting alive
         elif self._map[player_position_next] is Cell.EXIT and player_position_next != minotaur_position_next:
-            reward = self._REWARD_EXIT
+            reward = self._reward_exit
         # additional objective: don't waste time while you are alive
         # <=> minimize time to exit <=> maximize negative time to exit
         else:
@@ -159,7 +158,7 @@ class MinotaurMaze(Maze):
         if self.poison:
             horizon_reached = self._rng.choice(
                 a=[True, False],
-                p=[self._PROBABILITY_POISON_DEATH, 1 - self._PROBABILITY_POISON_DEATH]
+                p=[self._probability_poison_death, 1 - self._probability_poison_death]
             )
         else:
             horizon_reached = super()._horizon_reached()

@@ -27,9 +27,9 @@ class Cell(Enum):
 
 
 class Maze(GridWorld):
-    _REWARD_STEP = -1
-    _REWARD_EXIT = -_REWARD_STEP
-    _DELAY_PROBABILITY = 0.5
+    _reward_step = -1
+    _reward_exit = -_reward_step
+    _probability_delay = 0.5
 
     def __init__(self, map_filepath: Path, horizon: int | None = None, discount: float | None = None):
         super().__init__(map_filepath, horizon, discount)
@@ -55,8 +55,8 @@ class Maze(GridWorld):
         # => negative reward (penalty) at each step
         else:
             delay = self._map[state].delay
-            reward_no_delay = self._REWARD_STEP
-            reward_delay = (1 + delay) * self._REWARD_STEP
+            reward_no_delay = self._reward_step
+            reward_delay = (1 + delay) * self._reward_step
 
             # exit!
             # Pay attention: the reward when the exit is reached must be greater than the another walk step.
@@ -65,14 +65,14 @@ class Maze(GridWorld):
             # equal to the reward of not exiting the maze.
             next_state = self._next_state(state, action)
             if self._terminal_state(next_state):
-                reward_no_delay += self._REWARD_EXIT
-                reward_delay += self._REWARD_EXIT
+                reward_no_delay += self._reward_exit
+                reward_delay += self._reward_exit
             if mean:
-                reward = self._DELAY_PROBABILITY * reward_delay + (1 - self._DELAY_PROBABILITY) * reward_no_delay
+                reward = self._probability_delay * reward_delay + (1 - self._probability_delay) * reward_no_delay
             else:
                 reward = self._rng.choice(
                     a=[reward_delay, reward_no_delay],
-                    p=[self._DELAY_PROBABILITY, 1-self._DELAY_PROBABILITY]
+                    p=[self._probability_delay, 1 - self._probability_delay]
                 )
 
         return reward

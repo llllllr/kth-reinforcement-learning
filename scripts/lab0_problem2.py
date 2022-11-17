@@ -1,3 +1,4 @@
+import numpy as np
 from pathlib import Path
 from el2805.lab0.envs import PluckingBerries
 from el2805.lab0.agents import DynamicProgrammingAgent, ValueIterationAgent
@@ -6,17 +7,17 @@ from utils import best_path
 
 def main():
     map_filepath = Path(__file__).parent.parent / "data" / "plucking_berries.txt"
-
-    min_horizon = 1
-    max_horizon = 28
+    horizons = np.arange(1, 31)
 
     # trick: instead of solving for every min_horizon<=T<=max_horizon, we solve only for T=max_horizon
-    # then, we read the results by hacking the policy by considering the last T time steps
+    # then, we read the results by hacking the policy to consider the last T time steps
+    max_horizon = horizons[-1]
     env = PluckingBerries(map_filepath=map_filepath, horizon=max_horizon)
     agent = DynamicProgrammingAgent(env)
     agent.solve()
     full_policy = agent._policy.copy()
-    for horizon in range(min_horizon, max_horizon+1):
+
+    for horizon in horizons:
         print(f"Dynamic programming - Maximum value path with T={horizon}")
         agent._policy = full_policy[max_horizon-horizon:]   # trick
         env.horizon = horizon

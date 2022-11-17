@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 from el2805.lab1.envs import MinotaurMaze
 from el2805.lab0.agents import DynamicProgrammingAgent, ValueIterationAgent
-from utils import print_write_line
+from utils import print_and_write_line
 
 MAP_FILEPATH = Path(__file__).parent.parent / "data" / "maze_minotaur.txt"
 
@@ -33,14 +33,23 @@ def part_d(results_dir):
     results_dir.mkdir(parents=True, exist_ok=True)
 
     figure, axes = plt.subplots()
+    write_mode = "w"
     for minotaur_nop in [False, True]:
         print(f"Minotaur NOP: {minotaur_nop}")
-        exit_probabilities = []
         horizons = np.arange(1, 31)
+
+        # trick: instead of solving for every min_horizon<=T<=max_horizon, we solve only for T=max_horizon
+        # then, we read the results by hacking the policy to consider the last T time steps
+        max_horizon = horizons[-1]
+        env = MinotaurMaze(map_filepath=MAP_FILEPATH, horizon=max_horizon, minotaur_nop=minotaur_nop)
+        agent = DynamicProgrammingAgent(env)
+        agent.solve()
+        full_policy = agent._policy.copy()
+
+        exit_probabilities = []
         for horizon in horizons:
-            env = MinotaurMaze(map_filepath=MAP_FILEPATH, horizon=horizon, minotaur_nop=minotaur_nop)
-            agent = DynamicProgrammingAgent(env)
-            agent.solve()
+            agent._policy = full_policy[max_horizon-horizon:]  # trick
+            env.horizon = horizon
 
             n_episodes = 10000
             n_wins = 0
@@ -57,10 +66,12 @@ def part_d(results_dir):
 
             exit_probability = n_wins / n_episodes
             exit_probabilities.append(exit_probability)
-            print_write_line(
+            print_and_write_line(
                 filepath=results_dir / "results.txt",
-                output=f"T={horizon} -> P('exit alive')={exit_probability}"
+                output=f"T={horizon} -> P('exit alive')={exit_probability}",
+                mode=write_mode
             )
+            write_mode = "a"    # append after the first time
 
         label = ("with " if minotaur_nop else "w/o ") + "stay move"
         axes.plot(horizons, exit_probabilities, label=label)
@@ -93,9 +104,10 @@ def part_f(results_dir):
         n_wins += 1 if env.won() else 0
 
     exit_probability = n_wins / n_episodes
-    print_write_line(
+    print_and_write_line(
         filepath=results_dir / "results.txt",
-        output=f"P('exit alive'|'poisoned')={exit_probability}"
+        output=f"P('exit alive'|'poisoned')={exit_probability}",
+        mode="w"
     )
     print()
 
