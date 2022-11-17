@@ -11,16 +11,7 @@ class MDPAgent(ABC):
         :type env: MDP
         """
         self.env = env
-
-    @property
-    @abstractmethod
-    def policy(self) -> np.ndarray:
-        """Returns the agent's policy.
-
-        :return: policy
-        :rtype: ndarray
-        """
-        raise NotImplementedError
+        self._policy = None
 
     @abstractmethod
     def solve(self) -> None:
@@ -39,6 +30,24 @@ class MDPAgent(ABC):
         :rtype: int
         """
         raise NotImplementedError
+
+    @property
+    def policy(self) -> np.ndarray:
+        """Getter for the agent's policy.
+
+        :return: policy
+        :rtype: ndarray
+        """
+        return self._policy
+
+    @policy.setter
+    def policy(self, policy: np.ndarray):
+        """Setter for the agent's policy.
+
+        :param policy: policy
+        :type policy: ndarray
+        """
+        self._policy = policy
 
     def q(self, state: Any, action: int, v: np.ndarray) -> float:
         """Calculates the Q-function.

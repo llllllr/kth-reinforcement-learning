@@ -7,17 +7,12 @@ from el2805.lab0.envs import MDP
 class DynamicProgrammingAgent(MDPAgent):
     def __init__(self, env: MDP):
         super().__init__(env)
-        self._policy = None
         assert self.env.finite_horizon()
-
-    @property
-    def policy(self) -> np.ndarray:
-        return self._policy
 
     def solve(self) -> None:
         n_states = len(self.env.states)
         u = np.zeros(n_states)
-        self._policy = np.zeros((self.env.horizon, n_states), dtype=np.int32)    # optimal policy (non-stationary)
+        self.policy = np.zeros((self.env.horizon, n_states), dtype=np.int32)    # optimal policy (non-stationary)
 
         for t in range(self.env.horizon-1, -1, -1):
             last_time_step = t == self.env.horizon - 1              # terminal case?
@@ -36,10 +31,10 @@ class DynamicProgrammingAgent(MDPAgent):
 
                 # store optimal policy (non-stationary, optimal at this time step)
                 a_best = q.argmax()     # index of best action for valid actions in this state
-                self._policy[t, s] = valid_actions[a_best]
+                self.policy[t, s] = valid_actions[a_best]
 
     def compute_action(self, state: Any, time_step: int) -> int:
-        assert self._policy is not None
+        assert self.policy is not None
         s = self.env.state_to_index(state)
-        action = self._policy[time_step, s]
+        action = self.policy[time_step, s]
         return action

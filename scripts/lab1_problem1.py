@@ -44,11 +44,11 @@ def part_d(results_dir):
         env = MinotaurMaze(map_filepath=MAP_FILEPATH, horizon=max_horizon, minotaur_nop=minotaur_nop)
         agent = DynamicProgrammingAgent(env)
         agent.solve()
-        full_policy = agent._policy.copy()
+        full_policy = agent.policy.copy()
 
         exit_probabilities = []
         for horizon in horizons:
-            agent._policy = full_policy[max_horizon-horizon:]  # trick
+            agent.policy = full_policy[max_horizon - horizon:]  # trick
             env.horizon = horizon
 
             n_episodes = 10000

@@ -15,11 +15,11 @@ def main():
     env = PluckingBerries(map_filepath=map_filepath, horizon=max_horizon)
     agent = DynamicProgrammingAgent(env)
     agent.solve()
-    full_policy = agent._policy.copy()
+    full_policy = agent.policy.copy()
 
     for horizon in horizons:
         print(f"Dynamic programming - Maximum value path with T={horizon}")
-        agent._policy = full_policy[max_horizon-horizon:]   # trick
+        agent.policy = full_policy[max_horizon - horizon:]   # trick
         env.horizon = horizon
         env.render(mode="policy", policy=best_path(env, agent))
         print()
