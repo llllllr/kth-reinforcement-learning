@@ -15,3 +15,9 @@ def best_path(env, agent):
         state, _, done, _ = env.step(action)
         time_step += 1
     return best_path_
+
+
+def print_write_line(filepath, output):
+    print(output)
+    with open(filepath, mode="a") as f:
+        f.write(output + "\n")

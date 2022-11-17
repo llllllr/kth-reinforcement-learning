@@ -1,1 +1,1 @@
-from el2805.lab1.envs.maze_minotaur import MazeMinotaur
+from el2805.lab1.envs.minotaur_maze import MinotaurMaze

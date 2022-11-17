@@ -60,8 +60,6 @@ class GridWorld(MDP, ABC):
         raise NotImplementedError
 
     def step(self, action: int) -> tuple[Position, float, bool, dict]:
-        assert not self._horizon_reached()
-
         # update state
         previous_state = self._current_state
         new_state = self._next_state(previous_state, action)
@@ -120,7 +118,7 @@ class GridWorld(MDP, ABC):
         return state
 
     def _horizon_reached(self):
-        horizon_reached = self._n_steps >= self.horizon
+        horizon_reached = self._n_steps >= self.horizon if self.finite_horizon() else False
         return horizon_reached
 
     @staticmethod

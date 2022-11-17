@@ -48,7 +48,7 @@ class Maze(GridWorld):
     ) -> float:
         assert action in self.valid_actions(state)
 
-        # already terminated: nothing happens
+        # terminal state (absorbing): nothing happens
         if self._terminal_state(state):
             reward = 0
         # main objective: minimize the time to exit <=> maximize the negative time to exit

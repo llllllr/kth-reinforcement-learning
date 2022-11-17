@@ -10,8 +10,9 @@ from el2805.lab0.envs.grid_world import Move, Position
 State = tuple[Position, Position]       # (player position, minotaur position)
 
 
-class MazeMinotaur(Maze):
-    _REWARD_EATEN = -1
+class MinotaurMaze(Maze):
+    _REWARD_STEP = None     # do not use this
+    _REWARD_EXIT = 1
     _PROBABILITY_POISON_DEATH = 1/30
 
     def __init__(
@@ -20,7 +21,7 @@ class MazeMinotaur(Maze):
             horizon: int | None = None,
             discount: float | None = None,
             minotaur_nop: bool = False,
-            poisoned: bool = False
+            poison: bool = False
     ):
         super().__init__(map_filepath, horizon, discount)
         self.observation_space = gym.spaces.Tuple((
@@ -28,7 +29,16 @@ class MazeMinotaur(Maze):
             gym.spaces.MultiDiscrete(self._map.shape)   # minotaur
         ))
         self.minotaur_nop = minotaur_nop
-        self.poisoned = poisoned
+        self.poison = poison
+
+        if self.finite_horizon():
+            # important: since this is an additional objective, the worst-case penalty should be much lower than the
+            # exit reward. Otherwise, the player might prioritize minimizing the average time to exit, resulting in a
+            # lower probability of exiting alive.
+            self._reward_step = - self._REWARD_EXIT / (100*self.horizon)
+        else:
+            # for discounted MDPs, we do not need this reward (see self._reward())
+            self._reward_step = None
 
         minotaur_states = [(x, y) for x in range(self._map.shape[0]) for y in range(self._map.shape[1])]
         player_states = [(x, y) for x, y in minotaur_states if self._map[x, y] is not Cell.WALL]
@@ -122,30 +132,40 @@ class MazeMinotaur(Maze):
         player_position, minotaur_position = state
         player_position_next, minotaur_position_next = next_state
 
-        if self._map[player_position] is Cell.EXIT:
+        # terminal state (absorbing): nothing happens
+        if self._terminal_state(state):
             reward = 0
-            if player_position != minotaur_position:
-                reward += self._REWARD_EATEN
+        # main objective: maximize probability of exiting alive before the time expires
+        # <=> maximize reward by collecting the exit reward
+        # => positive reward for exiting alive
+        elif self._map[player_position_next] is Cell.EXIT and player_position_next != minotaur_position_next:
+            reward = self._REWARD_EXIT
+        # additional objective: don't waste time while you are alive
+        # <=> minimize time to exit <=> maximize negative time to exit
         else:
-            reward = self._REWARD_STEP
+            # for finite-horizon MDPs, we give negative reward (penalty) at each step
+            # (e.g., better to arrive at t-1 than t, if both ways have the same success probability)
+            if self.finite_horizon():
+                reward = self._reward_step
+            # for discounted MDPs, we do not need a penalty, as the player will already avoid wasting time due to the
+            # discount factor (i.e., exiting in the future is worse than exiting now)
+            else:
+                reward = 0
 
-            # Pay attention: the reward when the exit is initially reached must be greater than the other
-            # cases. Otherwise, with T corresponding to the shortest path, the agent is not encouraged to
-            # exit the maze. Indeed, the total reward of exiting the maze (without staying there for at least
-            # 1 timestep) would be equal to the reward of not exiting the maze.
-            if self._map[player_position_next] is Cell.EXIT and player_position_next != minotaur_position_next:
-                reward += self._REWARD_EXIT
         return reward
 
-    def _done(self) -> bool:
-        if self.poisoned:
-            done = self._rng.choice(
+    def _horizon_reached(self) -> bool:
+        # random time horizon geometrically distributed
+        if self.poison:
+            horizon_reached = self._rng.choice(
                 a=[True, False],
                 p=[self._PROBABILITY_POISON_DEATH, 1 - self._PROBABILITY_POISON_DEATH]
             )
-        return super()._done()
+        else:
+            horizon_reached = super()._horizon_reached()
+        return horizon_reached
 
-    def _terminal_state(self, state: State = None) -> bool:
+    def _terminal_state(self, state: State) -> bool:
         player_position, minotaur_position = state
         exited = super()._terminal_state(player_position)
         eaten = player_position == minotaur_position
