@@ -1,14 +1,14 @@
 import gym
 import numpy as np
 from abc import ABC, abstractmethod
-from typing import Optional, Any
+from typing import Any
 from gym.utils.seeding import np_random
 
 
 class MDP(gym.Env, ABC):
     """Interface for a homogeneous Markov Decision Process."""
 
-    def __init__(self, horizon: Optional[int] = None, discount: Optional[float] = None):
+    def __init__(self, horizon: int | None = None, discount: float | None = None):
         """
         :param horizon: time horizon, if None then the MDP has infinite horizon
         :type horizon: int, optional
@@ -104,6 +104,6 @@ class MDP(gym.Env, ABC):
         """
         return self.horizon is None and 0 < self.discount < 1
 
-    def seed(self, seed: Optional[int] = None):
+    def seed(self, seed: int | None = None):
         self._rng, seed = np_random(seed)
         return [seed]
