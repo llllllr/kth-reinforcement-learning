@@ -64,12 +64,12 @@ class GridWorld(MDP, ABC):
         previous_state = self._current_state
         new_state = self._next_state(previous_state, action)
         self._current_state = new_state
-        self._n_steps += 1
 
         # calculate reward
-        reward = self.reward(previous_state, action)
+        reward = self.discount**self._n_steps * self.reward(previous_state, action)
 
         # check end of episode
+        self._n_steps += 1
         done = self._horizon_reached() or self._terminal_state(self._current_state)
 
         # additional info
