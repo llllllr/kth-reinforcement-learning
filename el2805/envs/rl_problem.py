@@ -1,12 +1,11 @@
 import gym
-import numpy as np
 from abc import ABC, abstractmethod
 from typing import Any
 from gym.utils.seeding import np_random
 
 
-class MDP(gym.Env, ABC):
-    """Interface for a homogeneous Markov Decision Process."""
+class RLProblem(gym.Env, ABC):
+    """Interface for a RL problem with discrete state and action spaces."""
 
     def __init__(self, horizon: int | None = None, discount: float | None = None):
         """
@@ -33,12 +32,7 @@ class MDP(gym.Env, ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def reward(
-            self,
-            state: Any,
-            action: int,
-            mean: bool = False
-    ) -> float:
+    def reward(self, state: Any, action: int) -> float:
         """Returns reward received by taking a certain action in a certain state.
 
         :param state: current state
@@ -64,21 +58,7 @@ class MDP(gym.Env, ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def next_states(self, state: Any, action: int) -> tuple[np.ndarray, np.ndarray]:
-        """Returns the list of next states which can be reached from a certain state and their corresponding transition
-        probabilities.
-
-        :param state: current state
-        :type state: any
-        :param action: action taken in the current state
-        :type action: int
-        :return: (next states, transition probabilities)
-        :rtype: tuple[ndarray, ndarray]
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    def state_to_index(self, state: Any) -> int:
+    def state_index(self, state: Any) -> int:
         """Returns the index of a certain state in the list of valid states.
 
         :param state: state for which the index is desired

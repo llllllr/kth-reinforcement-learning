@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Any
-from el2805.lab0.agents.mdp_agent import MDPAgent
-from el2805.lab0.envs import MDP
+from el2805.agents.mdp_agent import MDPAgent
+from el2805.envs.mdp import MDP
 
 
 class ValueIterationAgent(MDPAgent):
@@ -36,6 +36,6 @@ class ValueIterationAgent(MDPAgent):
     def compute_action(self, state: Any, time_step: int) -> int:
         assert self.policy is not None
         _ = time_step   # not used, infinite-horizon MDPs have a stationary optimal policy
-        s = self.env.state_to_index(state)
+        s = self.env.state_index(state)
         action = self.policy[s]
         return action

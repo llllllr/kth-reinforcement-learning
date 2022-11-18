@@ -1,6 +1,6 @@
 import numpy as np
 from pathlib import Path
-from el2805.lab0.envs.grid_world import GridWorld, Move, Position
+from el2805.envs.grid_world import GridWorld, Move, Position
 
 
 class Cell:
@@ -31,12 +31,7 @@ class PluckingBerries(GridWorld):
         self._n_steps = None
         self._states = [(x, y) for x in range(self._map.shape[0]) for y in range(self._map.shape[1])]
 
-    def reward(
-            self,
-            state: Position,
-            action: int,
-            mean: bool = False
-    ) -> float:
+    def reward(self, state: Position, action: int, mean: bool = False) -> float:
         assert action in self.valid_actions(state)
         x_next, y_next = self._next_state(state, action)
         reward = self._map[x_next, y_next].reward
@@ -64,7 +59,7 @@ class PluckingBerries(GridWorld):
 
         return valid_moves
 
-    def state_to_index(self, state: Position) -> int:
+    def state_index(self, state: Position) -> int:
         x, y = state
         index = x * self._map.shape[1] + y   # think about row-major matrix in memory (e.g., C programming language)
         return index

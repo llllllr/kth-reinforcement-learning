@@ -1,5 +1,5 @@
 import numpy as np
-from el2805.lab0.envs.grid_world import Move
+from el2805.envs.grid_world import Move
 
 
 def best_path(env, agent):
@@ -9,7 +9,7 @@ def best_path(env, agent):
     env.seed(1)
     state = env.reset()
     while not done:
-        s = env.state_to_index(state)
+        s = env.state_index(state)
         action = agent.compute_action(state, time_step)
         best_path_[s] = Move(action)
         state, _, done, _ = env.step(action)

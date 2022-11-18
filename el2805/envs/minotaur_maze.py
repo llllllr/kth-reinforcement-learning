@@ -3,9 +3,8 @@ import numpy as np
 import itertools as it
 from pathlib import Path
 from termcolor import colored
-from el2805.lab0.envs import Maze
-from el2805.lab0.envs.maze import Cell
-from el2805.lab0.envs.grid_world import Move, Position
+from el2805.envs.maze import Maze, Cell
+from el2805.envs.grid_world import Move, Position
 
 State = tuple[Position, Position]       # (player position, minotaur position)
 
@@ -39,17 +38,15 @@ class MinotaurMaze(Maze):
             # for discounted MDPs, we do not need this reward (see self._reward())
             self._reward_step = None
 
+        # TODO: reduce state space by
+        #   - considering the exit-alive configurations as a unique state
+        #   - considering the eaten configurations as a unique state
         minotaur_states = [(x, y) for x in range(self._map.shape[0]) for y in range(self._map.shape[1])]
         player_states = [(x, y) for x, y in minotaur_states if self._map[x, y] is not Cell.WALL]
         self._states = list(it.product(player_states, minotaur_states))
         self._state_to_index = {state: s for state, s in zip(self._states, np.arange(len(self._states)))}
 
-    def reward(
-            self,
-            state: State,
-            action: Move,
-            mean: bool = False
-    ) -> float:
+    def reward(self, state: State, action: Move, mean: bool = False) -> float:
         assert action in self.valid_actions(state)
 
         if mean:

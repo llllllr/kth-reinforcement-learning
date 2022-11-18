@@ -1,7 +1,7 @@
 import numpy as np
 from pathlib import Path
 from enum import Enum
-from el2805.lab0.envs.grid_world import GridWorld, Move, Position
+from el2805.envs.grid_world import GridWorld, Move, Position
 
 
 class Cell(Enum):
@@ -34,18 +34,14 @@ class Maze(GridWorld):
     def __init__(self, map_filepath: Path, horizon: int | None = None, discount: float | None = None):
         super().__init__(map_filepath, horizon, discount)
 
+        # TODO: reduce state space by considering the exit configurations as a unique state
         self._states = [
             (x, y) for x in range(self._map.shape[0]) for y in range(self._map.shape[1])
             if self._map[x, y] is not Cell.WALL
         ]
         self._state_to_index = {state: s for state, s in zip(self._states, np.arange(len(self._states)))}
 
-    def reward(
-            self,
-            state: Position,
-            action: int,
-            mean: bool = False
-    ) -> float:
+    def reward(self, state: Position, action: int, mean: bool = False) -> float:
         assert action in self.valid_actions(state)
 
         # terminal state (absorbing): nothing happens
@@ -100,8 +96,7 @@ class Maze(GridWorld):
 
         return valid_moves
 
-    def state_to_index(self, state: Position) -> int:
-        state = tuple(state)
+    def state_index(self, state: Position) -> int:
         return self._state_to_index[state]
 
     def won(self):

@@ -1,7 +1,7 @@
 import numpy as np
 from pathlib import Path
-from el2805.lab0.envs import PluckingBerries
-from el2805.lab0.agents import DynamicProgrammingAgent, ValueIterationAgent
+from el2805.envs import PluckingBerries
+from el2805.agents import DynamicProgrammingAgent, ValueIterationAgent
 from utils import best_path
 
 

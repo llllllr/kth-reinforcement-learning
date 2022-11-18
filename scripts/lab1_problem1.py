@@ -1,8 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
-from el2805.lab1.envs import MinotaurMaze
-from el2805.lab0.agents import DynamicProgrammingAgent, ValueIterationAgent
+from el2805.envs import MinotaurMaze
+from el2805.agents import DynamicProgrammingAgent, ValueIterationAgent
 from utils import print_and_write_line
 
 MAP_FILEPATH = Path(__file__).parent.parent / "data" / "maze_minotaur.txt"
