@@ -4,7 +4,7 @@ from enum import Enum
 from el2805.envs.grid_world import GridWorld, Move, Position
 
 
-class Cell(Enum):
+class MazeCell(Enum):
     EMPTY = "0"
     WALL = "#"
     START = "A"
@@ -14,9 +14,9 @@ class Cell(Enum):
 
     @property
     def delay(self) -> int:
-        if self is Cell.DELAY_R1:
+        if self is MazeCell.DELAY_R1:
             d = 6
-        elif self is Cell.DELAY_R2:
+        elif self is MazeCell.DELAY_R2:
             d = 1
         else:
             d = 0
@@ -34,10 +34,9 @@ class Maze(GridWorld):
     def __init__(self, map_filepath: Path, horizon: int | None = None, discount: float | None = None):
         super().__init__(map_filepath, horizon, discount)
 
-        # TODO: reduce state space by considering the exit configurations as a unique state
         self._states = [
             (x, y) for x in range(self._map.shape[0]) for y in range(self._map.shape[1])
-            if self._map[x, y] is not Cell.WALL
+            if self._map[x, y] is not MazeCell.WALL
         ]
         self._state_to_index = {state: s for state, s in zip(self._states, np.arange(len(self._states)))}
 
@@ -76,22 +75,23 @@ class Maze(GridWorld):
     def valid_actions(self, state: Position) -> list[Move]:
         valid_moves = [Move.NOP]
 
-        x, y = state
-        if self._map[x, y] is not Cell.EXIT:
+        if not self._terminal_state(state):
+            x, y = state
+
             x_tmp = x - 1
-            if x_tmp >= 0 and self._map[x_tmp, y] is not Cell.WALL:
+            if x_tmp >= 0 and self._map[x_tmp, y] is not MazeCell.WALL:
                 valid_moves.append(Move.UP)
 
             x_tmp = x + 1
-            if x_tmp < self._map.shape[0] and self._map[x_tmp, y] is not Cell.WALL:
+            if x_tmp < self._map.shape[0] and self._map[x_tmp, y] is not MazeCell.WALL:
                 valid_moves.append(Move.DOWN)
 
             y_tmp = y - 1
-            if y_tmp >= 0 and self._map[x, y_tmp] is not Cell.WALL:
+            if y_tmp >= 0 and self._map[x, y_tmp] is not MazeCell.WALL:
                 valid_moves.append(Move.LEFT)
 
             y_tmp = y + 1
-            if y_tmp < self._map.shape[1] and self._map[x, y_tmp] is not Cell.WALL:
+            if y_tmp < self._map.shape[1] and self._map[x, y_tmp] is not MazeCell.WALL:
                 valid_moves.append(Move.RIGHT)
 
         return valid_moves
@@ -103,13 +103,12 @@ class Maze(GridWorld):
         return self._terminal_state(self._current_state)
 
     def _terminal_state(self, state: Position) -> bool:
-        exited = self._map[state] is Cell.EXIT
+        exited = self._map[state] is MazeCell.EXIT
         return exited
 
     def _load_map(self, filepath: Path) -> None:
         with open(filepath) as f:
             lines = f.readlines()
-
-        self._map = np.asarray([[Cell(symbol) for symbol in line[:-1].split("\t")] for line in lines])
-        self._initial_state = np.asarray(self._map == Cell.START).nonzero()
+        self._map = np.asarray([[MazeCell(symbol) for symbol in line[:-1].split("\t")] for line in lines])
+        self._initial_state = np.asarray(self._map == MazeCell.START).nonzero()
         self._initial_state = (self._initial_state[0][0], self._initial_state[1][0])   # format as a state

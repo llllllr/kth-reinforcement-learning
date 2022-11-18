@@ -2,6 +2,7 @@ import numpy as np
 from typing import Any
 from el2805.agents.rl_agent import RLAgent
 from el2805.envs.rl_problem import RLProblem
+from el2805.utils import random_decide
 
 
 class SARSA(RLAgent):
@@ -23,22 +24,14 @@ class SARSA(RLAgent):
         self.q[s][a] += self.learning_rate * (reward + self.env.discount * self.q[s_next][a_next] - self.q[s][a])
 
     def compute_action(self, state: Any, explore: bool = False) -> int:
-        if explore:
-            # eps-greedy policy (part 1): exploration mode with epsilon probability
-            explore = self._rng.choice(
-                a=[True, False],
-                p=[self.epsilon, 1 - self.epsilon]
-            )
-
         valid_actions = self.env.valid_actions(state)
 
-        # exploration mode: random action from uniform distribution (eps-greedy policy)
-        if explore:
+        # eps-greedy policy: exploration mode with epsilon probability
+        if explore and random_decide(self._rng, self.epsilon):
             action = self._rng.choice(valid_actions)
-        # exploitation mode: best action according to the agent's policy
         else:
             s = self.env.state_index(state)
-            a = np.argmax(self.q[s])
+            a = self.q[s].argmax()
             action = valid_actions[a]
 
         return action

@@ -8,7 +8,7 @@ class ValueIterationAgent(MDPAgent):
     def __init__(self, env: MDP, precision: float = 1e-2):
         super().__init__(env)
         self.precision = precision
-        assert self.env.infinite_horizon()
+        assert self.env.discounted()
 
     def solve(self) -> None:
         # value improvement

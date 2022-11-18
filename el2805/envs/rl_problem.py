@@ -16,7 +16,7 @@ class RLProblem(gym.Env, ABC):
         """
         self.horizon = horizon
         self.discount = discount if discount is not None else 1
-        assert self.finite_horizon() or self.infinite_horizon()
+        assert self.finite_horizon() or self.discounted()
 
         self._rng = None
         self.seed()
@@ -76,7 +76,7 @@ class RLProblem(gym.Env, ABC):
         """
         return self.horizon is not None and self.discount == 1
 
-    def infinite_horizon(self) -> bool:
+    def discounted(self) -> bool:
         """Returns whether the MDP is infinite horizon (and discounted) or not.
 
         :return: True if the MDP is infinite horizon (discounted).

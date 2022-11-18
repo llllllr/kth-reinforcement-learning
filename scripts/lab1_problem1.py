@@ -5,14 +5,12 @@ from el2805.envs import MinotaurMaze
 from el2805.agents import DynamicProgrammingAgent, ValueIterationAgent
 from utils import print_and_write_line
 
-MAP_FILEPATH = Path(__file__).parent.parent / "data" / "maze_minotaur.txt"
 
-
-def part_c(results_dir):
+def part_c(map_filepath, results_dir):
     results_dir = results_dir / "part_c"
     results_dir.mkdir(parents=True, exist_ok=True)
 
-    env = MinotaurMaze(map_filepath=MAP_FILEPATH, horizon=20)
+    env = MinotaurMaze(map_filepath=map_filepath, horizon=20)
     agent = DynamicProgrammingAgent(env)
     agent.solve()
 
@@ -28,7 +26,7 @@ def part_c(results_dir):
         env.render()
 
 
-def part_d(results_dir):
+def part_d(map_filepath, results_dir):
     results_dir = results_dir / "part_d"
     results_dir.mkdir(parents=True, exist_ok=True)
 
@@ -41,7 +39,7 @@ def part_d(results_dir):
         # trick: instead of solving for every min_horizon<=T<=max_horizon, we solve only for T=max_horizon
         # then, we read the results by hacking the policy to consider the last T time steps
         max_horizon = horizons[-1]
-        env = MinotaurMaze(map_filepath=MAP_FILEPATH, horizon=max_horizon, minotaur_nop=minotaur_nop)
+        env = MinotaurMaze(map_filepath=map_filepath, horizon=max_horizon, minotaur_nop=minotaur_nop)
         agent = DynamicProgrammingAgent(env)
         agent.solve()
         full_policy = agent.policy.copy()
@@ -82,11 +80,11 @@ def part_d(results_dir):
     figure.savefig(results_dir / "probability_exit.pdf")
 
 
-def part_f(results_dir):
+def part_f(map_filepath, results_dir):
     results_dir = results_dir / "part_f"
     results_dir.mkdir(parents=True, exist_ok=True)
 
-    env = MinotaurMaze(map_filepath=MAP_FILEPATH, discount=29/30, poison=True)
+    env = MinotaurMaze(map_filepath=map_filepath, discount=29/30, poison=True)
     agent = ValueIterationAgent(env)
     agent.solve()
 
@@ -112,19 +110,45 @@ def part_f(results_dir):
     print()
 
 
+def part_j(map_filepath, results_dir):
+    results_dir = results_dir / "part_j"
+    results_dir.mkdir(parents=True, exist_ok=True)
+
+    env = MinotaurMaze(map_filepath=map_filepath, discount=49/50, poison=True, stronger_minotaur=True)
+    agent = ValueIterationAgent(env)
+    agent.solve()
+
+    done = False
+    time_step = 0
+    env.seed(1)
+    state = env.reset()
+    env.render()
+    while not done:
+        action = agent.compute_action(state, time_step)
+        state, reward, done, _ = env.step(action)
+        time_step += 1
+        env.render()
+
+
 def main():
     results_dir = Path(__file__).parent.parent / "results" / "lab1" / "problem1"
+    map_filepath = Path(__file__).parent.parent / "data" / "maze_minotaur.txt"
+    map_filepath_key = Path(__file__).parent.parent / "data" / "maze_minotaur_key.txt"
 
-    print("Part (c)")
-    part_c(results_dir)
-    print()
+    # print("Part (c)")
+    # part_c(map_filepath, results_dir)
+    # print()
+    #
+    # print("Part (d)")
+    # part_d(map_filepath, results_dir)
+    # print()
+    #
+    # print("Part (f)")
+    # part_f(map_filepath, results_dir)
+    # print()
 
-    print("Part (d)")
-    part_d(results_dir)
-    print()
-
-    print("Part (f)")
-    part_f(results_dir)
+    print("Part (j)")
+    part_j(map_filepath_key, results_dir)
     print()
 
 
