@@ -58,7 +58,7 @@ def part_d(map_filepath, results_dir):
                 state = env.reset()
                 while not done:
                     action = agent.compute_action(state, time_step)
-                    state, reward, done, _ = env.step(action)
+                    state, _, done, _ = env.step(action)
                     time_step += 1
                 n_wins += 1 if env.won() else 0
 
@@ -97,7 +97,7 @@ def part_f(map_filepath, results_dir):
         state = env.reset()
         while not done:
             action = agent.compute_action(state, time_step)
-            state, reward, done, _ = env.step(action)
+            state, _, done, _ = env.step(action)
             time_step += 1
         n_wins += 1 if env.won() else 0
 
@@ -114,7 +114,7 @@ def part_i(map_filepath, results_dir):
     results_dir = results_dir / "part_i"
     results_dir.mkdir(parents=True, exist_ok=True)
 
-    env = MinotaurMaze(map_filepath=map_filepath, discount=49/50, poison=True, minotaur_chase=True)
+    env = MinotaurMaze(map_filepath=map_filepath, discount=49/50, poison=True, minotaur_chase=True, keys=True)
     agent = ValueIterationAgent(env)
     agent.solve()
 
@@ -125,9 +125,10 @@ def part_i(map_filepath, results_dir):
     env.render()
     while not done:
         action = agent.compute_action(state, time_step)
-        state, reward, done, _ = env.step(action)
+        state, _, done, _ = env.step(action)
         time_step += 1
         env.render()
+        print(done)
 
 
 def main():

@@ -41,13 +41,13 @@ class MinotaurMaze(Maze):
             minotaur_nop: bool = False,
             poison: bool = False,
             minotaur_chase: bool = False,
-            keys_collected: bool = False
+            keys: bool = False
     ):
+        self.keys = keys
         super().__init__(map_filepath, horizon, discount)
         self.minotaur_nop = minotaur_nop
         self.poison = poison
         self.minotaur_chase = minotaur_chase
-        self.keys = keys_collected
 
         self.observation_space = gym.spaces.Tuple((
             gym.spaces.MultiDiscrete(self._map.shape),  # player
@@ -56,8 +56,11 @@ class MinotaurMaze(Maze):
         ))
 
         # E[T] = 1/(1-lambda) and T has geometric distribution => T~Geo(1-lambda)
-        self._probability_poison_death = 1 - self.discount if self.poison else None
+        self._probability_poison_death = 1 - self.discount if self.poison else 0
         assert not self.poison or self.discounted()     # poison only for discounted MDPs
+
+        if not self.minotaur_chase:
+            self._probability_chase_move = 0
 
         if self.finite_horizon():
             # important: since this is an additional objective, the worst-case penalty should be much lower than the
@@ -65,8 +68,9 @@ class MinotaurMaze(Maze):
             # lower probability of exiting alive.
             self._reward_step = - 0.0001
         else:
-            # for discounted MDPs, we do not need this reward (see self._reward())
-            self._reward_step = None
+            # for discounted MDPs, we do not need this reward
+            # indeed, the exit reward is discounted, so the player will not waste time
+            self._reward_step = 0
 
         self._states = self._generate_state_space()
         self._state_to_index = {state: s for state, s in zip(self._states, np.arange(len(self._states)))}
@@ -98,52 +102,45 @@ class MinotaurMaze(Maze):
         # <=> maximize reward by collecting the keys and exit reward
         # => positive reward for collecting keys and exiting alive
         elif next_progress is not Progress.EATEN and \
-                progress is not Progress.WITH_KEYS and next_progress is Progress.WITH_KEYS:
+                progress is Progress.WITHOUT_KEYS and next_progress is Progress.WITH_KEYS:
             reward = self._reward_key
         elif next_progress is not Progress.EATEN and \
                 progress is not Progress.EXITED and next_progress is Progress.EXITED:
             reward = self._reward_exit
         # additional objective: don't waste time while you are alive
         # <=> minimize time to exit <=> maximize negative time to exit
+        # notice that for discounted MDPs, the step penalty is set to 0 in the constructor
         else:
-            # for finite-horizon MDPs, we give negative reward (penalty) at each step
-            # (e.g., better to arrive at t-1 than t, if both ways have the same success probability)
-            if self.finite_horizon():
-                reward = self._reward_step
-            # for discounted MDPs, we do not need a penalty, as the player will already avoid wasting time due to the
-            # discount factor (i.e., exiting in the future is worse than exiting now)
-            else:
-                reward = 0
+            reward = self._reward_step
 
         return reward
 
     def next_states(self, state: State, action: int) -> tuple[list[State], np.ndarray]:
-        transition_probabilities = {}
-        valid_minotaur_moves = self._valid_minotaur_moves(state)
-
         if self._terminal_state(state):
             next_states = [state]
             transition_probabilities = np.asarray([1])
         else:
+            transition_probabilities = {}
+
             # example: P('up') =
             # = P('random move', 'up') + P('deterministic move', 'up')
             # = P('random move') * P('up') + P('deterministic move') * P('up')
             # here we add the first part...
-            probability_minotaur_move = 1 / len(valid_minotaur_moves)
-            if self.minotaur_chase:
-                probability_minotaur_move *= 1 - self._probability_chase_move
-            for minotaur_move in valid_minotaur_moves:
+            random_moves = self._valid_minotaur_moves(state, chase=False)
+            probability_random_move = (1 - self._probability_chase_move) * 1 / len(random_moves)
+            for minotaur_move in random_moves:
                 next_state = self._next_state(state, action, minotaur_move)
-                if next_state in transition_probabilities:
-                    transition_probabilities[next_state] += probability_minotaur_move
-                else:
-                    transition_probabilities[next_state] = probability_minotaur_move
+                if next_state not in transition_probabilities:
+                    transition_probabilities[next_state] = 0
+                transition_probabilities[next_state] += probability_random_move
 
-            # ...and here the second part
             if self.minotaur_chase:
-                minotaur_move = self._chase_minotaur_move(state)
-                next_state = self._next_state(state, action, minotaur_move)
-                transition_probabilities[next_state] += self._probability_chase_move
+                # ...and here the second part
+                chase_moves = self._valid_minotaur_moves(state, chase=True)
+                probability_chase_move = self._probability_chase_move * 1 / len(chase_moves)
+                for minotaur_move in chase_moves:
+                    next_state = self._next_state(state, action, minotaur_move)
+                    transition_probabilities[next_state] += probability_chase_move
 
             next_states = list(transition_probabilities.keys())
             transition_probabilities = np.asarray(list(transition_probabilities.values()))
@@ -157,24 +154,21 @@ class MinotaurMaze(Maze):
             raise ValueError(f"Invalid action {action}")
 
         if self._terminal_state(state):
-            pass
+            pass    # state stays the same (absorbing state)
         else:
             if minotaur_move is None:
-                if self.minotaur_chase and random_decide(self._rng, self._probability_chase_move):
-                    minotaur_move = self._chase_minotaur_move(state)
-                else:
-                    minotaur_move = self._rng.choice(self._valid_minotaur_moves(state))
+                chase = self.minotaur_chase and random_decide(self._rng, self._probability_chase_move)
+                valid_minotaur_moves = self._valid_minotaur_moves(state, chase=chase)
+                minotaur_move = self._rng.choice(valid_minotaur_moves)
 
             next_player_position = super()._next_state(player_position, action)
             next_minotaur_position = super()._next_state(minotaur_position, minotaur_move)
 
             if next_player_position == next_minotaur_position:
-                progress = Progress.EATEN
-                state = (self._sentinel_position, self._sentinel_position, progress)
+                state = (self._sentinel_position, self._sentinel_position, Progress.EATEN)
             elif progress is Progress.WITH_KEYS and self._map[next_player_position] is MazeCell.EXIT:
-                progress = Progress.EXITED
-                state = (self._sentinel_position, self._sentinel_position, progress)
-            elif self._map[next_player_position] is MinotaurMazeCell.KEY:
+                state = (self._sentinel_position, self._sentinel_position, Progress.EXITED)
+            elif progress is Progress.WITHOUT_KEYS and self._map[next_player_position] is MinotaurMazeCell.KEY:
                 state = (next_player_position, next_minotaur_position, Progress.WITH_KEYS)
             else:
                 state = (next_player_position, next_minotaur_position, progress)
@@ -192,7 +186,7 @@ class MinotaurMaze(Maze):
             valid_moves = super().valid_actions(player_position)
         return valid_moves
 
-    def _valid_minotaur_moves(self, state: State) -> list[Move]:
+    def _valid_minotaur_moves(self, state: State, chase: bool) -> list[Move]:
         player_position, minotaur_position, _ = state
         valid_moves = []
 
@@ -213,9 +207,11 @@ class MinotaurMaze(Maze):
 
         return valid_moves
 
-    def _chase_minotaur_move(self, state: State) -> Move:
+    def _chase_minotaur_moves(self, state: State) -> list[Move]:
+        chase_moves = []
+
         if self._terminal_state(state):
-            move = Move.NOP
+            chase_moves.append(Move.NOP)
         else:
             player_position, minotaur_position, _ = state
             x_player, y_player = player_position
@@ -225,21 +221,21 @@ class MinotaurMaze(Maze):
             delta_y = y_player - y_minotaur
             assert abs(delta_x) > 0 or abs(delta_y) > 0  # otherwise it should be eaten (terminal state)
 
-            # strategy:
-            # - move towards the player along the direction with smallest absolute delta (so as to block the path)
-            # - if the smallest absolute delta is 0 (aligned along that direction), move along the other direction
+            # move towards the player along the direction with smallest absolute delta
+            # if the smallest absolute delta is 0 (aligned along that direction), move along the other direction
+            # notice that there can be two moves resulting in the same distance
             if delta_x != 0 and (delta_y == 0 or abs(delta_x) <= abs(delta_y)):
                 if delta_x < 0:
-                    move = Move.UP
+                    chase_moves.append(Move.UP)
                 else:
-                    move = Move.DOWN
-            else:
-                assert delta_y != 0 and (delta_x == 0 or abs(delta_x) > abs(delta_y))
+                    chase_moves.append(Move.DOWN)
+            if delta_y != 0 and (delta_x == 0 or abs(delta_y) <= abs(delta_x)):
                 if delta_y < 0:
-                    move = Move.LEFT
+                    chase_moves.append(Move.LEFT)
                 else:
-                    move = Move.RIGHT
-        return move
+                    chase_moves.append(Move.RIGHT)
+
+        return chase_moves
 
     def _horizon_reached(self) -> bool:
         # random time horizon geometrically distributed
@@ -272,9 +268,9 @@ class MinotaurMaze(Maze):
 
         # collapse terminal states to just one exit state and one eaten state
         def non_terminal_state(state):
-            player_position, minotaur_position, _ = state
+            player_position, minotaur_position, progress = state
             eaten = player_position == minotaur_position
-            exited = self._map[player_position] is MazeCell.EXIT  # even if eaten at the exit, we don't care here
+            exited = progress is Progress.WITH_KEYS and self._map[player_position] is MazeCell.EXIT
             return not eaten and not exited
         states = [state for state in states if non_terminal_state(state)]
         states.append((self._sentinel_position, self._sentinel_position, Progress.EATEN))
@@ -284,7 +280,7 @@ class MinotaurMaze(Maze):
 
     def won(self):
         _, _, progress = self._current_state
-        return progress.EXITED
+        return progress is Progress.EXITED
 
     def render(self, mode: str = "human", policy: np.ndarray = None) -> None:
         assert mode == "human" or (mode == "policy" and policy is not None)
@@ -332,11 +328,15 @@ class MinotaurMaze(Maze):
         minotaur_start = (int(minotaur_start[0][0]), int(minotaur_start[1][0]))
 
         # if there are no keys to collect in the map, start with keys
-        keys_present = len(np.asarray(self._map == MinotaurMazeCell.KEY).nonzero()) == 0
-        progress = Progress.WITHOUT_KEYS if keys_present else Progress.WITH_KEYS
+        keys_present = len(np.asarray(self._map == MinotaurMazeCell.KEY).nonzero()) > 0
+        if self.keys:
+            assert keys_present
+            progress = Progress.WITHOUT_KEYS
+        else:
+            progress = Progress.WITH_KEYS
 
         self._initial_state = (player_start, minotaur_start, progress)
 
     @property
-    def states(self) -> list[State]:    # need to override only for avoiding warnings of type hints
+    def states(self) -> list[State]:
         return self._states
