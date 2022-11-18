@@ -110,11 +110,11 @@ def part_f(map_filepath, results_dir):
     print()
 
 
-def part_j(map_filepath, results_dir):
-    results_dir = results_dir / "part_j"
+def part_i(map_filepath, results_dir):
+    results_dir = results_dir / "part_i"
     results_dir.mkdir(parents=True, exist_ok=True)
 
-    env = MinotaurMaze(map_filepath=map_filepath, discount=49/50, poison=True, stronger_minotaur=True)
+    env = MinotaurMaze(map_filepath=map_filepath, discount=49/50, poison=True, minotaur_chase=True)
     agent = ValueIterationAgent(env)
     agent.solve()
 
@@ -135,20 +135,20 @@ def main():
     map_filepath = Path(__file__).parent.parent / "data" / "maze_minotaur.txt"
     map_filepath_key = Path(__file__).parent.parent / "data" / "maze_minotaur_key.txt"
 
-    # print("Part (c)")
-    # part_c(map_filepath, results_dir)
-    # print()
-    #
-    # print("Part (d)")
-    # part_d(map_filepath, results_dir)
-    # print()
-    #
-    # print("Part (f)")
-    # part_f(map_filepath, results_dir)
-    # print()
+    print("Part (c)")
+    part_c(map_filepath, results_dir)
+    print()
 
-    print("Part (j)")
-    part_j(map_filepath_key, results_dir)
+    print("Part (d)")
+    part_d(map_filepath, results_dir)
+    print()
+
+    print("Part (f)")
+    part_f(map_filepath, results_dir)
+    print()
+
+    print("Part (i)")
+    part_i(map_filepath_key, results_dir)
     print()
 
 

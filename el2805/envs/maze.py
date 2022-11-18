@@ -111,4 +111,4 @@ class Maze(GridWorld):
             lines = f.readlines()
         self._map = np.asarray([[MazeCell(symbol) for symbol in line[:-1].split("\t")] for line in lines])
         self._initial_state = np.asarray(self._map == MazeCell.START).nonzero()
-        self._initial_state = (self._initial_state[0][0], self._initial_state[1][0])   # format as a state
+        self._initial_state = (int(self._initial_state[0][0]), int(self._initial_state[1][0]))
