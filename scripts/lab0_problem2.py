@@ -2,7 +2,7 @@ import numpy as np
 from pathlib import Path
 from el2805.envs import PluckingBerries
 from el2805.agents import DynamicProgrammingAgent, ValueIterationAgent
-from utils import best_path
+from utils import best_maze_path
 
 
 def main():
@@ -21,7 +21,7 @@ def main():
         print(f"Dynamic programming - Maximum value path with T={horizon}")
         agent.policy = full_policy[max_horizon - horizon:]   # trick
         env.horizon = horizon
-        env.render(mode="policy", policy=best_path(env, agent))
+        env.render(mode="policy", policy=best_maze_path(env, agent))
         print()
 
     print("Value iteration")

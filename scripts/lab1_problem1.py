@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 from el2805.envs import MinotaurMaze
 from el2805.agents import DynamicProgrammingAgent, ValueIterationAgent
-from utils import print_and_write_line
+from utils import print_and_write_line, minotaur_maze_exit_probability
 
 
 def part_c(map_filepath, results_dir):
@@ -21,7 +21,7 @@ def part_c(map_filepath, results_dir):
     env.render()
     while not done:
         action = agent.compute_action(state, time_step)
-        state, reward, done, _ = env.step(action)
+        state, _, done, _ = env.step(action)
         time_step += 1
         env.render()
 
@@ -49,21 +49,9 @@ def part_d(map_filepath, results_dir):
             agent.policy = full_policy[max_horizon - horizon:]  # trick
             env.horizon = horizon
 
-            n_episodes = 10000
-            n_wins = 0
-            for i in range(n_episodes):
-                done = False
-                time_step = 0
-                env.seed(i)
-                state = env.reset()
-                while not done:
-                    action = agent.compute_action(state, time_step)
-                    state, _, done, _ = env.step(action)
-                    time_step += 1
-                n_wins += 1 if env.won() else 0
-
-            exit_probability = n_wins / n_episodes
+            exit_probability = minotaur_maze_exit_probability(env, agent)
             exit_probabilities.append(exit_probability)
+
             print_and_write_line(
                 filepath=results_dir / "results.txt",
                 output=f"T={horizon} -> P('exit alive')={exit_probability}",
@@ -88,20 +76,7 @@ def part_f(map_filepath, results_dir):
     agent = ValueIterationAgent(env)
     agent.solve()
 
-    n_episodes = 10000
-    n_wins = 0
-    for i in range(n_episodes):
-        done = False
-        time_step = 0
-        env.seed(i)
-        state = env.reset()
-        while not done:
-            action = agent.compute_action(state, time_step)
-            state, _, done, _ = env.step(action)
-            time_step += 1
-        n_wins += 1 if env.won() else 0
-
-    exit_probability = n_wins / n_episodes
+    exit_probability = minotaur_maze_exit_probability(env, agent)
     print_and_write_line(
         filepath=results_dir / "results.txt",
         output=f"P('exit alive'|'poisoned')={exit_probability}",
@@ -118,17 +93,13 @@ def part_i(map_filepath, results_dir):
     agent = ValueIterationAgent(env)
     agent.solve()
 
-    done = False
-    time_step = 0
-    env.seed(1)
-    state = env.reset()
-    env.render()
-    while not done:
-        action = agent.compute_action(state, time_step)
-        state, _, done, _ = env.step(action)
-        time_step += 1
-        env.render()
-        print(done)
+    exit_probability = minotaur_maze_exit_probability(env, agent)
+    print_and_write_line(
+        filepath=results_dir / "results.txt",
+        output=f"P('exit alive'|'poisoned')={exit_probability}",
+        mode="w"
+    )
+    print()
 
 
 def main():
