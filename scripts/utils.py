@@ -1,10 +1,10 @@
 import numpy as np
-from el2805.envs import Maze, MinotaurMaze
+from el2805.envs import Maze, PluckingBerries, MinotaurMaze
 from el2805.envs.grid_world import Move
 
 
 def best_maze_path(env, agent):
-    assert type(env) == Maze
+    assert type(env) == Maze or type(env) == PluckingBerries
     best_path_ = np.full(len(env.states), fill_value=Move.NOP)
     done = False
     time_step = 0

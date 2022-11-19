@@ -5,31 +5,31 @@ from el2805.envs.mdp import MDP
 
 
 class ValueIterationAgent(MDPAgent):
-    def __init__(self, env: MDP, precision: float = 1e-2):
+    def __init__(self, env: MDP, precision):
         super().__init__(env)
         self.precision = precision
+        self.v = np.zeros(len(self.env.states))     # V(s) for each s in S
         assert self.env.discounted()
 
     def solve(self) -> None:
         # value improvement
         n_states = len(self.env.states)
-        v = np.zeros(n_states)  # V(s) for each s in S
         delta = None
         while delta is None or delta > self.precision * (1 - self.env.discount) / self.env.discount:
             # update V(s)
-            v_old = v.copy()
+            v_old = self.v.copy()
             for s, state in enumerate(self.env.states):
-                q = np.asarray([self.q(state, action, v) for action in self.env.valid_actions(state)])
-                v[s] = max(q)
+                q = np.asarray([self.q(state, action, self.v) for action in self.env.valid_actions(state)])
+                self.v[s] = max(q)
 
             # calculate value improvement
-            delta = np.linalg.norm(v - v_old, ord=np.inf)
+            delta = np.linalg.norm(self.v - v_old, ord=np.inf)
 
         # store eps-optimal policy
         self.policy = np.zeros(n_states, dtype=np.int32)    # eps-optimal policy (stationary)
         for s, state in enumerate(self.env.states):
             valid_actions = self.env.valid_actions(state)
-            q = np.asarray([self.q(state, action, v) for action in valid_actions])
+            q = np.asarray([self.q(state, action, self.v) for action in valid_actions])
             a_best = q.argmax()     # index of best action for valid actions in this state
             self.policy[s] = valid_actions[a_best]
 

@@ -13,7 +13,7 @@ def main():
     # then, we read the results by hacking the policy to consider the last T time steps
     max_horizon = horizons[-1]
     env = PluckingBerries(map_filepath=map_filepath, horizon=max_horizon)
-    agent = DynamicProgrammingAgent(env)
+    agent = DynamicProgrammingAgent(env=env)
     agent.solve()
     full_policy = agent.policy.copy()
 
@@ -26,7 +26,7 @@ def main():
 
     print("Value iteration")
     env = PluckingBerries(map_filepath=map_filepath, discount=.99)
-    agent = ValueIterationAgent(env)
+    agent = ValueIterationAgent(env=env, precision=1e-2)
     agent.solve()
     env.render(mode="policy", policy=agent.policy)
     print()

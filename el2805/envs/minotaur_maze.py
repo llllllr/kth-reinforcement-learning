@@ -96,7 +96,7 @@ class MinotaurMaze(Maze):
         _, _, next_progress = next_state
 
         # terminal state (absorbing): nothing happens
-        if self._terminal_state(state):
+        if self.terminal_state(state):
             reward = 0
         # main objective: maximize probability of exiting alive before the time expires
         # <=> maximize reward by collecting the keys and exit reward
@@ -116,7 +116,7 @@ class MinotaurMaze(Maze):
         return reward
 
     def next_states(self, state: State, action: int) -> tuple[list[State], np.ndarray]:
-        if self._terminal_state(state):
+        if self.terminal_state(state):
             next_states = [state]
             transition_probabilities = np.asarray([1])
         else:
@@ -153,7 +153,7 @@ class MinotaurMaze(Maze):
         if action not in self.valid_actions(state):
             raise ValueError(f"Invalid action {action}")
 
-        if self._terminal_state(state):
+        if self.terminal_state(state):
             pass    # state stays the same (absorbing state)
         else:
             if minotaur_move is None:
@@ -176,7 +176,7 @@ class MinotaurMaze(Maze):
         return state
 
     def valid_actions(self, state: State | Position) -> list[Move]:
-        if self._terminal_state(state):
+        if self.terminal_state(state):
             valid_moves = [Move.NOP]
         else:
             if isinstance(state, tuple) and isinstance(state[0], int):
@@ -190,7 +190,7 @@ class MinotaurMaze(Maze):
         player_position, minotaur_position, _ = state
         valid_moves = []
 
-        if self._terminal_state(state):
+        if self.terminal_state(state):
             valid_moves.append(Move.NOP)
         else:
             x_minotaur, y_minotaur = minotaur_position
@@ -210,7 +210,7 @@ class MinotaurMaze(Maze):
     def _chase_minotaur_moves(self, state: State) -> list[Move]:
         chase_moves = []
 
-        if self._terminal_state(state):
+        if self.terminal_state(state):
             chase_moves.append(Move.NOP)
         else:
             player_position, minotaur_position, _ = state
@@ -245,7 +245,7 @@ class MinotaurMaze(Maze):
             horizon_reached = super()._horizon_reached()
         return horizon_reached
 
-    def _terminal_state(self, state: State | Position) -> bool:
+    def terminal_state(self, state: State | Position) -> bool:
         if isinstance(state, tuple) and isinstance(state[0], int):  # called by parent class
             terminal = False
         else:

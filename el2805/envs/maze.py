@@ -44,7 +44,7 @@ class Maze(GridWorld):
         assert action in self.valid_actions(state)
 
         # terminal state (absorbing): nothing happens
-        if self._terminal_state(state):
+        if self.terminal_state(state):
             reward = 0
         # main objective: minimize the time to exit <=> maximize the negative time to exit
         # => negative reward (penalty) at each step
@@ -59,7 +59,7 @@ class Maze(GridWorld):
             # Indeed, the total reward of exiting the maze (without staying there for at least 1 timestep) would be
             # equal to the reward of not exiting the maze.
             next_state = self._next_state(state, action)
-            if self._terminal_state(next_state):
+            if self.terminal_state(next_state):
                 reward_no_delay += self._reward_exit
                 reward_delay += self._reward_exit
             if mean:
@@ -75,7 +75,7 @@ class Maze(GridWorld):
     def valid_actions(self, state: Position) -> list[Move]:
         valid_moves = [Move.NOP]
 
-        if not self._terminal_state(state):
+        if not self.terminal_state(state):
             x, y = state
 
             x_tmp = x - 1
@@ -100,9 +100,9 @@ class Maze(GridWorld):
         return self._state_to_index[state]
 
     def won(self):
-        return self._terminal_state(self._current_state)
+        return self.terminal_state(self._current_state)
 
-    def _terminal_state(self, state: Position) -> bool:
+    def terminal_state(self, state: Position) -> bool:
         exited = self._map[state] is MazeCell.EXIT
         return exited
 

@@ -13,7 +13,7 @@ def main():
         print(f"Map file: {map_filepath}")
 
         env = Maze(map_filepath=map_filepath, horizon=horizon)
-        agent = DynamicProgrammingAgent(env)
+        agent = DynamicProgrammingAgent(env=env)
         agent.solve()
         # for t in range(horizon):
         #     print(f"Dynamic programming - Policy with {horizon-t} remaining time steps")
@@ -24,8 +24,8 @@ def main():
         env.render(mode="policy", policy=best_maze_path(env, agent))
 
         print("Value iteration - Stationary policy")
-        env = Maze(map_filepath=map_filepath, discount=.99)
-        agent = ValueIterationAgent(env)
+        env = Maze(map_filepath=map_filepath, discount=0.99)
+        agent = ValueIterationAgent(env=env, precision=1e-2)
         agent.solve()
         env.render(mode="policy", policy=agent.policy)
         print()

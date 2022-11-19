@@ -68,6 +68,17 @@ class RLProblem(gym.Env, ABC):
         """
         raise NotImplementedError
 
+    @abstractmethod
+    def terminal_state(self, state: Any) -> bool:
+        """Returns whether the state is terminal or not.
+
+        :param state: state to be analyzed
+        :type state: Any
+        :return: whether the state is terminal or not
+        :rtype: bool
+        """
+        raise NotImplementedError
+
     def finite_horizon(self) -> bool:
         """Returns whether the MDP is finite horizon or not.
 

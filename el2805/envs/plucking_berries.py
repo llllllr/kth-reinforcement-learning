@@ -64,7 +64,7 @@ class PluckingBerries(GridWorld):
         index = x * self._map.shape[1] + y   # think about row-major matrix in memory (e.g., C programming language)
         return index
 
-    def _terminal_state(self, state: Position) -> bool:
+    def terminal_state(self, state: Position) -> bool:
         _ = state   # no terminal state
         return False
 

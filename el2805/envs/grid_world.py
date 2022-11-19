@@ -52,10 +52,6 @@ class GridWorld(MDP, ABC):
         return self._states
 
     @abstractmethod
-    def _terminal_state(self, state: Position) -> bool:
-        raise NotImplementedError
-
-    @abstractmethod
     def _load_map(self, filepath: Path) -> None:
         raise NotImplementedError
 
@@ -70,7 +66,7 @@ class GridWorld(MDP, ABC):
 
         # check end of episode
         self._n_steps += 1
-        done = self._horizon_reached() or self._terminal_state(self._current_state)
+        done = self._horizon_reached() or self.terminal_state(self._current_state)
 
         # additional info
         info = {}

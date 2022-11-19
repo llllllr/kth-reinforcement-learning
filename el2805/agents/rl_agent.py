@@ -8,42 +8,29 @@ from el2805.envs.rl_problem import RLProblem
 class RLAgent(ABC):
     """Interface for RL algorithm."""
 
-    def __init__(self, env: RLProblem, learning_rate: float):
+    def __init__(self, env: RLProblem, learning_rate: float | str, seed: int | None = None):
         """
         :param env: RL environment
         :type env: gym.Env
-        :param learning_rate: learning rate
-        :type learning_rate: float
+        :param learning_rate: learning rate (e.g., 1e-3) or learning rate method (e.g., "decay")
+        :type learning_rate: float or str
+        :param seed: seed
+        :type seed: int, optional
         """
         self.env = env
         self.learning_rate = learning_rate
 
         self._rng = None
-        self.seed()
+        self.seed(seed)
 
     @abstractmethod
-    def update(self, state: Any, action: int, reward: float, next_state: Any) -> None:
-        """Update the agent's policy according to the provided new observation.
-
-        :param state: current state (s)
-        :type state: Any
-        :param action: action taken in the current state (a)
-        :type action: int
-        :param reward: reward received (r(s,a))
-        :type reward: float
-        :param next_state: next state resulting after taking action a in state s
-        :type next_state: Any
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    def compute_action(self, state: Any, explore: bool = False) -> int:
+    def compute_action(self, state: Any, explore: bool = True) -> int:
         """Calculates the best action according to the agent's policy.
 
         :param state: state for which the action is desired
         :type state: any
-        :param explore: whether to allow exploration (training) or not (testing)
-        :type explore: bool
+        :param explore: whether to allow exploration or not
+        :type explore: bool, optional
         :return: best action according to the agent's policy
         :rtype: int
         """
