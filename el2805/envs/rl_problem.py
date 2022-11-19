@@ -62,7 +62,7 @@ class RLProblem(gym.Env, ABC):
         """Returns the index of a certain state in the list of valid states.
 
         :param state: state for which the index is desired
-        :type state: ndarray
+        :type state: any
         :return: index of the specified state in the list of valid states
         :rtype: int
         """
@@ -95,6 +95,11 @@ class RLProblem(gym.Env, ABC):
         """
         return self.horizon is None and 0 < self.discount < 1
 
-    def seed(self, seed: int | None = None):
+    def seed(self, seed: int | None = None) -> list[int]:
+        """Sets the seed of the environment's internal RNG.
+
+        :param seed: seed
+        :type seed: int, optional
+        """
         self._rng, seed = np_random(seed)
         return [seed]

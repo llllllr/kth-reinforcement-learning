@@ -1,4 +1,3 @@
-import gym
 import numpy as np
 from abc import ABC, abstractmethod
 from typing import Any
@@ -6,12 +5,12 @@ from el2805.envs.rl_problem import RLProblem
 
 
 class RLAgent(ABC):
-    """Interface for RL algorithm."""
+    """Interface for a RL algorithm."""
 
     def __init__(self, env: RLProblem, learning_rate: float | str, seed: int | None = None):
         """
         :param env: RL environment
-        :type env: gym.Env
+        :type env: RLProblem
         :param learning_rate: learning rate (e.g., 1e-3) or learning rate method (e.g., "decay")
         :type learning_rate: float or str
         :param seed: seed
