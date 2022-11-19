@@ -32,6 +32,8 @@ def minotaur_maze_exit_probability(env, agent):
             action = agent.compute_action(state=state, time_step=time_step)
             state, _, done, _ = env.step(action)
             time_step += 1
+        if time_step > 15:
+            print(time_step)
         n_wins += 1 if env.won() else 0
     exit_probability = n_wins / n_episodes
     return exit_probability

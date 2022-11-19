@@ -33,7 +33,7 @@ class ValueIteration(MDPAgent):
             a_best = q.argmax()     # index of best action for valid actions in this state
             self.policy[s] = valid_actions[a_best]
 
-    def compute_action(self, state: Any) -> int:
+    def compute_action(self, state: Any, **kwargs) -> int:
         assert self.policy is not None
         s = self.env.state_index(state)
         action = self.policy[s]

@@ -33,7 +33,7 @@ class DynamicProgramming(MDPAgent):
                 a_best = q.argmax()     # index of best action for valid actions in this state
                 self.policy[t, s] = valid_actions[a_best]
 
-    def compute_action(self, state: Any, time_step: int) -> int:
+    def compute_action(self, state: Any, time_step: int, **kwargs) -> int:
         assert self.policy is not None
         s = self.env.state_index(state)
         action = self.policy[time_step, s]
