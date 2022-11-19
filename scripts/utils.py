@@ -23,7 +23,7 @@ def best_maze_path(env, agent):
     env.seed(1)
     state = env.reset()
     while not done:
-        action = _compute_action(env, agent, state, time_step)
+        action = agent.compute_action(state, time_step)
         s = env.state_index(state)
         best_path_[s] = Move(action)
         state, _, done, _ = env.step(action)

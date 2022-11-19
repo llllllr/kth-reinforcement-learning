@@ -1,5 +1,5 @@
 import numpy as np
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import Any
 from el2805.agents.rl_agent import RLAgent
 from el2805.envs.rl_problem import RLProblem
@@ -51,6 +51,16 @@ class QAgent(RLAgent, ABC):
             s = self.env.state_index(state)
             self._q[s][:] = 0
         self._n = [np.ones(len(self.env.valid_actions(state))) for state in self.env.states]
+
+    @abstractmethod
+    def update(self, **kwargs) -> None:
+        """Updates the Q-function from new observation(s).
+
+        The parameters depend on the algorithm. For example:
+        - Q-learning requires tuples (state, action, reward, next_state).
+        - SARSA requires tuples (state, action, reward, next_state, next_action).
+        """
+        raise NotImplementedError
 
     def q(self, state: Any, action: int) -> float:
         """Returns the Q-function evaluated on the specified (state, action) pair. That is, Q(state,action).

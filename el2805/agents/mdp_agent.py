@@ -20,6 +20,16 @@ class MDPAgent(ABC):
         """Calculates the optimal policy for the MDP."""
         raise NotImplementedError
 
+    @abstractmethod
+    def compute_action(self, **kwargs) -> int:
+        """Computes the action in a particular situation.
+
+        The parameters depend on the algorithm. For example:
+        - Value Iteration requires only the state.
+        - Dynamic Programming requires the state and also the time step.
+        """
+        raise NotImplementedError
+
     @property
     def policy(self) -> np.ndarray:
         """Getter for the agent's policy.
