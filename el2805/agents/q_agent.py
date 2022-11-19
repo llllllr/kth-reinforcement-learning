@@ -46,7 +46,7 @@ class QAgent(RLAgent, ABC):
         assert (self.epsilon == "decay") is (self.delta is not None)
 
         # note: list of 1D ndarray and not 2D ndarray because the set of available actions for each state is different
-        self._q = [np.ones(len(self.env.valid_actions(state))) for state in self.env.states]
+        self._q = [np.zeros(len(self.env.valid_actions(state))) for state in self.env.states]
         self._n = [np.ones(len(self.env.valid_actions(state))) for state in self.env.states]
 
     @abstractmethod

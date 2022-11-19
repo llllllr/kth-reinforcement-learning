@@ -80,10 +80,7 @@ class MinotaurMaze(Maze):
 
         if mean:
             next_states, transition_probabilities = self.next_states(state, action)
-            rewards = []
-            for next_state in next_states:
-                reward = self._reward(state, next_state)
-                rewards.append(reward)
+            rewards = np.asarray([self._reward(state, next_state) for next_state in next_states])
             reward = transition_probabilities.dot(rewards)  # mean reward
         else:
             next_state = self._next_state(state, action)
@@ -187,25 +184,29 @@ class MinotaurMaze(Maze):
         return valid_moves
 
     def _valid_minotaur_moves(self, state: State, chase: bool) -> list[Move]:
-        player_position, minotaur_position, _ = state
-        valid_moves = []
+        valid_moves = self._chase_minotaur_moves(state) if chase else self._random_minotaur_moves(state)
+        return valid_moves
+
+    def _random_minotaur_moves(self, state: State) -> list[Move]:
+        random_moves = []
 
         if self.terminal_state(state):
-            valid_moves.append(Move.NOP)
+            random_moves.append(Move.NOP)
         else:
+            _, minotaur_position, _ = state
             x_minotaur, y_minotaur = minotaur_position
             if self.minotaur_nop:
-                valid_moves.append(Move.NOP)
+                random_moves.append(Move.NOP)
             if x_minotaur - 1 >= 0:
-                valid_moves.append(Move.UP)
+                random_moves.append(Move.UP)
             if x_minotaur + 1 < self.map.shape[0]:
-                valid_moves.append(Move.DOWN)
+                random_moves.append(Move.DOWN)
             if y_minotaur - 1 >= 0:
-                valid_moves.append(Move.LEFT)
+                random_moves.append(Move.LEFT)
             if y_minotaur + 1 < self.map.shape[1]:
-                valid_moves.append(Move.RIGHT)
+                random_moves.append(Move.RIGHT)
 
-        return valid_moves
+        return random_moves
 
     def _chase_minotaur_moves(self, state: State) -> list[Move]:
         chase_moves = []
@@ -295,19 +296,20 @@ class MinotaurMaze(Maze):
                 if progress is Progress.WITHOUT_KEYS:
                     player_color = "red"
                 elif progress is Progress.WITH_KEYS:
-                    player_color = "yellow"
+                    player_color = "green"
                 else:
                     player_color = None
                 map_[player_position] = colored("P", color=player_color)
                 map_[minotaur_position] = colored("M", color="magenta")
+                self._render(map_)
         elif mode == "policy":
             for i in range(map_.shape[0]):
                 for j in range(map_.shape[1]):
                     if self.map[i, j] is not MazeCell.WALL:
                         map_[i, j] = Move(policy[i, j])
+            self._render(map_)
         else:
             raise ValueError
-        self._render(map_)
 
     def _load_map(self, filepath: Path) -> None:
         with open(filepath) as f:

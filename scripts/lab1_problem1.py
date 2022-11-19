@@ -115,7 +115,7 @@ def part_bonus(map_filepath, results_dir):
     results_dir = results_dir / "part_bonus"
     results_dir.mkdir(parents=True, exist_ok=True)
 
-    env = MinotaurMaze(map_filepath=map_filepath, discount=49/50, poison=True, minotaur_chase=True, keys=True)
+    env = MinotaurMaze(map_filepath=map_filepath, discount=49/50, poison=False, minotaur_chase=True, keys=True)
     start_state = env.reset()
     n_episodes = 50000
 
