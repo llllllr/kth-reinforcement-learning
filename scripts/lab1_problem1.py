@@ -1,8 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
+from tqdm import trange
 from el2805.envs import MinotaurMaze
-from el2805.agents import DynamicProgrammingAgent, ValueIterationAgent, QLearning, SARSA
+from el2805.agents import DynamicProgramming, ValueIteration, QLearning, SARSA
 from utils import print_and_write_line, minotaur_maze_exit_probability
 
 SEED = 1
@@ -13,7 +14,7 @@ def part_c(map_filepath, results_dir):
     results_dir.mkdir(parents=True, exist_ok=True)
 
     env = MinotaurMaze(map_filepath=map_filepath, horizon=20)
-    agent = DynamicProgrammingAgent(env=env)
+    agent = DynamicProgramming(env=env)
     agent.solve()
 
     done = False
@@ -42,7 +43,7 @@ def part_d(map_filepath, results_dir):
         # then, we read the results by hacking the policy to consider the last T time steps
         max_horizon = horizons[-1]
         env = MinotaurMaze(map_filepath=map_filepath, horizon=max_horizon, minotaur_nop=minotaur_nop)
-        agent = DynamicProgrammingAgent(env=env)
+        agent = DynamicProgramming(env=env)
         agent.solve()
         full_policy = agent.policy.copy()
 
@@ -76,7 +77,7 @@ def part_f(map_filepath, results_dir):
     results_dir.mkdir(parents=True, exist_ok=True)
 
     env = MinotaurMaze(map_filepath=map_filepath, discount=29/30, poison=True)
-    agent = ValueIterationAgent(env=env, precision=1e-2)
+    agent = ValueIteration(env=env, precision=1e-2)
     agent.solve()
 
     exit_probability = minotaur_maze_exit_probability(env, agent)
@@ -92,8 +93,16 @@ def part_bonus(map_filepath, results_dir):
     results_dir = results_dir / "part_bonus"
     results_dir.mkdir(parents=True, exist_ok=True)
 
-    env = MinotaurMaze(map_filepath=map_filepath, discount=49 / 50, poison=True, minotaur_chase=True, keys=True)
-    n_episodes = 50000
+    env = MinotaurMaze(map_filepath=map_filepath, discount=49/50, poison=True, minotaur_chase=True, keys=True)
+    start_state = env.reset()
+    n_episodes = 500000
+
+    # baseline: Value Iteration
+    agent = ValueIteration(env=env, precision=1e-2)
+    agent.solve()
+    v = agent.v(start_state)
+    values_baseline = np.full(n_episodes, v)
+    x = np.arange(1, n_episodes+1)
 
     ########################
     # part (i): Q-learning #
@@ -103,25 +112,23 @@ def part_bonus(map_filepath, results_dir):
             [0.1, 0.5, 0.1, 0.1],
             [2/3, 2/3, 0.6, 0.9]
     ):
-        agent = QLearning(env, learning_rate="decay", alpha=alpha, epsilon=epsilon, seed=SEED)
+        label = rf"$\epsilon$={epsilon:.2f}, $\alpha$={alpha:.2f}"
+        agent = QLearning(env=env, learning_rate="decay", alpha=alpha, epsilon=epsilon, seed=SEED)
         env.seed(SEED)
         values = []
-        for _ in range(n_episodes):
+        for _ in trange(n_episodes, desc=f"Q-learning - {label}"):
             done = False
-
             state = env.reset()
             while not done:
                 action = agent.compute_action(state)
                 next_state, reward, done, _ = env.step(action)
                 agent.update(state, action, reward, next_state)
                 state = next_state
-
-            initial_state = env.reset()
-            v = agent.v(initial_state)
+            v = agent.v(start_state)
             values.append(v)
 
-        label = rf"$\epsilon$={epsilon}, $\alpha$={alpha}"
-        axes.plot(np.arange(1, n_episodes+1), values, label=label)
+        axes.plot(x, values, label=label)
+    axes.plot(x, values_baseline, label="VI")
     axes.set_xlabel("number of episodes")
     axes.set_ylabel(r"V($s_0$)")
     axes.legend()
@@ -136,12 +143,12 @@ def part_bonus(map_filepath, results_dir):
             [0.2, 0.1, 0.2, 0.2],
             [None, None, 0.6, 0.9]
     ):
-        agent = SARSA(env, learning_rate="decay", alpha=2/3, epsilon=epsilon, delta=delta, seed=SEED)
+        label = rf"$\epsilon$={epsilon:.2f}" if delta is None else rf"$\epsilon$={epsilon:.2f}, $\delta$={delta:.2f}"
+        agent = SARSA(env=env, learning_rate="decay", alpha=2/3, epsilon=epsilon, delta=delta, seed=SEED)
         env.seed(SEED)
         values = []
-        for _ in range(n_episodes):
+        for _ in trange(n_episodes, desc=f"SARSA - {label}"):
             done = False
-
             state = env.reset()
             action = agent.compute_action(state)
             while not done:
@@ -150,13 +157,11 @@ def part_bonus(map_filepath, results_dir):
                 agent.update(state, action, reward, next_state, next_action)
                 state = next_state
                 action = next_action
-
-            initial_state = env.reset()
-            v = agent.v(initial_state)
+            v = agent.v(start_state)
             values.append(v)
 
-        label = rf"$\epsilon$={epsilon}" if delta is None else rf"$\epsilon$={epsilon}, $\delta$={delta}"
-        axes.plot(np.arange(1, n_episodes+1), values, label=label)
+        axes.plot(x, values, label=label)
+    axes.plot(x, values_baseline, label="VI")
     axes.set_xlabel("number of episodes")
     axes.set_ylabel(r"V($s_0$)")
     axes.legend()

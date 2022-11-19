@@ -4,11 +4,11 @@ from el2805.agents.mdp_agent import MDPAgent
 from el2805.envs.mdp import MDP
 
 
-class ValueIterationAgent(MDPAgent):
+class ValueIteration(MDPAgent):
     def __init__(self, env: MDP, precision):
         super().__init__(env)
         self.precision = precision
-        self.v = np.zeros(len(self.env.states))     # V(s) for each s in S
+        self._v = np.zeros(len(self.env.states))     # V(s) for each s in S
         assert self.env.discounted()
 
     def solve(self) -> None:
@@ -17,25 +17,29 @@ class ValueIterationAgent(MDPAgent):
         delta = None
         while delta is None or delta > self.precision * (1 - self.env.discount) / self.env.discount:
             # update V(s)
-            v_old = self.v.copy()
+            v_old = self._v.copy()
             for s, state in enumerate(self.env.states):
-                q = np.asarray([self.q(state, action, self.v) for action in self.env.valid_actions(state)])
-                self.v[s] = max(q)
+                q = np.asarray([self.q(state, action, self._v) for action in self.env.valid_actions(state)])
+                self._v[s] = max(q)
 
             # calculate value improvement
-            delta = np.linalg.norm(self.v - v_old, ord=np.inf)
+            delta = np.linalg.norm(self._v - v_old, ord=np.inf)
 
         # store eps-optimal policy
         self.policy = np.zeros(n_states, dtype=np.int32)    # eps-optimal policy (stationary)
         for s, state in enumerate(self.env.states):
             valid_actions = self.env.valid_actions(state)
-            q = np.asarray([self.q(state, action, self.v) for action in valid_actions])
+            q = np.asarray([self.q(state, action, self._v) for action in valid_actions])
             a_best = q.argmax()     # index of best action for valid actions in this state
             self.policy[s] = valid_actions[a_best]
 
-    def compute_action(self, state: Any, time_step: int) -> int:
+    def compute_action(self, state: Any) -> int:
         assert self.policy is not None
-        _ = time_step   # not used, infinite-horizon MDPs have a stationary optimal policy
         s = self.env.state_index(state)
         action = self.policy[s]
         return action
+
+    def v(self, state: Any) -> float:
+        s = self.env.state_index(state)
+        v = self._v[s]
+        return v

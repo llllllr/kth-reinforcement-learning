@@ -1,6 +1,18 @@
 import numpy as np
 from el2805.envs import Maze, PluckingBerries, MinotaurMaze
+from el2805.agents import DynamicProgramming, ValueIteration
 from el2805.envs.grid_world import Move
+
+
+def _compute_action(env, agent, state, time_step):
+    s = env.state_index(state)
+    if type(agent) == DynamicProgramming:
+        action = agent.compute_action(state, time_step)
+    elif type(agent) == ValueIteration:
+        action = agent.compute_action(state)
+    else:
+        raise ValueError
+    return action
 
 
 def best_maze_path(env, agent):
@@ -11,8 +23,8 @@ def best_maze_path(env, agent):
     env.seed(1)
     state = env.reset()
     while not done:
+        action = _compute_action(env, agent, state, time_step)
         s = env.state_index(state)
-        action = agent.compute_action(state, time_step)
         best_path_[s] = Move(action)
         state, _, done, _ = env.step(action)
         time_step += 1
@@ -29,7 +41,7 @@ def minotaur_maze_exit_probability(env, agent):
         env.seed(i)
         state = env.reset()
         while not done:
-            action = agent.compute_action(state, time_step)
+            action = _compute_action(env, agent, state, time_step)
             state, _, done, _ = env.step(action)
             time_step += 1
         n_wins += 1 if env.won() else 0

@@ -20,19 +20,6 @@ class MDPAgent(ABC):
         """Calculates the optimal policy for the MDP."""
         raise NotImplementedError
 
-    @abstractmethod
-    def compute_action(self, state: Any, time_step: int) -> int:
-        """Calculates the best action according to the agent's policy.
-
-        :param state: state for which the action is desired
-        :type state: any
-        :param time_step: time step at which the player is in the specified state
-        :type time_step: int
-        :return: best action according to the agent's policy
-        :rtype: int
-        """
-        raise NotImplementedError
-
     @property
     def policy(self) -> np.ndarray:
         """Getter for the agent's policy.

@@ -4,7 +4,7 @@ from el2805.agents.mdp_agent import MDPAgent
 from el2805.envs.mdp import MDP
 
 
-class DynamicProgrammingAgent(MDPAgent):
+class DynamicProgramming(MDPAgent):
     def __init__(self, env: MDP):
         super().__init__(env)
         assert self.env.finite_horizon()
