@@ -23,16 +23,8 @@ class RLAgent(ABC):
         self.seed(seed)
 
     @abstractmethod
-    def compute_action(self, state: Any, explore: bool = True) -> int:
-        """Calculates the best action according to the agent's policy.
-
-        :param state: state for which the action is desired
-        :type state: any
-        :param explore: whether to allow exploration or not
-        :type explore: bool, optional
-        :return: best action according to the agent's policy
-        :rtype: int
-        """
+    def compute_action(self, **kwargs) -> int:
+        """Calculates the best action according to the agent's policy. The parameters depend on the algorithm."""
         raise NotImplementedError
 
     def seed(self, seed: int | None = None):

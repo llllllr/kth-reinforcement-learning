@@ -12,8 +12,8 @@ class QAgent(RLAgent, ABC):
     def __init__(
             self,
             env: RLProblem,
-            learning_rate: str | float,
-            epsilon: float,
+            learning_rate: float | str,
+            epsilon: float | str,
             alpha: float | None = None,
             delta: float | None = None,
             seed: int | None = None
@@ -23,8 +23,8 @@ class QAgent(RLAgent, ABC):
         :type env: RLProblem
         :param learning_rate: learning rate (e.g., 1e-3) or learning rate method (e.g., "decay")
         :type learning_rate: float or str
-        :param epsilon: parameter for eps-greedy policy (probability of exploration)
-        :type epsilon: float
+        :param epsilon: probability of exploration (eps-greedy policy) or strategy to calculate it (e.g., "decay")
+        :type epsilon: float or str
         :param alpha: parameter for the learning rate decay 1/n(s,a)**alpha
         :type alpha: float, optional
         :param delta: parameter for epsilon decay in eps-greedy policy
@@ -43,13 +43,10 @@ class QAgent(RLAgent, ABC):
         else:
             assert self.alpha is not None
 
-        # initialize to random values except for the terminal states, whose value must be 0
+        assert (self.epsilon == "decay") is (self.delta is not None)
+
         # note: list of 1D ndarray and not 2D ndarray because the set of available actions for each state is different
-        self._q = [self._rng.randn(len(self.env.valid_actions(state))) for state in self.env.states]
-        terminal_states = [state for state in env.states if self.env.terminal_state(state)]
-        for state in terminal_states:
-            s = self.env.state_index(state)
-            self._q[s][:] = 0
+        self._q = [np.ones(len(self.env.valid_actions(state))) for state in self.env.states]
         self._n = [np.ones(len(self.env.valid_actions(state))) for state in self.env.states]
 
     @abstractmethod
@@ -89,20 +86,23 @@ class QAgent(RLAgent, ABC):
         v = max(self._q[s])
         return v
 
-    def compute_action(self, state: Any, explore: bool = True) -> int:
+    def compute_action(self, state: Any, episode: int, explore: bool = True) -> int:
         """Calculates the best action according to the agent's policy.
 
         :param state: state for which the action is desired
         :type state: any
+        :param episode: episode
+        :type episode: int
         :param explore: whether to allow exploration or not
         :type explore: bool, optional
         :return: best action according to the agent's policy
         :rtype: int
         """
         valid_actions = self.env.valid_actions(state)
+        epsilon = 1 / (episode ** self.delta) if self.epsilon == "decay" else self.epsilon
 
         # eps-greedy policy: exploration mode with epsilon probability
-        if explore and random_decide(self._rng, self.epsilon):
+        if explore and random_decide(self._rng, epsilon):
             action = self._rng.choice(valid_actions)
         else:
             s = self.env.state_index(state)

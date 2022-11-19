@@ -95,7 +95,7 @@ def part_bonus(map_filepath, results_dir):
 
     env = MinotaurMaze(map_filepath=map_filepath, discount=49/50, poison=True, minotaur_chase=True, keys=True)
     start_state = env.reset()
-    n_episodes = 500000
+    n_episodes = 50000
 
     # baseline: Value Iteration
     agent = ValueIteration(env=env, precision=1e-2)
@@ -116,11 +116,11 @@ def part_bonus(map_filepath, results_dir):
         agent = QLearning(env=env, learning_rate="decay", alpha=alpha, epsilon=epsilon, seed=SEED)
         env.seed(SEED)
         values = []
-        for _ in trange(n_episodes, desc=f"Q-learning - {label}"):
+        for episode in trange(1, n_episodes+1, desc=f"Q-learning - {label}"):
             done = False
             state = env.reset()
             while not done:
-                action = agent.compute_action(state)
+                action = agent.compute_action(state=state, episode=episode)
                 next_state, reward, done, _ = env.step(action)
                 agent.update(state, action, reward, next_state)
                 state = next_state
@@ -136,24 +136,28 @@ def part_bonus(map_filepath, results_dir):
     figure.show()
 
     ####################
-    # part (ii): SARSA #
+    # part (j): SARSA #
     ####################
     figure, axes = plt.subplots()
     for epsilon, delta in zip(
-            [0.2, 0.1, 0.2, 0.2],
+            [0.2, 0.1, "decay", "decay"],
             [None, None, 0.6, 0.9]
     ):
-        label = rf"$\epsilon$={epsilon:.2f}" if delta is None else rf"$\epsilon$={epsilon:.2f}, $\delta$={delta:.2f}"
+        if epsilon != "decay":
+            label = rf"$\epsilon$={epsilon:.2f}"
+        else:
+            label = rf"$\delta$={delta:.2f}"
+
         agent = SARSA(env=env, learning_rate="decay", alpha=2/3, epsilon=epsilon, delta=delta, seed=SEED)
         env.seed(SEED)
         values = []
-        for _ in trange(n_episodes, desc=f"SARSA - {label}"):
+        for episode in trange(1, n_episodes+1, desc=f"SARSA - {label}"):
             done = False
             state = env.reset()
-            action = agent.compute_action(state)
+            action = agent.compute_action(state=state, episode=episode)
             while not done:
                 next_state, reward, done, _ = env.step(action)
-                next_action = agent.compute_action(next_state)
+                next_action = agent.compute_action(state=next_state, episode=episode)
                 agent.update(state, action, reward, next_state, next_action)
                 state = next_state
                 action = next_action
