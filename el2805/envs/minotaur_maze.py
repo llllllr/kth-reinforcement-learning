@@ -50,8 +50,8 @@ class MinotaurMaze(Maze):
         self.minotaur_chase = minotaur_chase
 
         self.observation_space = gym.spaces.Tuple((
-            gym.spaces.MultiDiscrete(self._map.shape),  # player
-            gym.spaces.MultiDiscrete(self._map.shape),  # minotaur
+            gym.spaces.MultiDiscrete(self.map.shape),  # player
+            gym.spaces.MultiDiscrete(self.map.shape),  # minotaur
             gym.spaces.Discrete(n=len(Progress))        # progress (key not collected, key collected, exited, eaten)
         ))
 
@@ -166,9 +166,9 @@ class MinotaurMaze(Maze):
 
             if next_player_position == next_minotaur_position:
                 state = (self._sentinel_position, self._sentinel_position, Progress.EATEN)
-            elif progress is Progress.WITH_KEYS and self._map[next_player_position] is MazeCell.EXIT:
+            elif progress is Progress.WITH_KEYS and self.map[next_player_position] is MazeCell.EXIT:
                 state = (self._sentinel_position, self._sentinel_position, Progress.EXITED)
-            elif progress is Progress.WITHOUT_KEYS and self._map[next_player_position] is MinotaurMazeCell.KEY:
+            elif progress is Progress.WITHOUT_KEYS and self.map[next_player_position] is MinotaurMazeCell.KEY:
                 state = (next_player_position, next_minotaur_position, Progress.WITH_KEYS)
             else:
                 state = (next_player_position, next_minotaur_position, progress)
@@ -198,11 +198,11 @@ class MinotaurMaze(Maze):
                 valid_moves.append(Move.NOP)
             if x_minotaur - 1 >= 0:
                 valid_moves.append(Move.UP)
-            if x_minotaur + 1 < self._map.shape[0]:
+            if x_minotaur + 1 < self.map.shape[0]:
                 valid_moves.append(Move.DOWN)
             if y_minotaur - 1 >= 0:
                 valid_moves.append(Move.LEFT)
-            if y_minotaur + 1 < self._map.shape[1]:
+            if y_minotaur + 1 < self.map.shape[1]:
                 valid_moves.append(Move.RIGHT)
 
         return valid_moves
@@ -255,10 +255,10 @@ class MinotaurMaze(Maze):
 
     def _generate_state_space(self) -> list[State]:
         # minotaur anywhere
-        minotaur_states = [(x, y) for x in range(self._map.shape[0]) for y in range(self._map.shape[1])]
+        minotaur_states = [(x, y) for x in range(self.map.shape[0]) for y in range(self.map.shape[1])]
 
         # player not in walls
-        player_states = [(x, y) for x, y in minotaur_states if self._map[x, y] is not MazeCell.WALL]
+        player_states = [(x, y) for x, y in minotaur_states if self.map[x, y] is not MazeCell.WALL]
 
         # key collected or not
         keys_collected = [Progress.WITHOUT_KEYS, Progress.WITH_KEYS] if self.keys else [Progress.WITH_KEYS]
@@ -270,7 +270,7 @@ class MinotaurMaze(Maze):
         def non_terminal_state(state):
             player_position, minotaur_position, progress = state
             eaten = player_position == minotaur_position
-            exited = progress is Progress.WITH_KEYS and self._map[player_position] is MazeCell.EXIT
+            exited = progress is Progress.WITH_KEYS and self.map[player_position] is MazeCell.EXIT
             return not eaten and not exited
         states = [state for state in states if non_terminal_state(state)]
         states.append((self._sentinel_position, self._sentinel_position, Progress.EATEN))
@@ -283,11 +283,10 @@ class MinotaurMaze(Maze):
         return progress is Progress.EXITED
 
     def render(self, mode: str = "human", policy: np.ndarray = None) -> None:
-        assert mode == "human" or (mode == "policy" and policy is not None)
-        map_ = self._map.copy()
+        assert mode == "human" or (mode == "policy" and policy is not None and policy.shape == self.map.shape)
+        map_ = self.map.copy()
         if mode == "human":
             player_position, minotaur_position, progress = self._current_state
-
             if progress is Progress.EATEN:
                 print("LOSER...")
             elif progress is Progress.EXITED:
@@ -296,39 +295,38 @@ class MinotaurMaze(Maze):
                 if progress is Progress.WITHOUT_KEYS:
                     player_color = "red"
                 elif progress is Progress.WITH_KEYS:
-                    player_color = "green"
+                    player_color = "yellow"
                 else:
                     player_color = None
                 map_[player_position] = colored("P", color=player_color)
                 map_[minotaur_position] = colored("M", color="magenta")
-                self._render(map_)
         elif mode == "policy":
-            for s, action in enumerate(policy):
-                player_position, _, _ = self.states[s]
-                action = Move(action)
-                map_[player_position] = str(action)
-                self._render(map_)
+            for i in range(map_.shape[0]):
+                for j in range(map_.shape[1]):
+                    if self.map[i, j] is not MazeCell.WALL:
+                        map_[i, j] = Move(policy[i, j])
         else:
             raise ValueError
+        self._render(map_)
 
     def _load_map(self, filepath: Path) -> None:
         with open(filepath) as f:
             lines = f.readlines()
 
         # create map
-        self._map = np.asarray([[
+        self.map = np.asarray([[
             (MinotaurMazeCell(symbol) if symbol == MinotaurMazeCell.KEY.value else MazeCell(symbol))
             for symbol in line[:-1].split("\t")
         ] for line in lines])
 
         # get starting position of player and minotaur
-        player_start = np.asarray(self._map == MazeCell.START).nonzero()
+        player_start = np.asarray(self.map == MazeCell.START).nonzero()
         player_start = (int(player_start[0][0]), int(player_start[1][0]))
-        minotaur_start = np.asarray(self._map == MazeCell.EXIT).nonzero()
+        minotaur_start = np.asarray(self.map == MazeCell.EXIT).nonzero()
         minotaur_start = (int(minotaur_start[0][0]), int(minotaur_start[1][0]))
 
         # if there are no keys to collect in the map, start with keys
-        keys_present = len(np.asarray(self._map == MinotaurMazeCell.KEY).nonzero()) > 0
+        keys_present = len(np.asarray(self.map == MinotaurMazeCell.KEY).nonzero()) > 0
         if self.keys:
             assert keys_present
             progress = Progress.WITHOUT_KEYS
@@ -337,6 +335,10 @@ class MinotaurMaze(Maze):
 
         self._initial_state = (player_start, minotaur_start, progress)
 
+    # need to override just to avoid warning of type hints
     @property
     def states(self) -> list[State]:
         return self._states
+
+    def state_index(self, state: State) -> int:
+        return self._state_to_index[state]

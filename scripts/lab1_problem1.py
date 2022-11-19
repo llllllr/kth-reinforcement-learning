@@ -3,6 +3,9 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 from tqdm import trange
 from el2805.envs import MinotaurMaze
+from el2805.envs.grid_world import Move
+from el2805.envs.maze import MazeCell
+from el2805.envs.minotaur_maze import Progress
 from el2805.agents import DynamicProgramming, ValueIteration, QLearning, SARSA
 from utils import print_and_write_line, minotaur_maze_exit_probability
 
@@ -27,6 +30,25 @@ def part_c(map_filepath, results_dir):
         state, _, done, _ = env.step(action)
         time_step += 1
         env.render()
+
+    for t in [0, agent.policy.shape[0]-1]:
+        policy = agent.policy[t]
+        map_policy = np.zeros(env.map.shape)
+        minotaur_position = np.asarray(env.map == MazeCell.EXIT).nonzero()
+        minotaur_position = int(minotaur_position[0][0]), int(minotaur_position[1][0])
+
+        for i in range(env.map.shape[0]):
+            for j in range(env.map.shape[1]):
+                try:
+                    state = ((i, j), minotaur_position, Progress.WITH_KEYS)
+                    s = env.state_index(state)
+                    map_policy[i, j] = policy[s]
+                except KeyError:
+                    map_policy[i, j] = Move.NOP
+
+        print(f"Dynamic programming - Minotaur at exit and t={t+1}")
+        env.render(mode="policy", policy=map_policy)
+        print()
 
 
 def part_d(map_filepath, results_dir):

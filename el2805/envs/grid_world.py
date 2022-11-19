@@ -42,10 +42,10 @@ class GridWorld(MDP, ABC):
         self._n_steps = None
         self._current_state = None
         self._initial_state = None
-        self._map = None
+        self.map = None
         self._load_map(map_filepath)
-        assert isinstance(self._map, np.ndarray)
-        self.observation_space = gym.spaces.MultiDiscrete(self._map.shape)
+        assert isinstance(self.map, np.ndarray)
+        self.observation_space = gym.spaces.MultiDiscrete(self.map.shape)
 
     @property
     def states(self) -> list[Position]:
@@ -80,7 +80,7 @@ class GridWorld(MDP, ABC):
 
     def render(self, mode: str = "human", policy: np.ndarray = None) -> None:
         assert mode == "human" or (mode == "policy" and policy is not None)
-        map_ = self._map.copy()
+        map_ = self.map.copy()
         if mode == "human":
             map_[self._current_state] = colored("P", color="blue")
         elif mode == "policy":

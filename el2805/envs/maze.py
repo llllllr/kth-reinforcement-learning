@@ -35,8 +35,8 @@ class Maze(GridWorld):
         super().__init__(map_filepath, horizon, discount)
 
         self._states = [
-            (x, y) for x in range(self._map.shape[0]) for y in range(self._map.shape[1])
-            if self._map[x, y] is not MazeCell.WALL
+            (x, y) for x in range(self.map.shape[0]) for y in range(self.map.shape[1])
+            if self.map[x, y] is not MazeCell.WALL
         ]
         self._state_to_index = {state: s for state, s in zip(self._states, np.arange(len(self._states)))}
 
@@ -49,7 +49,7 @@ class Maze(GridWorld):
         # main objective: minimize the time to exit <=> maximize the negative time to exit
         # => negative reward (penalty) at each step
         else:
-            delay = self._map[state].delay
+            delay = self.map[state].delay
             reward_no_delay = self._reward_step
             reward_delay = (1 + delay) * self._reward_step
 
@@ -79,19 +79,19 @@ class Maze(GridWorld):
             x, y = state
 
             x_tmp = x - 1
-            if x_tmp >= 0 and self._map[x_tmp, y] is not MazeCell.WALL:
+            if x_tmp >= 0 and self.map[x_tmp, y] is not MazeCell.WALL:
                 valid_moves.append(Move.UP)
 
             x_tmp = x + 1
-            if x_tmp < self._map.shape[0] and self._map[x_tmp, y] is not MazeCell.WALL:
+            if x_tmp < self.map.shape[0] and self.map[x_tmp, y] is not MazeCell.WALL:
                 valid_moves.append(Move.DOWN)
 
             y_tmp = y - 1
-            if y_tmp >= 0 and self._map[x, y_tmp] is not MazeCell.WALL:
+            if y_tmp >= 0 and self.map[x, y_tmp] is not MazeCell.WALL:
                 valid_moves.append(Move.LEFT)
 
             y_tmp = y + 1
-            if y_tmp < self._map.shape[1] and self._map[x, y_tmp] is not MazeCell.WALL:
+            if y_tmp < self.map.shape[1] and self.map[x, y_tmp] is not MazeCell.WALL:
                 valid_moves.append(Move.RIGHT)
 
         return valid_moves
@@ -103,12 +103,12 @@ class Maze(GridWorld):
         return self.terminal_state(self._current_state)
 
     def terminal_state(self, state: Position) -> bool:
-        exited = self._map[state] is MazeCell.EXIT
+        exited = self.map[state] is MazeCell.EXIT
         return exited
 
     def _load_map(self, filepath: Path) -> None:
         with open(filepath) as f:
             lines = f.readlines()
-        self._map = np.asarray([[MazeCell(symbol) for symbol in line[:-1].split("\t")] for line in lines])
-        self._initial_state = np.asarray(self._map == MazeCell.START).nonzero()
+        self.map = np.asarray([[MazeCell(symbol) for symbol in line[:-1].split("\t")] for line in lines])
+        self._initial_state = np.asarray(self.map == MazeCell.START).nonzero()
         self._initial_state = (int(self._initial_state[0][0]), int(self._initial_state[1][0]))
