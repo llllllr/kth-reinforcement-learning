@@ -24,8 +24,8 @@ def main():
         env.render(mode="policy", policy=best_maze_path(env, agent))
 
         print("Value iteration - Stationary policy")
-        env = Maze(map_filepath=map_filepath, discount=0.99)
-        agent = ValueIteration(env=env, precision=1e-2)
+        env = Maze(map_filepath=map_filepath)
+        agent = ValueIteration(env=env, discount=0.99, precision=1e-2)
         agent.solve()
         env.render(mode="policy", policy=agent.policy)
         print()
