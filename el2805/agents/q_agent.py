@@ -1,8 +1,8 @@
 import numpy as np
-from abc import ABC, abstractmethod
+from abc import ABC
 from typing import Any
 from el2805.agents.rl_agent import RLAgent
-from el2805.envs.rl_problem import RLProblem
+from el2805.envs import RLProblem
 from el2805.utils import random_decide
 
 
@@ -12,15 +12,19 @@ class QAgent(RLAgent, ABC):
     def __init__(
             self,
             env: RLProblem,
+            discount: float,
             learning_rate: float | str,
             epsilon: float | str,
             alpha: float | None = None,
             delta: float | None = None,
+            q_init: float = 0,
             seed: int | None = None
     ):
         """
         :param env: RL environment
         :type env: RLProblem
+        :param discount: discount factor
+        :type discount: float
         :param learning_rate: learning rate (e.g., 1e-3) or learning rate method (e.g., "decay")
         :type learning_rate: float or str
         :param epsilon: probability of exploration (eps-greedy policy) or strategy to calculate it (e.g., "decay")
@@ -29,13 +33,16 @@ class QAgent(RLAgent, ABC):
         :type alpha: float, optional
         :param delta: parameter for epsilon decay in eps-greedy policy
         :type delta: float, optional
+        :param q_init: value for Q-function initialization (except for terminal states)
+        :type q_init: float, optional
         :param seed: seed
         :type seed: int, optional
         """
-        super().__init__(env, learning_rate, seed)
+        super().__init__(env=env, discount=discount, learning_rate=learning_rate, seed=seed)
         self.epsilon = epsilon
         self.alpha = alpha
         self.delta = delta
+        self.q_init = q_init
         self._exploration_decay = self.delta is not None
 
         if self.learning_rate != "decay":
@@ -45,19 +52,14 @@ class QAgent(RLAgent, ABC):
 
         assert (self.epsilon == "decay") is (self.delta is not None)
 
-        # note: list of 1D ndarray and not 2D ndarray because the set of available actions for each state is different
-        self._q = [np.zeros(len(self.env.valid_actions(state))) for state in self.env.states]
+        # notes:
+        # - list of 1D ndarray and not 2D ndarray because the set of available actions for each state is different
+        # - Q-values of terminal states must be initialized to 0, they will never be updated (see Sutton and Barto)
+        self._q = [
+            (self.q_init if not env.terminal_state(state) else 0) * np.ones(len(self.env.valid_actions(state)))
+            for state in self.env.states
+        ]
         self._n = [np.ones(len(self.env.valid_actions(state))) for state in self.env.states]
-
-    @abstractmethod
-    def update(self, **kwargs) -> None:
-        """Updates the Q-function from new observation(s).
-
-        The parameters depend on the algorithm. For example:
-        - Q-learning requires tuples (state, action, reward, next_state).
-        - SARSA requires tuples (state, action, reward, next_state, next_action).
-        """
-        raise NotImplementedError
 
     def q(self, state: Any, action: int) -> float:
         """Returns the Q-function evaluated on the specified (state, action) pair. That is, Q(state,action).
@@ -86,12 +88,12 @@ class QAgent(RLAgent, ABC):
         v = max(self._q[s])
         return v
 
-    def compute_action(self, state: Any, episode: int, explore: bool = True) -> int:
+    def compute_action(self, state: Any, episode: int, explore: bool = True, **kwargs) -> int:
         """Calculates the best action according to the agent's policy.
 
         :param state: state for which the action is desired
         :type state: any
-        :param episode: episode
+        :param episode: episode. The first episode is supposed to be 1 (not 0).
         :type episode: int
         :param explore: whether to allow exploration or not
         :type explore: bool, optional
@@ -106,7 +108,8 @@ class QAgent(RLAgent, ABC):
             action = self._rng.choice(valid_actions)
         else:
             s = self.env.state_index(state)
-            a = self._q[s].argmax()
+            v = self.v(state)
+            a = self._rng.choice(np.asarray(self._q[s] == v).nonzero()[0])      # random among those with max Q-value
             action = valid_actions[a]
 
         return action

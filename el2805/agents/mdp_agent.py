@@ -1,33 +1,27 @@
 import numpy as np
 from abc import ABC, abstractmethod
 from typing import Any
-from el2805.envs.mdp import MDP
+from el2805.agents.agent import Agent
+from el2805.envs import MDP
 
 
-class MDPAgent(ABC):
+class MDPAgent(Agent, ABC):
     """Interface for an algorithm solving MDPs."""
 
-    def __init__(self, env: MDP):
+    def __init__(self, env: MDP, discount: float | None = None):
         """
         :param env: MDP problem
         :type env: MDP
+        :param discount: discount factor
+        :type discount: float, optional
         """
-        self.env = env
+        super().__init__(env=env, discount=discount)
+        self.env = env  # to avoid warning for type hints
         self._policy = None
 
     @abstractmethod
     def solve(self) -> None:
         """Calculates the optimal policy for the MDP."""
-        raise NotImplementedError
-
-    @abstractmethod
-    def compute_action(self, **kwargs) -> int:
-        """Computes the action in a particular situation.
-
-        The parameters depend on the algorithm. For example:
-        - Value Iteration requires only the state.
-        - Dynamic Programming requires the state and also the time step.
-        """
         raise NotImplementedError
 
     @property
@@ -63,5 +57,5 @@ class MDPAgent(ABC):
         next_states, transition_probabilities = self.env.next_states(state, action)
         s_next = [self.env.state_index(next_state) for next_state in next_states]    # indices of next states
         v = v[s_next]   # V(s',a) for all the possible next states
-        q = self.env.reward(state, action, mean=True) + self.env.discount * transition_probabilities.dot(v)
+        q = self.env.reward(state, action, mean=True) + self.discount * transition_probabilities.dot(v)
         return q

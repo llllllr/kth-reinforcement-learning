@@ -9,5 +9,5 @@ class QLearning(QAgent):
         s_next = self.env.state_index(next_state)
         step_size = 1 / (self._n[s][a] ** self.alpha)
 
-        self._q[s][a] += step_size * (reward + self.env.discount * max(self._q[s_next]) - self._q[s][a])
+        self._q[s][a] += step_size * (reward + self.discount * max(self._q[s_next]) - self._q[s][a])
         self._n[s][a] += 1

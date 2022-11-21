@@ -5,17 +5,17 @@ from el2805.envs.mdp import MDP
 
 
 class ValueIteration(MDPAgent):
-    def __init__(self, env: MDP, precision):
-        super().__init__(env)
+    def __init__(self, env: MDP, discount: float, precision: float):
+        super().__init__(env, discount)
+        self.discount = discount
         self.precision = precision
         self._v = np.zeros(len(self.env.states))     # V(s) for each s in S
-        assert self.env.discounted()
 
     def solve(self) -> None:
         # value improvement
         n_states = len(self.env.states)
         delta = None
-        while delta is None or delta > self.precision * (1 - self.env.discount) / self.env.discount:
+        while delta is None or delta > self.precision * (1 - self.discount) / self.discount:
             # update V(s)
             v_old = self._v.copy()
             for s, state in enumerate(self.env.states):

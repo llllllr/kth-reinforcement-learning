@@ -36,8 +36,8 @@ Position = tuple[int, int]
 class GridWorld(MDP, ABC):
     action_space = gym.spaces.Discrete(len(Move))
 
-    def __init__(self, map_filepath: Path, horizon: int | None = None, discount: float | None = None):
-        super().__init__(horizon, discount)
+    def __init__(self, map_filepath: Path, horizon: int | None = None):
+        super().__init__(horizon)
         self._states = None
         self._n_steps = None
         self._current_state = None
@@ -62,7 +62,7 @@ class GridWorld(MDP, ABC):
         self._current_state = new_state
 
         # calculate reward
-        reward = self.discount**self._n_steps * self.reward(previous_state, action)
+        reward = self.reward(previous_state, action)
 
         # check end of episode
         self._n_steps += 1

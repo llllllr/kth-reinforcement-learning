@@ -1,12 +1,12 @@
 import numpy as np
 from typing import Any
 from el2805.agents.mdp_agent import MDPAgent
-from el2805.envs.mdp import MDP
+from el2805.envs import MDP
 
 
 class DynamicProgramming(MDPAgent):
     def __init__(self, env: MDP):
-        super().__init__(env)
+        super().__init__(env=env)
         assert self.env.finite_horizon()
 
     def solve(self) -> None:

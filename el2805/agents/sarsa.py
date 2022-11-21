@@ -10,5 +10,5 @@ class SARSA(QAgent):
         a_next = self._action_index(next_state, next_action)
         step_size = 1 / (self._n[s][a] ** self.alpha)
 
-        self._q[s][a] += step_size * (reward + self.env.discount * self._q[s_next][a_next] - self._q[s][a])
+        self._q[s][a] += step_size * (reward + self.discount * self._q[s_next][a_next] - self._q[s][a])
         self._n[s][a] += 1

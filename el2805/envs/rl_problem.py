@@ -7,17 +7,12 @@ from gym.utils.seeding import np_random
 class RLProblem(gym.Env, ABC):
     """Interface for a RL problem with discrete state and action spaces."""
 
-    def __init__(self, horizon: int | None = None, discount: float | None = None):
+    def __init__(self, horizon: int | None = None):
         """
         :param horizon: time horizon, if None then the MDP has infinite horizon
         :type horizon: int, optional
-        :param discount: discount factor, must be provided if horizon=None (infinite-horizon MDPs)
-        :type discount: float, optional
         """
         self.horizon = horizon
-        self.discount = discount if discount is not None else 1
-        assert self.finite_horizon() or self.discounted()
-
         self._rng = None
         self.seed()
 
@@ -85,15 +80,7 @@ class RLProblem(gym.Env, ABC):
         :return: True if the MDP is finite horizon.
         :rtype: bool
         """
-        return self.horizon is not None and self.discount == 1
-
-    def discounted(self) -> bool:
-        """Returns whether the MDP is infinite horizon (and discounted) or not.
-
-        :return: True if the MDP is infinite horizon (discounted).
-        :rtype: bool
-        """
-        return self.horizon is None and 0 < self.discount < 1
+        return self.horizon is not None
 
     def seed(self, seed: int | None = None) -> list[int]:
         """Sets the seed of the environment's internal RNG.

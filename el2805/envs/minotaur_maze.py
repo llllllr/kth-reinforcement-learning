@@ -37,27 +37,23 @@ class MinotaurMaze(Maze):
             self,
             map_filepath: Path,
             horizon: int | None = None,
-            discount: float | None = None,
             minotaur_nop: bool = False,
-            poison: bool = False,
+            probability_poison_death: float = 0,
             minotaur_chase: bool = False,
             keys: bool = False
     ):
         self.keys = keys
-        super().__init__(map_filepath, horizon, discount)
+        super().__init__(map_filepath, horizon)
         self.minotaur_nop = minotaur_nop
-        self.poison = poison
+        self.probability_poison_death = probability_poison_death
         self.minotaur_chase = minotaur_chase
+        assert not (self.probability_poison_death > 0 and self.finite_horizon())    # poison only for discounted MDPs
 
         self.observation_space = gym.spaces.Tuple((
-            gym.spaces.MultiDiscrete(self.map.shape),  # player
-            gym.spaces.MultiDiscrete(self.map.shape),  # minotaur
+            gym.spaces.MultiDiscrete(self.map.shape),   # player
+            gym.spaces.MultiDiscrete(self.map.shape),   # minotaur
             gym.spaces.Discrete(n=len(Progress))        # progress (key not collected, key collected, exited, eaten)
         ))
-
-        # E[T] = 1/(1-lambda) and T has geometric distribution => T~Geo(1-lambda)
-        self._probability_poison_death = 1 - self.discount if self.poison else 0
-        assert not self.poison or self.discounted()     # poison only for discounted MDPs
 
         if not self.minotaur_chase:
             self._probability_chase_move = 0
@@ -240,8 +236,8 @@ class MinotaurMaze(Maze):
 
     def _horizon_reached(self) -> bool:
         # random time horizon geometrically distributed
-        if self.poison:
-            horizon_reached = random_decide(self._rng, self._probability_poison_death)
+        if self.probability_poison_death > 0:
+            horizon_reached = random_decide(self._rng, self.probability_poison_death)
         else:
             horizon_reached = super()._horizon_reached()
         return horizon_reached

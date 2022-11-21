@@ -31,8 +31,8 @@ class Maze(GridWorld):
     _reward_exit = -_reward_step
     _probability_delay = 0.5
 
-    def __init__(self, map_filepath: Path, horizon: int | None = None, discount: float | None = None):
-        super().__init__(map_filepath, horizon, discount)
+    def __init__(self, map_filepath: Path, horizon: int | None = None):
+        super().__init__(map_filepath, horizon)
 
         self._states = [
             (x, y) for x in range(self.map.shape[0]) for y in range(self.map.shape[1])
