@@ -60,7 +60,7 @@ class QAgent(RLAgent, ABC):
             (self.q_init if not env.terminal_state(state) else 0) * np.ones(len(self.env.valid_actions(state)))
             for state in self.env.states
         ]
-        self._n = [np.ones(len(self.env.valid_actions(state))) for state in self.env.states]
+        self._n = [np.zeros(len(self.env.valid_actions(state))) for state in self.env.states]
 
     def q(self, state: Any, action: int) -> float:
         """Returns the Q-function evaluated on the specified (state, action) pair. That is, Q(state,action).

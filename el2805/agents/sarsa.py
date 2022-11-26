@@ -8,7 +8,8 @@ class Sarsa(QAgent):
         a = self._action_index(state, action)
         s_next = self.env.state_index(next_state)
         a_next = self._action_index(next_state, next_action)
+
+        self._n[s][a] += 1
         step_size = 1 / (self._n[s][a] ** self.alpha)
 
         self._q[s][a] += step_size * (reward + self.discount * self._q[s_next][a_next] - self._q[s][a])
-        self._n[s][a] += 1
