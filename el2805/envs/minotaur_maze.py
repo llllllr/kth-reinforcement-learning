@@ -98,7 +98,7 @@ class MinotaurMaze(Maze):
                 progress is Progress.WITHOUT_KEYS and next_progress is Progress.WITH_KEYS:
             reward = self._reward_key
         elif next_progress is not Progress.EATEN and \
-                progress is not Progress.EXITED and next_progress is Progress.EXITED:
+                progress is Progress.WITH_KEYS and next_progress is Progress.EXITED:
             reward = self._reward_exit
         # additional objective: don't waste time while you are alive
         # <=> minimize time to exit <=> maximize negative time to exit

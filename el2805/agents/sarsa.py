@@ -2,7 +2,7 @@ from typing import Any
 from el2805.agents.q_agent import QAgent
 
 
-class SARSA(QAgent):
+class Sarsa(QAgent):
     def update(self, state: Any, action: int, reward: float, next_state: Any, next_action: int, **kwargs) -> None:
         s = self.env.state_index(state)
         a = self._action_index(state, action)

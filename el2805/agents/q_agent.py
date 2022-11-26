@@ -7,7 +7,7 @@ from el2805.utils import random_decide
 
 
 class QAgent(RLAgent, ABC):
-    """Interface for a RL algorithm approximating the Q-function."""
+    """Interface for a RL algorithm learning the Q-function."""
 
     def __init__(
             self,
@@ -39,6 +39,7 @@ class QAgent(RLAgent, ABC):
         :type seed: int, optional
         """
         super().__init__(env=env, discount=discount, learning_rate=learning_rate, seed=seed)
+        self.env = env  # to avoid warnings of type hints
         self.epsilon = epsilon
         self.alpha = alpha
         self.delta = delta

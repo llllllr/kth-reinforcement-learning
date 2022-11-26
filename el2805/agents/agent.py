@@ -1,14 +1,14 @@
+import gym
 from abc import ABC, abstractmethod
-from el2805.envs import RLProblem
 
 
 class Agent(ABC):
     """Interface for an agent controlling a stochastic Markovian dynamical system."""
 
-    def __init__(self, env: RLProblem, discount: float | None = None):
+    def __init__(self, env: gym.Env, discount: float | None = None):
         """
-        :param env: MDP problem
-        :type env: MDP
+        :param env: RL environment
+        :type env: gym.Env
         :param discount: discount factor
         :type discount: float, optional
         """

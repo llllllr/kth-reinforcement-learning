@@ -47,7 +47,7 @@ def running_average(x, N):
 
 
 def scale_state_variables(s, low=env.observation_space.low, high=env.observation_space.high):
-    ''' Rescaling of s to the box [0,1]^2 '''
+    """Rescales of s to the box [0,1]^2."""
     x = (s - low) / (high - low)
     return x
 

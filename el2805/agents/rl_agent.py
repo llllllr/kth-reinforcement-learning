@@ -1,21 +1,22 @@
+import gym
 import numpy as np
 from abc import ABC, abstractmethod
 from el2805.agents.agent import Agent
-from el2805.envs import RLProblem
 
 
 class RLAgent(Agent, ABC):
     """Interface for a RL algorithm."""
 
     def __init__(
-            self, env: RLProblem,
+            self,
+            env: gym.Env,
             discount: float,
             learning_rate: float | str,
             seed: int | None = None
     ):
         """
         :param env: RL environment
-        :type env: RLProblem
+        :type env: gym.Env
         :param discount: discount factor of the MDP
         :type discount: float
         :param learning_rate: learning rate (e.g., 1e-3) or learning rate method (e.g., "decay")
