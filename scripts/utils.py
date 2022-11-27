@@ -21,7 +21,7 @@ def best_maze_path(env, agent):
 
 def minotaur_maze_exit_probability(env, agent):
     assert type(env) == MinotaurMaze
-    n_episodes = 100000
+    n_episodes = 10000
     n_wins = 0
     for episode in range(1, n_episodes+1):
         done = False

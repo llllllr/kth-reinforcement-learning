@@ -6,7 +6,7 @@ from el2805.envs import MinotaurMaze
 from el2805.envs.grid_world import Move
 from el2805.envs.maze import MazeCell
 from el2805.envs.minotaur_maze import Progress
-from el2805.agents import DynamicProgramming, ValueIteration, QLearning, SARSA
+from el2805.agents import DynamicProgramming, ValueIteration, QLearning, Sarsa
 from utils import print_and_write_line, minotaur_maze_exit_probability, train_rl_agent_one_episode
 
 SEED = 1
@@ -85,7 +85,7 @@ def part_d(map_filepath, results_dir):
             write_mode = "a"    # append after the first time
 
         label = ("with " if minotaur_nop else "w/o ") + "stay move"
-        axes.plot(horizons, exit_probabilities, label=label)
+        axes.plot(horizons, exit_probabilities, marker="o", label=label)
     axes.set_xlabel("T")
     axes.set_ylabel(r"$\mathbb{P}$('exit alive')")
     axes.set_xticks(horizons[4::5])
@@ -118,7 +118,7 @@ def part_ij(map_filepath, results_dir):
 
     expected_life = 50
     discount = 1 - 1/expected_life
-    n_episodes = 100000
+    n_episodes = 50000
 
     env = MinotaurMaze(
         map_filepath=map_filepath,
@@ -138,21 +138,22 @@ def part_ij(map_filepath, results_dir):
     filename = "part_j3"     # TODO: adjust the filename according to algorithm selected
     figure, axes = plt.subplots()
 
-    for delta, in zip(        # TODO: put here the hyper-parameters under study
-        [0.55, 0.65, 0.75, 0.85, 0.95]
+    for delta, alpha in zip(        # TODO: put here the hyper-parameters under study
+        [0.55, 0.55, 0.75, 0.75, 0.95, 0.95],
+        [0.65, 0.85, 0.65, 0.85, 0.65, 0.85],
     ):
         # TODO: adjust the label for the plot legend according to hyper-parameters under study
-        label = rf"$\epsilon={delta:.2f}"
+        label = rf"$\delta$={delta:.2f} - $\alpha$={alpha:.2f}"
 
         # agent = QLearning(    # TODO: select the algorithm by commenting/uncommenting
-        agent = SARSA(
+        agent = Sarsa(
             env=env,
             learning_rate="decay",
             discount=discount,
-            alpha=2/3,
+            alpha=alpha,
             epsilon="decay",    # TODO: adjust the parameters according to hyper-parameters under study
             delta=delta,
-            q_init=0.01,
+            q_init=1,
             seed=SEED
         )
 
@@ -193,31 +194,31 @@ def part_k(map_filepath, results_dir):
         env=env,
         learning_rate="decay",
         discount=discount,
-        alpha=2/3,
-        epsilon=0.1,
+        alpha=0.55,
+        epsilon=0.2,
         delta=None,
         q_init=0.01,
         seed=SEED
     )
 
-    agent_sarsa = SARSA(
+    agent_sarsa = Sarsa(
         env=env,
         learning_rate="decay",
         discount=discount,
-        alpha=2/3,
-        epsilon=0.1,
-        delta=None,
-        q_init=0.01,
+        alpha=0.65,
+        epsilon="decay",
+        delta=0.95,
+        q_init=1,
         seed=SEED
     )
 
     write_mode = "w"
-    for agent, agent_name in zip(
-        [agent_vi, agent_q_learning, agent_sarsa],
-        ["vi", "q_learning", "sarsa"]
-    ):
+    n_episodes = 50000
+    agents = [agent_vi, agent_q_learning, agent_sarsa]
+    agent_names = ["vi", "q_learning", "sarsa"]
+    exit_probabilities = []
+    for agent_name, agent in zip(agent_names, agents):
         # train
-        n_episodes = 50000
         if agent_name != "vi":
             for episode in trange(1, n_episodes+1, desc=agent_name):
                 train_rl_agent_one_episode(env, agent, episode)
@@ -226,6 +227,7 @@ def part_k(map_filepath, results_dir):
 
         # test
         exit_probability = minotaur_maze_exit_probability(env, agent)
+        exit_probabilities.append(exit_probability)
         print_and_write_line(
             filepath=results_dir / "results.txt",
             output=f"{agent_name}: P('exit alive'|'poisoned')={exit_probability}",
@@ -233,6 +235,16 @@ def part_k(map_filepath, results_dir):
         )
         write_mode = "a"    # append after the first time
         print()
+
+    figure, axes = plt.subplots()
+    axes.bar_label(axes.bar(
+        x=np.arange(len(exit_probabilities)),
+        height=exit_probabilities,
+        tick_label=agent_names
+    ))
+    axes.set_ylabel(r"$\mathbb{P}$('exit alive')")
+    figure.savefig(results_dir / "probability_exit.pdf")
+    figure.show()
 
 
 def main():
