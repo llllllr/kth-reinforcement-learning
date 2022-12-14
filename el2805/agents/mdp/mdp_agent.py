@@ -2,7 +2,7 @@ import numpy as np
 from abc import ABC, abstractmethod
 from typing import Any
 from el2805.agents.agent import Agent
-from el2805.envs import MDP
+from el2805.environments import MDP
 
 
 class MDPAgent(Agent, ABC):

@@ -18,6 +18,7 @@
 import numpy as np
 import gym
 import matplotlib.pyplot as plt
+from el2805.utils import running_average
 
 # Import and initialize Mountain Car Environment
 env = gym.make('MountainCar-v0')
@@ -33,19 +34,6 @@ discount_factor = 1.  # Value of gamma
 episode_reward_list = []  # Used to save episodes reward
 
 
-# Functions used during training
-def running_average(x, N):
-    ''' Function used to compute the running mean
-        of the last N elements of a vector x
-    '''
-    if len(x) >= N:
-        y = np.copy(x)
-        y[N - 1:] = np.convolve(x, np.ones((N,)) / N, mode='valid')
-    else:
-        y = np.zeros_like(x)
-    return y
-
-
 def scale_state_variables(s, low=env.observation_space.low, high=env.observation_space.high):
     """Rescales of s to the box [0,1]^2."""
     x = (s - low) / (high - low)
@@ -54,7 +42,7 @@ def scale_state_variables(s, low=env.observation_space.low, high=env.observation
 
 # Training process
 for i in range(N_episodes):
-    # Reset enviroment data
+    # Reset environment data
     done = False
     state = scale_state_variables(env.reset())
     total_episode_reward = 0.

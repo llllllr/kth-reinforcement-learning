@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from enum import IntEnum
 from termcolor import colored
-from el2805.envs.mdp import MDP
+from el2805.environments.mdp import MDP
 
 
 class Move(IntEnum):

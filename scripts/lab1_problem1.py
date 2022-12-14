@@ -2,11 +2,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
 from tqdm import trange
-from el2805.envs import MinotaurMaze
-from el2805.envs.grid_world import Move
-from el2805.envs.maze import MazeCell
-from el2805.envs.minotaur_maze import Progress
-from el2805.agents import DynamicProgramming, ValueIteration, QLearning, Sarsa
+from el2805.environments import MinotaurMaze
+from el2805.environments.grid_world import Move
+from el2805.environments.maze import MazeCell
+from el2805.environments.minotaur_maze import Progress
+from el2805.agents.mdp import DynamicProgramming, ValueIteration
+from el2805.agents.rl import QLearning, Sarsa
 from utils import print_and_write_line, minotaur_maze_exit_probability, train_rl_agent_one_episode
 
 SEED = 1

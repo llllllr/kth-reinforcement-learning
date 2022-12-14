@@ -4,8 +4,8 @@ import itertools as it
 from pathlib import Path
 from enum import Enum, IntEnum
 from termcolor import colored
-from el2805.envs.maze import Maze, MazeCell
-from el2805.envs.grid_world import Move, Position
+from el2805.environments.maze import Maze, MazeCell
+from el2805.environments.grid_world import Move, Position
 from el2805.utils import random_decide
 
 

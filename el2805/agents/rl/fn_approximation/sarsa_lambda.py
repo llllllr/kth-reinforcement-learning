@@ -2,7 +2,7 @@ import numpy as np
 import gym
 import pickle
 from typing import Any
-from el2805.agents.rl_agent import QAgent
+from el2805.agents.rl.rl_agent import QAgent
 from el2805.bases import Basis, FourierBasis
 
 

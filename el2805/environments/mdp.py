@@ -1,7 +1,7 @@
 import numpy as np
 from abc import ABC, abstractmethod
 from typing import Any
-from el2805.envs.rl_problem import RLProblem
+from el2805.environments.rl_problem import RLProblem
 
 
 class MDP(RLProblem, ABC):

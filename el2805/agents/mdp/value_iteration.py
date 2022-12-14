@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Any
-from el2805.agents.mdp_agent import MDPAgent
-from el2805.envs.mdp import MDP
+from el2805.agents.mdp.mdp_agent import MDPAgent
+from el2805.environments.mdp import MDP
 
 
 class ValueIteration(MDPAgent):

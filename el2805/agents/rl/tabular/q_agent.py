@@ -1,8 +1,8 @@
 import numpy as np
 from abc import ABC
 from typing import Any
-from el2805.agents.rl_agent import RLAgent
-from el2805.envs import RLProblem
+from el2805.agents.rl.rl_agent import RLAgent
+from el2805.environments import RLProblem
 from el2805.utils import random_decide
 
 
@@ -53,9 +53,10 @@ class QAgent(RLAgent, ABC):
 
         assert (self.epsilon == "decay") is (self.delta is not None)
 
-        # notes:
-        # - list of 1D ndarray and not 2D ndarray because the set of available actions for each state is different
-        # - Q-values of terminal states must be initialized to 0, they will never be updated (see Sutton and Barto)
+        # Notes:
+        # - List of 1D ndarray (not just 2D ndarray) because the set of available actions for each state is different.
+        # - Q-values of terminal states must be initialized to 0, they will never be updated (see Sutton and Barto).
+        #   This allows keeping the update formula the same also when the next state is terminal.
         self._q = [
             (self.q_init if not env.terminal_state(state) else 0) * np.ones(len(self.env.valid_actions(state)))
             for state in self.env.states

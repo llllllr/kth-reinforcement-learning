@@ -1,6 +1,6 @@
 import numpy as np
-from el2805.envs import Maze, PluckingBerries, MinotaurMaze
-from el2805.envs.grid_world import Move
+from el2805.environments import Maze, PluckingBerries, MinotaurMaze
+from el2805.environments.grid_world import Move
 
 
 def best_maze_path(env, agent):

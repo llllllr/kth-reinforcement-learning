@@ -1,5 +1,5 @@
 from typing import Any
-from el2805.agents.q_agent import QAgent
+from el2805.agents.rl.tabular.q_agent import QAgent
 
 
 class Sarsa(QAgent):
