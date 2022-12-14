@@ -27,7 +27,7 @@ def part_c(map_filepath, results_dir):
     state = environment.reset()
     environment.render()
     while not done:
-        action = agent.compute_action(state, time_step)
+        action = agent.compute_action(state=state, time_step=time_step)
         state, _, done, _ = environment.step(action)
         time_step += 1
         environment.render()

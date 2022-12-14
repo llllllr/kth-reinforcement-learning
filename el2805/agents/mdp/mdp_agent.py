@@ -8,7 +8,7 @@ from el2805.environments import MDP
 class MDPAgent(Agent, ABC):
     """Interface for an algorithm solving MDPs."""
 
-    def __init__(self, environment: MDP, discount: float | None = None):
+    def __init__(self, *, environment: MDP, discount: float | None = None):
         """
         :param environment: MDP problem
         :type environment: MDP

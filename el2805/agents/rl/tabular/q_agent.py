@@ -93,7 +93,7 @@ class QAgent(RLAgent, ABC):
         v = max(self._q[s])
         return v
 
-    def compute_action(self, state: Any, episode: int, explore: bool = True, **kwargs) -> int:
+    def compute_action(self, *, state: Any, episode: int, explore: bool = True, **kwargs) -> int:
         """Calculates the best action according to the agent's policy.
 
         :param state: state for which the action is desired

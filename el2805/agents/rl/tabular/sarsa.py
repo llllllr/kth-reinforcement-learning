@@ -3,7 +3,7 @@ from el2805.agents.rl.tabular.q_agent import QAgent
 
 
 class Sarsa(QAgent):
-    def update(self, state: Any, action: int, reward: float, next_state: Any, next_action: int, **kwargs) -> None:
+    def update(self, *, state: Any, action: int, reward: float, next_state: Any, next_action: int, **kwargs) -> None:
         _ = kwargs
         s = self.environment.state_index(state)
         a = self._action_index(state, action)

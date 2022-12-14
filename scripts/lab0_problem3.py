@@ -19,45 +19,30 @@ import gym
 import torch
 from collections import deque
 from el2805.agents.rl import RLAgent
-from el2805.utils import Experience
-
-
-class NeuralNetwork(torch.nn.Module):
-    _hidden_layer_size = 8
-
-    def __init__(self, input_size, output_size):
-        super().__init__()
-        self.input_size = input_size
-        self.output_size = output_size
-
-        self._hidden_layer_1 = torch.nn.Linear(input_size, self._hidden_layer_size)
-        self._hidden_layer_1_activation = torch.nn.ReLU()
-        self._output_layer = torch.nn.Linear(self._hidden_layer_size, output_size)
-
-    def forward(self, x):
-        x = self._hidden_layer_1(x)
-        x = self._hidden_layer_1_activation(x)
-        x = self._output_layer(x)
-        return x
+from el2805.utils import Experience, NeuralNetwork
+from utils import get_device
 
 
 class Agent(RLAgent):
     _replay_buffer_size = 128
     _batch_size = 3
 
-    def __init__(self, environment, device):
+    def __init__(self, environment, neural_network, device):
         super().__init__(environment=environment, discount=1, learning_rate=1e-3)
 
         self.device = device
-        self._input_size = len(environment.observation_space.low)
-        self._output_size = environment.action_space.n
-        self._nn = NeuralNetwork(input_size=self._input_size, output_size=self._output_size).to(device)
+        self.neural_network = neural_network.to(device)
+
+        self._n_actions = environment.action_space.n
         self._replay_buffer = deque(maxlen=self._replay_buffer_size)
-        self._optimizer = torch.optim.Adam(self._nn.parameters(), lr=self.learning_rate)
+        self._optimizer = torch.optim.Adam(self.neural_network.parameters(), lr=self.learning_rate)
+
+        assert self.neural_network.input_size == len(environment.observation_space.low)
+        assert self.neural_network.output_size == self._n_actions
 
     def update(self):
         if len(self._replay_buffer) < self._batch_size:
-            print("Not enough experience, skipping training step...")
+            print("Not enough experience, skipping update...")
             return
 
         # clean up gradients
@@ -68,10 +53,10 @@ class Agent(RLAgent):
         experience_batch = [self._replay_buffer[i] for i in experience_indices]
 
         # forward pass
-        states = torch.as_tensor(np.asarray([e.state for e in experience_batch])).to(self.device)
-        actions = [e.action for e in experience_batch]
-        outputs = self._nn(states)
-        assert outputs.shape == (self._batch_size, self._output_size)
+        states = torch.as_tensor(np.asarray([e.state for e in experience_batch]), device=self.device)
+        actions = torch.as_tensor([e.action for e in experience_batch], device=self.device)
+        outputs = self.neural_network(states)
+        assert outputs.shape == (self._batch_size, self._n_actions)
         outputs = outputs[torch.arange(self._batch_size), actions]
         assert outputs.shape == (self._batch_size,)
         z = outputs
@@ -80,12 +65,12 @@ class Agent(RLAgent):
 
         # backward pass
         loss.backward()
-        torch.nn.utils.clip_grad_norm_(self._nn.parameters(), max_norm=1)
+        torch.nn.utils.clip_grad_norm_(self.neural_network.parameters(), max_norm=1)
         self._optimizer.step()
 
     def compute_action(self, state):
         state = torch.tensor(state.reshape((1,) + state.shape))
-        output = self._nn(state)
+        output = self.neural_network(state)
         assert output.shape[0] == 1
         action = output.argmax().item()
         return action
@@ -95,14 +80,21 @@ class Agent(RLAgent):
 
 
 def main():
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-
     environment = gym.make('CartPole-v0')           # Create a CartPole environment
-    agent = Agent(environment=environment, device=device)
+
+    n_state_features = len(environment.observation_space.low)
+    n_actions = environment.action_space.n
+    neural_network = NeuralNetwork(
+        input_size=n_state_features,
+        output_size=n_actions,
+        hidden_layer_size=8,
+        n_hidden_layers=1
+    )
+    agent = Agent(environment=environment, neural_network=neural_network, device=get_device())
 
     for episode in range(5):
         state = environment.reset()                 # Reset environment, returns initial state
-        done = False                        # Boolean variable used to indicate if an episode terminated
+        done = False                                # Boolean variable used to indicate if an episode terminated
 
         while not done:
             environment.render()                    # Render the environment (DO NOT USE during training of the labs...)

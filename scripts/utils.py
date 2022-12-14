@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 from el2805.environments import Maze, PluckingBerries, MinotaurMaze
 from el2805.environments.grid_world import Move
 
@@ -53,3 +54,13 @@ def print_and_write_line(filepath, output, mode):
     print(output)
     with open(filepath, mode=mode) as f:
         f.write(output + "\n")
+
+
+def get_device():
+    if torch.cuda.is_available():
+        device = "cuda"
+    # elif torch.has_mps:
+    #     device = "mps"
+    else:
+        device = "cpu"
+    return device

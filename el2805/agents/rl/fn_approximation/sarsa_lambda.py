@@ -36,7 +36,7 @@ class SarsaLambda(QAgent):
         q = self._w[action].dot(phi)
         return q
 
-    def update(self, state: Any, action: int, reward: float, next_state: Any, next_action: int, **kwargs) -> None:
+    def update(self, *, state: Any, action: int, reward: float, next_state: Any, next_action: int, **kwargs) -> None:
         _ = kwargs
         phi = self.basis(state)
         q = self.q(state, action)
