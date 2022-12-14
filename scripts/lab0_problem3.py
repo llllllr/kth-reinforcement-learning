@@ -19,6 +19,7 @@ import gym
 import torch
 from collections import deque
 from typing import NamedTuple
+from el2805.agents.rl import RLAgent
 
 
 class Experience(NamedTuple):
@@ -29,10 +30,8 @@ class Experience(NamedTuple):
     done: bool
 
 
-class Agent(torch.nn.Module):
+class NeuralNetwork(torch.nn.Module):
     _hidden_layer_size = 8
-    _max_replay_buffer_len = 128
-    _batch_size = 3
 
     def __init__(self, input_size, output_size):
         super().__init__()
@@ -43,31 +42,31 @@ class Agent(torch.nn.Module):
         self._hidden_layer_1_activation = torch.nn.ReLU()
         self._output_layer = torch.nn.Linear(self._hidden_layer_size, output_size)
 
-        self._replay_buffer = deque(maxlen=self._max_replay_buffer_len)
-        self._optimizer = torch.optim.Adam(self.parameters())
-        self._rng = np.random.RandomState(seed=1)
-
     def forward(self, x):
         x = self._hidden_layer_1(x)
         x = self._hidden_layer_1_activation(x)
         x = self._output_layer(x)
         return x
 
-    def compute_action(self, state):
-        state_tensor = torch.tensor(np.asarray([state]))
-        output = self(state_tensor)
-        assert output.shape[0] == 1
-        action = output.argmax().item()
-        return action
 
-    def record_experience(self, experience):
-        self._replay_buffer.append(experience)
+class Agent(RLAgent):
+    _max_replay_buffer_len = 128
+    _batch_size = 3
 
-    def train_step(self):
+    def __init__(self, env, device):
+        super().__init__(env=env, discount=1, learning_rate=1e-3)
+
+        self.device = device
+        self._input_size = len(env.observation_space.low)
+        self._output_size = env.action_space.n
+        self._nn = NeuralNetwork(input_size=self._input_size, output_size=self._output_size).to(device)
+        self._replay_buffer = deque(maxlen=self._max_replay_buffer_len)
+        self._optimizer = torch.optim.Adam(self._nn.parameters(), lr=self.learning_rate)
+
+    def update(self, **kwargs) -> None:
         if len(self._replay_buffer) < self._batch_size:
             print("Not enough experience, skipping training step...")
             return
-        device = next(self.parameters()).device
 
         # clean up gradients
         self._optimizer.zero_grad()
@@ -77,10 +76,10 @@ class Agent(torch.nn.Module):
         experience_batch = [self._replay_buffer[i] for i in experience_indices]
 
         # forward pass
-        states = torch.as_tensor(np.asarray([e.state for e in experience_batch])).to(device)
+        states = torch.as_tensor(np.asarray([e.state for e in experience_batch])).to(self.device)
         actions = [e.action for e in experience_batch]
-        outputs = self(states)
-        assert outputs.shape == (self._batch_size, self.output_size)
+        outputs = self._nn(states)
+        assert outputs.shape == (self._batch_size, self._output_size)
         outputs = outputs[torch.arange(self._batch_size), actions]
         assert outputs.shape == (self._batch_size,)
         z = outputs
@@ -89,17 +88,25 @@ class Agent(torch.nn.Module):
 
         # backward pass
         loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm=1)
+        torch.nn.utils.clip_grad_norm_(self._nn.parameters(), max_norm=1)
         self._optimizer.step()
+
+    def compute_action(self, state):
+        state_tensor = torch.tensor(np.asarray([state]))
+        output = self._nn(state_tensor)
+        assert output.shape[0] == 1
+        action = output.argmax().item()
+        return action
+
+    def record_experience(self, experience):
+        self._replay_buffer.append(experience)
 
 
 def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     env = gym.make('CartPole-v0')           # Create a CartPole environment
-    n = len(env.observation_space.low)      # State space dimensionality
-    m = env.action_space.n                  # Number of actions
-    agent = Agent(n, m).to(device)
+    agent = Agent(env=env, device=device)
 
     for episode in range(5):
         state = env.reset()                 # Reset environment, returns initial state
@@ -124,7 +131,7 @@ def main():
                 done=done
             )
             agent.record_experience(experience)
-            agent.train_step()
+            agent.update()
 
             state = next_state
 
