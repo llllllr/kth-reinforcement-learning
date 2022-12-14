@@ -5,8 +5,8 @@ from el2805.environments.mdp import MDP
 
 
 class ValueIteration(MDPAgent):
-    def __init__(self, env: MDP, discount: float, precision: float):
-        super().__init__(env, discount)
+    def __init__(self, environment: MDP, discount: float, precision: float):
+        super().__init__(environment, discount)
         self.discount = discount
         self.precision = precision
         self._v = np.zeros(len(self.env.states))     # V(s) for each s in S
@@ -34,6 +34,7 @@ class ValueIteration(MDPAgent):
             self.policy[s] = valid_actions[a_best]
 
     def compute_action(self, state: Any, **kwargs) -> int:
+        _ = kwargs
         assert self.policy is not None
         s = self.env.state_index(state)
         action = self.policy[s]

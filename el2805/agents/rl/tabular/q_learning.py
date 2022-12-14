@@ -4,9 +4,10 @@ from el2805.agents.rl.tabular.q_agent import QAgent
 
 class QLearning(QAgent):
     def update(self, state: Any, action: int, reward: float, next_state: Any, **kwargs) -> None:
-        s = self.env.state_index(state)
+        _ = kwargs
+        s = self.environment.state_index(state)
         a = self._action_index(state, action)
-        s_next = self.env.state_index(next_state)
+        s_next = self.environment.state_index(next_state)
 
         self._n[s][a] += 1
         step_size = 1 / (self._n[s][a] ** self.alpha)

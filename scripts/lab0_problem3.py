@@ -18,16 +18,8 @@ import numpy as np
 import gym
 import torch
 from collections import deque
-from typing import NamedTuple
 from el2805.agents.rl import RLAgent
-
-
-class Experience(NamedTuple):
-    state: np.array
-    action: int
-    reward: float
-    next_state: np.array
-    done: bool
+from el2805.utils import Experience
 
 
 class NeuralNetwork(torch.nn.Module):
@@ -50,20 +42,20 @@ class NeuralNetwork(torch.nn.Module):
 
 
 class Agent(RLAgent):
-    _max_replay_buffer_len = 128
+    _replay_buffer_size = 128
     _batch_size = 3
 
-    def __init__(self, env, device):
-        super().__init__(env=env, discount=1, learning_rate=1e-3)
+    def __init__(self, environment, device):
+        super().__init__(environment=environment, discount=1, learning_rate=1e-3)
 
         self.device = device
-        self._input_size = len(env.observation_space.low)
-        self._output_size = env.action_space.n
+        self._input_size = len(environment.observation_space.low)
+        self._output_size = environment.action_space.n
         self._nn = NeuralNetwork(input_size=self._input_size, output_size=self._output_size).to(device)
-        self._replay_buffer = deque(maxlen=self._max_replay_buffer_len)
+        self._replay_buffer = deque(maxlen=self._replay_buffer_size)
         self._optimizer = torch.optim.Adam(self._nn.parameters(), lr=self.learning_rate)
 
-    def update(self, **kwargs) -> None:
+    def update(self):
         if len(self._replay_buffer) < self._batch_size:
             print("Not enough experience, skipping training step...")
             return
@@ -92,8 +84,8 @@ class Agent(RLAgent):
         self._optimizer.step()
 
     def compute_action(self, state):
-        state_tensor = torch.tensor(np.asarray([state]))
-        output = self._nn(state_tensor)
+        state = torch.tensor(state.reshape((1,) + state.shape))
+        output = self._nn(state)
         assert output.shape[0] == 1
         action = output.argmax().item()
         return action
@@ -105,15 +97,15 @@ class Agent(RLAgent):
 def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    env = gym.make('CartPole-v0')           # Create a CartPole environment
-    agent = Agent(env=env, device=device)
+    environment = gym.make('CartPole-v0')           # Create a CartPole environment
+    agent = Agent(environment=environment, device=device)
 
     for episode in range(5):
-        state = env.reset()                 # Reset environment, returns initial state
+        state = environment.reset()                 # Reset environment, returns initial state
         done = False                        # Boolean variable used to indicate if an episode terminated
 
         while not done:
-            env.render()                    # Render the environment (DO NOT USE during training of the labs...)
+            environment.render()                    # Render the environment (DO NOT USE during training of the labs...)
 
             # action = np.random.randint(m)   # Pick a random integer between [0, m-1]
             action = agent.compute_action(state)
@@ -121,7 +113,7 @@ def main():
             # The next line takes permits you to take an action in the RL environment
             # env.step(action) returns 4 variables:
             # (1) next state; (2) reward; (3) done variable; (4) additional stuff
-            next_state, reward, done, _ = env.step(action)
+            next_state, reward, done, _ = environment.step(action)
 
             experience = Experience(
                 state=state,
@@ -135,7 +127,7 @@ def main():
 
             state = next_state
 
-    env.close()  # Close all the windows
+    environment.close()  # Close all the windows
 
 
 if __name__ == "__main__":

@@ -11,7 +11,8 @@ class QAgent(RLAgent, ABC):
 
     def __init__(
             self,
-            env: RLProblem,
+            *,
+            environment: RLProblem,
             discount: float,
             learning_rate: float | str,
             epsilon: float | str,
@@ -20,9 +21,10 @@ class QAgent(RLAgent, ABC):
             q_init: float = 0,
             seed: int | None = None
     ):
-        """
-        :param env: RL environment
-        :type env: RLProblem
+        """Initializes a QAgent.
+
+        :param environment: RL environment
+        :type environment: RLProblem
         :param discount: discount factor
         :type discount: float
         :param learning_rate: learning rate (e.g., 1e-3) or learning rate method (e.g., "decay")
@@ -38,8 +40,8 @@ class QAgent(RLAgent, ABC):
         :param seed: seed
         :type seed: int, optional
         """
-        super().__init__(env=env, discount=discount, learning_rate=learning_rate, seed=seed)
-        self.env = env  # to avoid warnings of type hints
+        super().__init__(environment=environment, discount=discount, learning_rate=learning_rate, seed=seed)
+        self.environment = environment  # to avoid warnings of type hints
         self.epsilon = epsilon
         self.alpha = alpha
         self.delta = delta
@@ -58,10 +60,11 @@ class QAgent(RLAgent, ABC):
         # - Q-values of terminal states must be initialized to 0, they will never be updated (see Sutton and Barto).
         #   This allows keeping the update formula the same also when the next state is terminal.
         self._q = [
-            (self.q_init if not env.terminal_state(state) else 0) * np.ones(len(self.env.valid_actions(state)))
-            for state in self.env.states
+            (self.q_init if not environment.terminal_state(state) else 0) *
+            np.ones(len(self.environment.valid_actions(state)))
+            for state in self.environment.states
         ]
-        self._n = [np.zeros(len(self.env.valid_actions(state))) for state in self.env.states]
+        self._n = [np.zeros(len(self.environment.valid_actions(state))) for state in self.environment.states]
 
     def q(self, state: Any, action: int) -> float:
         """Returns the Q-function evaluated on the specified (state, action) pair. That is, Q(state,action).
@@ -73,7 +76,7 @@ class QAgent(RLAgent, ABC):
         :return: Q-value of the specified (state,action) pair, Q(state,action)
         :rtype: float
         """
-        s = self.env.state_index(state)
+        s = self.environment.state_index(state)
         a = self._action_index(state, action)
         q = self._q[s][a]
         return q
@@ -86,7 +89,7 @@ class QAgent(RLAgent, ABC):
         :return: value of the specified state, V(state)
         :rtype: float
         """
-        s = self.env.state_index(state)
+        s = self.environment.state_index(state)
         v = max(self._q[s])
         return v
 
@@ -102,14 +105,15 @@ class QAgent(RLAgent, ABC):
         :return: best action according to the agent's policy
         :rtype: int
         """
-        valid_actions = self.env.valid_actions(state)
+        _ = kwargs
+        valid_actions = self.environment.valid_actions(state)
         epsilon = 1 / (episode ** self.delta) if self.epsilon == "decay" else self.epsilon
 
         # eps-greedy policy: exploration mode with epsilon probability
         if explore and random_decide(self._rng, epsilon):
             action = self._rng.choice(valid_actions)
         else:
-            s = self.env.state_index(state)
+            s = self.environment.state_index(state)
             v = self.v(state)
             a = self._rng.choice(np.asarray(self._q[s] == v).nonzero()[0])      # random among those with max Q-value
             action = valid_actions[a]
@@ -126,7 +130,7 @@ class QAgent(RLAgent, ABC):
         :return: index of the specified action in the list of valid actions for the state
         :rtype: int
         """
-        valid_actions = self.env.valid_actions(state)
+        valid_actions = self.environment.valid_actions(state)
         return valid_actions.index(action)
 
     def seed(self, seed: int | None = None) -> None:

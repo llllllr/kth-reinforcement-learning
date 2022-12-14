@@ -19,30 +19,30 @@ def best_maze_path(env, agent):
     return best_path_
 
 
-def minotaur_maze_exit_probability(env, agent):
-    assert type(env) == MinotaurMaze
+def minotaur_maze_exit_probability(environment, agent):
+    assert type(environment) == MinotaurMaze
     n_episodes = 10000
     n_wins = 0
     for episode in range(1, n_episodes+1):
         done = False
         time_step = 0
-        env.seed(episode)
-        state = env.reset()
+        environment.seed(episode)
+        state = environment.reset()
         while not done:
             action = agent.compute_action(state=state, time_step=time_step, episode=episode, explore=False)
-            state, _, done, _ = env.step(action)
+            state, _, done, _ = environment.step(action)
             time_step += 1
-        n_wins += 1 if env.won() else 0
+        n_wins += 1 if environment.won() else 0
     exit_probability = n_wins / n_episodes
     return exit_probability
 
 
-def train_rl_agent_one_episode(env, agent, episode):
+def train_rl_agent_one_episode(environment, agent, episode):
     done = False
-    state = env.reset()
+    state = environment.reset()
     action = agent.compute_action(state=state, episode=episode)
     while not done:
-        next_state, reward, done, _ = env.step(action)
+        next_state, reward, done, _ = environment.step(action)
         next_action = agent.compute_action(state=next_state, episode=episode)
         agent.update(state=state, action=action, reward=reward, next_state=next_state, next_action=next_action)
         state = next_state

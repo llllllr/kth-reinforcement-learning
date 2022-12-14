@@ -9,14 +9,16 @@ class RLAgent(Agent, ABC):
 
     def __init__(
             self,
-            env: gym.Env,
+            *,
+            environment: gym.Env,
             discount: float,
             learning_rate: float | str,
             seed: int | None = None
     ):
-        """
-        :param env: RL environment
-        :type env: gym.Env
+        """Initializes a RLAgent.
+
+        :param environment: RL environment
+        :type environment: gym.Env
         :param discount: discount factor of the MDP
         :type discount: float
         :param learning_rate: learning rate (e.g., 1e-3) or learning rate method (e.g., "decay")
@@ -24,7 +26,7 @@ class RLAgent(Agent, ABC):
         :param seed: seed
         :type seed: int, optional
         """
-        super().__init__(env=env, discount=discount)
+        super().__init__(environment=environment, discount=discount)
         self.learning_rate = learning_rate
         self._rng = None
         self.seed(seed)

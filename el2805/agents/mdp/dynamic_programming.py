@@ -5,8 +5,8 @@ from el2805.environments import MDP
 
 
 class DynamicProgramming(MDPAgent):
-    def __init__(self, env: MDP):
-        super().__init__(env=env)
+    def __init__(self, environment: MDP):
+        super().__init__(environment=environment)
         assert self.env.finite_horizon()
 
     def solve(self) -> None:
@@ -34,6 +34,7 @@ class DynamicProgramming(MDPAgent):
                 self.policy[t, s] = valid_actions[a_best]
 
     def compute_action(self, state: Any, time_step: int, **kwargs) -> int:
+        _ = kwargs
         assert self.policy is not None
         s = self.env.state_index(state)
         action = self.policy[time_step, s]

@@ -17,39 +17,39 @@ def part_c(map_filepath, results_dir):
     results_dir = results_dir / "part_c"
     results_dir.mkdir(parents=True, exist_ok=True)
 
-    env = MinotaurMaze(map_filepath=map_filepath, horizon=20)
-    agent = DynamicProgramming(env=env)
+    environment = MinotaurMaze(map_filepath=map_filepath, horizon=20)
+    agent = DynamicProgramming(environment=environment)
     agent.solve()
 
     done = False
     time_step = 0
-    env.seed(1)
-    state = env.reset()
-    env.render()
+    environment.seed(1)
+    state = environment.reset()
+    environment.render()
     while not done:
         action = agent.compute_action(state, time_step)
-        state, _, done, _ = env.step(action)
+        state, _, done, _ = environment.step(action)
         time_step += 1
-        env.render()
+        environment.render()
 
     for t in [0, agent.policy.shape[0]-1]:
         policy = agent.policy[t]
-        map_policy = np.zeros(env.map.shape)
-        minotaur_position = np.asarray(env.map == MazeCell.EXIT).nonzero()
+        map_policy = np.zeros(environment.map.shape)
+        minotaur_position = np.asarray(environment.map == MazeCell.EXIT).nonzero()
         minotaur_position = int(minotaur_position[0][0]), int(minotaur_position[1][0])
 
-        for i in range(env.map.shape[0]):
-            for j in range(env.map.shape[1]):
+        for i in range(environment.map.shape[0]):
+            for j in range(environment.map.shape[1]):
                 try:
                     state = ((i, j), minotaur_position, Progress.WITH_KEYS)
-                    s = env.state_index(state)
+                    s = environment.state_index(state)
                     map_policy[i, j] = policy[s]
                 except KeyError:
                     map_policy[i, j] = Move.NOP
 
         print()
         print(f"Dynamic programming - Minotaur at exit and t={t+1}")
-        env.render(mode="policy", policy=map_policy)
+        environment.render(mode="policy", policy=map_policy)
 
 
 def part_d(map_filepath, results_dir):
@@ -65,17 +65,17 @@ def part_d(map_filepath, results_dir):
         # trick: instead of solving for every min_horizon<=T<=max_horizon, we solve only for T=max_horizon
         # then, we read the results by hacking the policy to consider the last T time steps
         max_horizon = horizons[-1]
-        env = MinotaurMaze(map_filepath=map_filepath, horizon=max_horizon, minotaur_nop=minotaur_nop)
-        agent = DynamicProgramming(env=env)
+        environment = MinotaurMaze(map_filepath=map_filepath, horizon=max_horizon, minotaur_nop=minotaur_nop)
+        agent = DynamicProgramming(environment=environment)
         agent.solve()
         full_policy = agent.policy.copy()
 
         exit_probabilities = []
         for horizon in horizons:
             agent.policy = full_policy[max_horizon - horizon:]  # trick
-            env.horizon = horizon
+            environment.horizon = horizon
 
-            exit_probability = minotaur_maze_exit_probability(env, agent)
+            exit_probability = minotaur_maze_exit_probability(environment, agent)
             exit_probabilities.append(exit_probability)
 
             print_and_write_line(
@@ -100,11 +100,11 @@ def part_f(map_filepath, results_dir):
     results_dir.mkdir(parents=True, exist_ok=True)
 
     expected_life = 30
-    env = MinotaurMaze(map_filepath=map_filepath, probability_poison_death=1/expected_life)
-    agent = ValueIteration(env=env, discount=1-1/expected_life, precision=1e-2)
+    environment = MinotaurMaze(map_filepath=map_filepath, probability_poison_death=1/expected_life)
+    agent = ValueIteration(environment=environment, discount=1 - 1 / expected_life, precision=1e-2)
     agent.solve()
 
-    exit_probability = minotaur_maze_exit_probability(env, agent)
+    exit_probability = minotaur_maze_exit_probability(environment, agent)
     print_and_write_line(
         filepath=results_dir / "results.txt",
         output=f"P('exit alive'|'poisoned')={exit_probability}",
@@ -121,7 +121,7 @@ def part_ij(map_filepath, results_dir):
     discount = 1 - 1/expected_life
     n_episodes = 50000
 
-    env = MinotaurMaze(
+    environment = MinotaurMaze(
         map_filepath=map_filepath,
         minotaur_chase=True,
         keys=True,
@@ -129,8 +129,8 @@ def part_ij(map_filepath, results_dir):
     )
 
     # baseline: Value Iteration
-    start_state = env.reset()
-    agent = ValueIteration(env=env, discount=discount, precision=1e-2)
+    start_state = environment.reset()
+    agent = ValueIteration(environment=environment, discount=discount, precision=1e-2)
     agent.solve()
     v = agent.v(start_state)
     values_baseline = np.full(n_episodes, v)
@@ -148,7 +148,7 @@ def part_ij(map_filepath, results_dir):
 
         # agent = QLearning(    # TODO: select the algorithm by commenting/uncommenting
         agent = Sarsa(
-            env=env,
+            environment=environment,
             learning_rate="decay",
             discount=discount,
             alpha=alpha,
@@ -158,10 +158,10 @@ def part_ij(map_filepath, results_dir):
             seed=SEED
         )
 
-        env.seed(SEED)
+        environment.seed(SEED)
         values = []
         for episode in trange(1, n_episodes+1, desc=label):
-            train_rl_agent_one_episode(env, agent, episode)
+            train_rl_agent_one_episode(environment, agent, episode)
             v = agent.v(start_state)
             values.append(v)
 
@@ -182,17 +182,17 @@ def part_k(map_filepath, results_dir):
     probability_poison_death = 1/expected_life
     discount = 1 - 1/expected_life
 
-    env = MinotaurMaze(
+    environment = MinotaurMaze(
         map_filepath=map_filepath,
         minotaur_chase=True,
         keys=True,
         probability_poison_death=probability_poison_death
     )
 
-    agent_vi = ValueIteration(env=env, discount=discount, precision=1e-2)
+    agent_vi = ValueIteration(environment=environment, discount=discount, precision=1e-2)
 
     agent_q_learning = QLearning(
-        env=env,
+        environment=environment,
         learning_rate="decay",
         discount=discount,
         alpha=0.55,
@@ -203,7 +203,7 @@ def part_k(map_filepath, results_dir):
     )
 
     agent_sarsa = Sarsa(
-        env=env,
+        environment=environment,
         learning_rate="decay",
         discount=discount,
         alpha=0.65,
@@ -222,12 +222,12 @@ def part_k(map_filepath, results_dir):
         # train
         if agent_name != "vi":
             for episode in trange(1, n_episodes+1, desc=agent_name):
-                train_rl_agent_one_episode(env, agent, episode)
+                train_rl_agent_one_episode(environment, agent, episode)
         else:
             agent.solve()
 
         # test
-        exit_probability = minotaur_maze_exit_probability(env, agent)
+        exit_probability = minotaur_maze_exit_probability(environment, agent)
         exit_probabilities.append(exit_probability)
         print_and_write_line(
             filepath=results_dir / "results.txt",

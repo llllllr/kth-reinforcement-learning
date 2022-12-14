@@ -8,15 +8,15 @@ from el2805.environments import MDP
 class MDPAgent(Agent, ABC):
     """Interface for an algorithm solving MDPs."""
 
-    def __init__(self, env: MDP, discount: float | None = None):
+    def __init__(self, environment: MDP, discount: float | None = None):
         """
-        :param env: MDP problem
-        :type env: MDP
+        :param environment: MDP problem
+        :type environment: MDP
         :param discount: discount factor
         :type discount: float, optional
         """
-        super().__init__(env=env, discount=discount)
-        self.env = env  # to avoid warning for type hints
+        super().__init__(environment=environment, discount=discount)
+        self.env = environment  # to avoid warning for type hints
         self._policy = None
 
     @abstractmethod

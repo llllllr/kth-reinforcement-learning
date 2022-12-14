@@ -35,6 +35,7 @@ class MinotaurMaze(Maze):
 
     def __init__(
             self,
+            *,
             map_filepath: Path,
             horizon: int | None = None,
             minotaur_nop: bool = False,

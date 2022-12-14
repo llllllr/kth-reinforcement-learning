@@ -9,7 +9,8 @@ from el2805.bases import Basis, FourierBasis
 class SarsaLambda(QAgent):
     def __init__(
             self,
-            env: gym.Env,
+            *,
+            environment: gym.Env,
             discount: float,
             learning_rate: float | str,
             basis: Basis,
@@ -18,7 +19,7 @@ class SarsaLambda(QAgent):
             clip: float | None = None,
             seed: int | None = None
     ):
-        super().__init__(env=env, discount=discount, learning_rate=learning_rate, seed=seed)
+        super().__init__(environment=environment, discount=discount, learning_rate=learning_rate, seed=seed)
         if not isinstance(basis, FourierBasis):
             raise NotImplementedError
         self.basis: FourierBasis = basis
@@ -36,6 +37,7 @@ class SarsaLambda(QAgent):
         return q
 
     def update(self, state: Any, action: int, reward: float, next_state: Any, next_action: int, **kwargs) -> None:
+        _ = kwargs
         phi = self.basis(state)
         q = self.q(state, action)
         q_next = self.q(next_state, next_action)
