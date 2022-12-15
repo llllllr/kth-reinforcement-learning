@@ -2,6 +2,7 @@ import numpy as np
 from abc import ABC
 from typing import Any
 from el2805.agents.rl.rl_agent import RLAgent
+from el2805.agents.rl.utils import Experience
 from el2805.environments import RLProblem
 from el2805.utils import random_decide
 
@@ -65,6 +66,7 @@ class QAgent(RLAgent, ABC):
             for state in self.environment.states
         ]
         self._n = [np.zeros(len(self.environment.valid_actions(state))) for state in self.environment.states]
+        self._last_experience = None
 
     def q(self, state: Any, action: int) -> float:
         """Returns the Q-function evaluated on the specified (state, action) pair. That is, Q(state,action).
@@ -119,6 +121,14 @@ class QAgent(RLAgent, ABC):
             action = valid_actions[a]
 
         return action
+
+    def record_experience(self, experience: Experience) -> None:
+        """Store a new experience, which is supposed to be used for training.
+
+        :param experience: new experience to store
+        :type experience: Experience
+        """
+        self._last_experience = experience
 
     def _action_index(self, state: Any, action: int) -> int:
         """Returns the index of a certain action in the list of valid actions in a certain state.

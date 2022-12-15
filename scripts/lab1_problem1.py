@@ -6,8 +6,8 @@ from el2805.environments import MinotaurMaze
 from el2805.environments.grid_world import Move
 from el2805.environments.maze import MazeCell
 from el2805.environments.minotaur_maze import Progress
-from el2805.agents.mdp import DynamicProgramming, ValueIteration
-from el2805.agents.rl import QLearning, Sarsa
+from el2805.agents.mdp import MDPAgent, DynamicProgramming, ValueIteration
+from el2805.agents.rl import RLAgent, QLearning, Sarsa
 from utils import print_and_write_line, minotaur_maze_exit_probability, train_rl_agent_one_episode
 
 SEED = 1
@@ -62,8 +62,8 @@ def part_d(map_filepath, results_dir):
         print(f"Minotaur NOP: {minotaur_nop}")
         horizons = np.arange(1, 31)
 
-        # trick: instead of solving for every min_horizon<=T<=max_horizon, we solve only for T=max_horizon
-        # then, we read the results by hacking the policy to consider the last T time steps
+        # Trick: instead of solving for every min_horizon<=T<=max_horizon, we solve only for T=max_horizon.
+        # Then, we read the results by hacking the policy to consider the last T time steps
         max_horizon = horizons[-1]
         environment = MinotaurMaze(map_filepath=map_filepath, horizon=max_horizon, minotaur_nop=minotaur_nop)
         agent = DynamicProgramming(environment=environment)
@@ -128,7 +128,7 @@ def part_ij(map_filepath, results_dir):
         probability_poison_death=0  # important: we can sample better with infinite horizon
     )
 
-    # baseline: Value Iteration
+    # Baseline: Value Iteration
     start_state = environment.reset()
     agent = ValueIteration(environment=environment, discount=discount, precision=1e-2)
     agent.solve()
@@ -219,14 +219,15 @@ def part_k(map_filepath, results_dir):
     agent_names = ["vi", "q_learning", "sarsa"]
     exit_probabilities = []
     for agent_name, agent in zip(agent_names, agents):
-        # train
-        if agent_name != "vi":
-            for episode in trange(1, n_episodes+1, desc=agent_name):
-                train_rl_agent_one_episode(environment, agent, episode)
-        else:
+        # Train or solve
+        if isinstance(agent, RLAgent):
+            agent.train(n_episodes)
+        elif isinstance(agent, MDPAgent):
             agent.solve()
+        else:
+            raise ValueError
 
-        # test
+        # Test
         exit_probability = minotaur_maze_exit_probability(environment, agent)
         exit_probabilities.append(exit_probability)
         print_and_write_line(

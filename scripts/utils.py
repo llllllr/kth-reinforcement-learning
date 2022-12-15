@@ -2,6 +2,7 @@ import numpy as np
 import torch
 from el2805.environments import Maze, PluckingBerries, MinotaurMaze
 from el2805.environments.grid_world import Move
+from el2805.agents.rl.utils import Experience
 
 
 def best_maze_path(env, agent):
@@ -41,13 +42,22 @@ def minotaur_maze_exit_probability(environment, agent):
 def train_rl_agent_one_episode(environment, agent, episode):
     done = False
     state = environment.reset()
-    action = agent.compute_action(state=state, episode=episode)
     while not done:
+        action = agent.compute_action(state=state, episode=episode)
         next_state, reward, done, _ = environment.step(action)
-        next_action = agent.compute_action(state=next_state, episode=episode)
-        agent.update(state=state, action=action, reward=reward, next_state=next_state, next_action=next_action)
         state = next_state
-        action = next_action
+
+        # Update policy
+        experience = Experience(
+            episode=episode,
+            state=state,
+            action=action,
+            reward=reward,
+            next_state=next_state,
+            done=done
+        )
+        agent.record_experience(experience)
+        agent.update()
 
 
 def print_and_write_line(filepath, output, mode):
