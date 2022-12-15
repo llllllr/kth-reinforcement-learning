@@ -45,9 +45,7 @@ def train_rl_agent_one_episode(environment, agent, episode):
     while not done:
         action = agent.compute_action(state=state, episode=episode)
         next_state, reward, done, _ = environment.step(action)
-        state = next_state
 
-        # Update policy
         experience = Experience(
             episode=episode,
             state=state,
@@ -58,6 +56,8 @@ def train_rl_agent_one_episode(environment, agent, episode):
         )
         agent.record_experience(experience)
         agent.update()
+
+        state = next_state
 
 
 def print_and_write_line(filepath, output, mode):
