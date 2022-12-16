@@ -69,7 +69,7 @@ class RLAgent(Agent, ABC):
             # Run episode
             while not done:
                 # Interact with the environment
-                action = self.compute_action(state=state, episode=episode)
+                action = self.compute_action(state=state, episode=episode, explore=train)
                 next_state, reward, done, _ = self.environment.step(action)
                 if render:
                     self.environment.render()
@@ -105,8 +105,10 @@ class RLAgent(Agent, ABC):
             avg_episode_reward = running_average(history_stats["episode_reward"])[-1]
             episodes.set_description(
                 f"Episode {episode} - "
-                f"Reward/Steps: {episode_reward:.1f}/{episode_length} - "
-                f"Avg. Reward/Steps: {avg_episode_reward:.1f}/{avg_episode_length}"
+                f"Reward: {episode_reward:.1f} - "
+                f"Length: {episode_length} - "
+                f"Avg reward: {avg_episode_reward:.1f} - "
+                f"Avg length: {avg_episode_length:.1f}"
             )
 
         # TODO: early stopping?

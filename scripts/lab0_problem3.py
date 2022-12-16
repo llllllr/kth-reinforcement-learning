@@ -31,12 +31,12 @@ class Agent(RLAgent):
     def __init__(self, *, environment, device):
         super().__init__(environment=environment, discount=1, learning_rate=1e-3)
 
-        self._n_state_features = len(environment.observation_space.low)
+        n_state_features = len(environment.observation_space.low)
         self._n_actions = environment.action_space.n
 
         self.device = device
         self.neural_network = QNetwork(
-            input_size=self._n_state_features,
+            input_size=n_state_features,
             output_size=self._n_actions,
             n_hidden_layers=1,
             hidden_layer_size=8,
@@ -49,7 +49,6 @@ class Agent(RLAgent):
     def update(self) -> dict:
         stats = {}
         if len(self._replay_buffer) < self._batch_size:
-            print("Not enough experience, skipping update...")
             return stats
 
         # Clean up gradients
