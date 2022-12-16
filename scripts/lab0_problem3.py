@@ -27,6 +27,8 @@ from utils import get_device
 class Agent(RLAgent):
     _replay_buffer_size = 128
     _batch_size = 3
+    _n_hidden_layers = 1
+    _hidden_layer_size = 8
 
     def __init__(self, *, environment, device):
         super().__init__(environment=environment, discount=1, learning_rate=1e-3)
@@ -38,8 +40,8 @@ class Agent(RLAgent):
         self.neural_network = QNetwork(
             input_size=n_state_features,
             output_size=self._n_actions,
-            n_hidden_layers=1,
-            hidden_layer_size=8,
+            n_hidden_layers=self._n_hidden_layers,
+            hidden_layer_size=self._hidden_layer_size,
             activation="relu"
         ).to(device)
 

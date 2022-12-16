@@ -53,7 +53,14 @@ class RLAgent(Agent, ABC):
         """
         raise NotImplementedError
 
-    def _train_or_test(self, n_episodes: int, train: bool, render: bool) -> dict:
+    def _train_or_test(
+            self,
+            n_episodes: int,
+            train: bool,
+            render: bool = False,
+            early_stopping_reward: float | None = None
+    ) -> dict:
+        assert not (train and render)
         history_stats = defaultdict(list)
         episodes = trange(1, n_episodes + 1, desc='Episode: ', leave=True)
 
@@ -111,15 +118,17 @@ class RLAgent(Agent, ABC):
                 f"Avg length: {avg_episode_length:.1f}"
             )
 
-        # TODO: early stopping?
+            if early_stopping_reward is not None and avg_episode_reward >= early_stopping_reward:
+                print("Early stopping")
+                break
 
         return history_stats
 
-    def train(self, n_episodes: int) -> dict:
+    def train(self, n_episodes: int, early_stopping_reward: float | None = None) -> dict:
         stats = self._train_or_test(
             n_episodes=n_episodes,
             train=True,
-            render=False
+            early_stopping_reward=early_stopping_reward
         )
         return stats
 
