@@ -1,5 +1,6 @@
 import gym
 import numpy as np
+import torch
 from abc import ABC, abstractmethod
 from tqdm import trange
 from collections import defaultdict
@@ -20,7 +21,7 @@ class RLAgent(Agent, ABC):
             epsilon: float | str,
             epsilon_max: float | None = None,
             epsilon_min: float | None = None,
-            epsilon_decay_episodes: int | None = None,
+            epsilon_decay_duration: int | None = None,
             delta: float | None = None,
             seed: int | None = None
     ):
@@ -38,8 +39,8 @@ class RLAgent(Agent, ABC):
         :type epsilon_max: float, optional
         :param epsilon_min: final probability of exploration (eps-greedy policy)
         :type epsilon_min: float, optional
-        :param epsilon_decay_episodes: duration of epsilon decay in episodes (eps-greedy policy)
-        :type epsilon_decay_episodes: int, optional
+        :param epsilon_decay_duration: duration of epsilon decay in episodes (eps-greedy policy)
+        :type epsilon_decay_duration: int, optional
         :param delta: exponent in epsilon decay 1/(episode**delta) (eps-greedy policy)
         :type delta: float, optional
         :param seed: seed
@@ -50,7 +51,7 @@ class RLAgent(Agent, ABC):
         self.epsilon = epsilon
         self.epsilon_max = epsilon_max
         self.epsilon_min = epsilon_min
-        self.epsilon_decay_episodes = epsilon_decay_episodes
+        self.epsilon_decay_duration = epsilon_decay_duration
         self.delta = delta
         self._rng = None
         self.seed(seed)
@@ -113,6 +114,7 @@ class RLAgent(Agent, ABC):
         :type seed: int, optional
         """
         self._rng = np.random.RandomState(seed)
+        torch.manual_seed(seed)
 
     def _train_or_test(
             self,
@@ -194,13 +196,13 @@ class RLAgent(Agent, ABC):
             epsilon = max(
                 self.epsilon_min,
                 self.epsilon_max -
-                (self.epsilon_max - self.epsilon_min) * (episode - 1) / (self.epsilon_decay_episodes - 1)
+                (self.epsilon_max - self.epsilon_min) * (episode - 1) / (self.epsilon_decay_duration - 1)
             )
         elif self.epsilon == "exponential":
             epsilon = max(
                 self.epsilon_min,
                 self.epsilon_max *
-                (self.epsilon_min / self.epsilon_max) ** ((episode - 1) / (self.epsilon_decay_episodes - 1))
+                (self.epsilon_min / self.epsilon_max) ** ((episode - 1) / (self.epsilon_decay_duration - 1))
             )
         else:
             raise NotImplementedError

@@ -1,65 +1,11 @@
 import gym
 import numpy as np
 import torch
-import pickle
 from collections import deque
 from copy import deepcopy
 from el2805.agents.rl.rl_agent import RLAgent
 from el2805.agents.rl.utils import Experience
 from el2805.utils import random_decide
-
-
-class QNetwork(torch.nn.Module):
-    def __init__(
-            self,
-            n_state_features: int,
-            n_actions: int,
-            n_hidden_layers: int,
-            hidden_layer_size: int,
-            activation: str,
-            dueling: bool
-    ):
-        super().__init__()
-        self.n_state_features = n_state_features
-        self.n_actions = n_actions
-        self.n_hidden_layers = n_hidden_layers
-        self.hidden_layer_size = hidden_layer_size
-        self.activation = activation
-        self.dueling = dueling
-
-        self._hidden_layers = torch.nn.ModuleList()
-        self._output_layer = None
-        self._v_layer = None
-        self._advantage_layer = None
-
-        input_size = self.n_state_features
-        for _ in range(n_hidden_layers):
-            self._hidden_layers.append(torch.nn.Linear(input_size, self.hidden_layer_size))
-            if activation == "relu":
-                self._hidden_layers.append(torch.nn.ReLU())
-            elif activation == "tanh":
-                self._hidden_layers.append(torch.nn.Tanh())
-            else:
-                raise NotImplementedError
-            input_size = hidden_layer_size
-
-        if self.dueling:
-            self._v_layer = torch.nn.Linear(input_size, 1)
-            self._advantage_layer = torch.nn.Linear(input_size, self.n_actions)
-        else:
-            self._output_layer = torch.nn.Linear(input_size, self.n_actions)
-
-    def forward(self, x):
-        for hidden_layer in self._hidden_layers:
-            x = hidden_layer(x)
-        if self.dueling:
-            v = self._v_layer(x)
-            advantage = self._advantage_layer(x)
-            avg_advantage = advantage.mean(dim=1, keepdim=True)
-            q = v + advantage - avg_advantage
-        else:
-            q = self._output_layer(x)
-        return q
 
 
 class DQN(RLAgent):
@@ -71,14 +17,14 @@ class DQN(RLAgent):
             epsilon: float | str,
             epsilon_max: float | None = None,
             epsilon_min: float | None = None,
-            epsilon_decay_episodes: int | None = None,
+            epsilon_decay_duration: int | None = None,
             delta: float | None = None,
             learning_rate: float,
             batch_size: int,
             replay_buffer_size: int,
             replay_buffer_min: int,
             target_update_period: int,
-            gradient_clipping_value: float,
+            gradient_clipping_max_norm: float,
             n_hidden_layers: int,
             hidden_layer_size: int,
             activation: str,
@@ -87,6 +33,49 @@ class DQN(RLAgent):
             device: str,
             seed: int | None = None
     ):
+        """Initializes a DQN agent.
+        
+        :param environment: RL environment
+        :type environment: gym.Env
+        :param discount: discount factor of the MDP
+        :type discount: float
+        :param epsilon: probability of exploration (eps-greedy policy) or strategy to schedule it
+        :type epsilon: float or str
+        :param epsilon_max: initial probability of exploration (eps-greedy policy)
+        :type epsilon_max: float, optional
+        :param epsilon_min: final probability of exploration (eps-greedy policy)
+        :type epsilon_min: float, optional
+        :param epsilon_decay_duration: duration of epsilon decay in episodes (eps-greedy policy)
+        :type epsilon_decay_duration: int, optional
+        :param delta: exponent in epsilon decay 1/(episode**delta) (eps-greedy policy)
+        :type delta: float, optional
+        :param learning_rate: learning rate (e.g., 1e-3) or learning rate method (e.g., "decay")
+        :type learning_rate: float or str
+        :param batch_size: batch size
+        :type batch_size: int
+        :param replay_buffer_size: size of experience replay buffer 
+        :type replay_buffer_size: int
+        :param replay_buffer_min: minimum number of experiences in the experience replay buffer to update the Q-network
+        :type replay_buffer_min: int
+        :param target_update_period: period for refreshing target network, expressed in number of steps
+        :type target_update_period: int
+        :param gradient_clipping_max_norm: maximum norm used for gradient clipping
+        :type gradient_clipping_max_norm: float
+        :param n_hidden_layers: number of hidden layers in the Q-network
+        :type n_hidden_layers: int
+        :param hidden_layer_size: number of neurons in each hidden layer of the Q-network
+        :type hidden_layer_size: int
+        :param activation: activation function for hidden layers in the Q-network
+        :type activation: str
+        :param cer: enables CER (combined experience replay)
+        :type cer: bool
+        :param dueling: enables dueling DQN
+        :type dueling: bool
+        :param device: device where to store and run neural networks (e.g., "cpu")
+        :type device: str
+        :param seed: seed
+        :type seed: int, optional
+        """
         super().__init__(
             environment=environment,
             discount=discount,
@@ -94,7 +83,7 @@ class DQN(RLAgent):
             epsilon=epsilon,
             epsilon_max=epsilon_max,
             epsilon_min=epsilon_min,
-            epsilon_decay_episodes=epsilon_decay_episodes,
+            epsilon_decay_duration=epsilon_decay_duration,
             delta=delta,
             seed=seed
         )
@@ -102,12 +91,12 @@ class DQN(RLAgent):
         self.epsilon = epsilon
         self.epsilon_max = epsilon_max
         self.epsilon_min = epsilon_min
-        self.epsilon_decay_episodes = epsilon_decay_episodes
+        self.epsilon_decay_episodes = epsilon_decay_duration
         self.replay_buffer_size = replay_buffer_size
         self.replay_buffer_min = replay_buffer_min
         self.batch_size = batch_size
         self.target_update_period = target_update_period
-        self.gradient_clipping_value = gradient_clipping_value
+        self.gradient_clipping_max_norm = gradient_clipping_max_norm
         self.n_hidden_layers = n_hidden_layers
         self.hidden_layer_size = hidden_layer_size
         self.cer = cer
@@ -196,7 +185,7 @@ class DQN(RLAgent):
         # Backward pass
         self._optimizer.zero_grad()
         loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.q_network.parameters(), max_norm=self.gradient_clipping_value)
+        torch.nn.utils.clip_grad_norm_(self.q_network.parameters(), max_norm=self.gradient_clipping_max_norm)
         self._optimizer.step()
 
         # Update target network
@@ -242,17 +231,55 @@ class DQN(RLAgent):
 
         return action
 
-    def save(self, filepath):
-        with open(filepath, mode="wb") as file:
-            pickle.dump(self, file)
 
-    @staticmethod
-    def load(filepath):
-        with open(filepath, mode="rb") as file:
-            dqn = pickle.load(file)
-        assert isinstance(dqn, DQN)
-        return dqn
+class QNetwork(torch.nn.Module):
+    def __init__(
+            self,
+            n_state_features: int,
+            n_actions: int,
+            n_hidden_layers: int,
+            hidden_layer_size: int,
+            activation: str,
+            dueling: bool
+    ):
+        super().__init__()
+        self.n_state_features = n_state_features
+        self.n_actions = n_actions
+        self.n_hidden_layers = n_hidden_layers
+        self.hidden_layer_size = hidden_layer_size
+        self.activation = activation
+        self.dueling = dueling
 
-    def seed(self, seed: int | None = None) -> None:
-        super().seed(seed)
-        torch.manual_seed(seed)
+        self._hidden_layers = torch.nn.ModuleList()
+        self._output_layer = None
+        self._v_layer = None
+        self._advantage_layer = None
+
+        input_size = self.n_state_features
+        for _ in range(n_hidden_layers):
+            self._hidden_layers.append(torch.nn.Linear(input_size, self.hidden_layer_size))
+            if activation == "relu":
+                self._hidden_layers.append(torch.nn.ReLU())
+            elif activation == "tanh":
+                self._hidden_layers.append(torch.nn.Tanh())
+            else:
+                raise NotImplementedError
+            input_size = hidden_layer_size
+
+        if self.dueling:
+            self._v_layer = torch.nn.Linear(input_size, 1)
+            self._advantage_layer = torch.nn.Linear(input_size, self.n_actions)
+        else:
+            self._output_layer = torch.nn.Linear(input_size, self.n_actions)
+
+    def forward(self, x):
+        for hidden_layer in self._hidden_layers:
+            x = hidden_layer(x)
+        if self.dueling:
+            v = self._v_layer(x)
+            advantage = self._advantage_layer(x)
+            avg_advantage = advantage.mean(dim=1, keepdim=True)
+            q = v + advantage - avg_advantage
+        else:
+            q = self._output_layer(x)
+        return q

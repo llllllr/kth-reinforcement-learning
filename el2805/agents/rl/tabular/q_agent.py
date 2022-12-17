@@ -20,7 +20,7 @@ class QAgent(RLAgent, ABC):
             epsilon: float | str,
             epsilon_max: float | None = None,
             epsilon_min: float | None = None,
-            epsilon_decay_episodes: int | None = None,
+            epsilon_decay_duration: int | None = None,
             delta: float | None = None,
             q_init: float = 0,
             seed: int | None = None
@@ -41,8 +41,8 @@ class QAgent(RLAgent, ABC):
         :type epsilon_max: float, optional
         :param epsilon_min: final probability of exploration (eps-greedy policy)
         :type epsilon_min: float, optional
-        :param epsilon_decay_episodes: duration of epsilon decay in episodes (eps-greedy policy)
-        :type epsilon_decay_episodes: int, optional
+        :param epsilon_decay_duration: duration of epsilon decay in episodes (eps-greedy policy)
+        :type epsilon_decay_duration: int, optional
         :param delta: parameter for epsilon decay in eps-greedy policy
         :type delta: float, optional
         :param q_init: value for Q-function initialization (except for terminal states)
@@ -57,7 +57,7 @@ class QAgent(RLAgent, ABC):
             epsilon=epsilon,
             epsilon_max=epsilon_max,
             epsilon_min=epsilon_min,
-            epsilon_decay_episodes=epsilon_decay_episodes,
+            epsilon_decay_duration=epsilon_decay_duration,
             delta=delta,
             seed=seed
         )
