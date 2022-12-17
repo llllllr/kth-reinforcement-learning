@@ -113,7 +113,14 @@ class QAgent(RLAgent, ABC):
         v = max(self._q[s])
         return v
 
-    def compute_action(self, *, state: Any, episode: int, explore: bool = True, **kwargs) -> int:
+    def compute_action(
+            self,
+            state: Any,
+            *,
+            episode: int | None = None,
+            explore: bool = True,
+            **kwargs
+    ) -> int:
         """Calculates the best action according to the agent's policy.
 
         :param state: state for which the action is desired
@@ -126,10 +133,11 @@ class QAgent(RLAgent, ABC):
         :rtype: int
         """
         _ = kwargs
+        assert not (explore and episode is None)
         valid_actions = self.environment.valid_actions(state)
-        epsilon = self._get_epsilon(episode)
 
         # eps-greedy policy: exploration mode with epsilon probability
+        epsilon = self._get_epsilon(episode) if explore else None
         if explore and random_decide(self._rng, epsilon):
             action = self._rng.choice(valid_actions)
         else:

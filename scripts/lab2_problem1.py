@@ -4,8 +4,7 @@ import torch
 import matplotlib.pyplot as plt
 from pathlib import Path
 from el2805.agents.rl import DQN
-from el2805.agents.utils import running_average
-from utils import get_device
+from el2805.agents.utils import running_average, get_device
 
 
 def train(results_dir, agent_path):

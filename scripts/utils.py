@@ -1,5 +1,4 @@
 import numpy as np
-import torch
 from el2805.environments import Maze, PluckingBerries, MinotaurMaze
 from el2805.environments.grid_world import Move
 from el2805.agents.rl.utils import Experience
@@ -31,7 +30,7 @@ def minotaur_maze_exit_probability(environment, agent):
         environment.seed(episode)
         state = environment.reset()
         while not done:
-            action = agent.compute_action(state=state, time_step=time_step, episode=episode, explore=False)
+            action = agent.compute_action(state=state, time_step=time_step, explore=False)
             state, _, done, _ = environment.step(action)
             time_step += 1
         n_wins += 1 if environment.won() else 0
@@ -64,13 +63,3 @@ def print_and_write_line(filepath, output, mode):
     print(output)
     with open(filepath, mode=mode) as f:
         f.write(output + "\n")
-
-
-def get_device():
-    if torch.cuda.is_available():
-        device = "cuda"
-    # elif torch.has_mps:
-    #     device = "mps"
-    else:
-        device = "cpu"
-    return device

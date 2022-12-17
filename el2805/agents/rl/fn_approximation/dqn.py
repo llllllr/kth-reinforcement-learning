@@ -214,11 +214,19 @@ class DQN(RLAgent):
     def record_experience(self, experience: Experience) -> None:
         self._replay_buffer.append(experience)
 
-    def compute_action(self, *, state: np.ndarray, episode: int, explore: bool = True, **kwargs) -> int:
+    def compute_action(
+            self,
+            state: np.ndarray,
+            *,
+            episode: int | None = None,
+            explore: bool = True,
+            **kwargs
+    ) -> int:
         _ = kwargs
+        assert not (explore and episode is None)
 
         # Epsilon-greedy policy (or greedy policy if explore=False)
-        epsilon = self._get_epsilon(episode)
+        epsilon = self._get_epsilon(episode) if explore else None
         if explore and random_decide(self._rng, epsilon):   # exploration (probability eps)
             action = self._rng.choice(self._n_actions)
         else:                                               # exploitation (probability 1-eps)
