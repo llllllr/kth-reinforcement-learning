@@ -53,9 +53,6 @@ class Agent(RLAgent):
         if len(self._replay_buffer) < self._batch_size:
             return stats
 
-        # Clean up gradients
-        self._optimizer.zero_grad()
-
         # Sample mini-batch of experiences
         experience_indices = self._rng.choice(len(self._replay_buffer), size=self._batch_size)
         experience_batch = [self._replay_buffer[i] for i in experience_indices]
@@ -72,6 +69,7 @@ class Agent(RLAgent):
         loss = torch.nn.functional.mse_loss(z, y)
 
         # Backward pass
+        self._optimizer.zero_grad()
         loss.backward()
         torch.nn.utils.clip_grad_norm_(self.neural_network.parameters(), max_norm=1)
         self._optimizer.step()

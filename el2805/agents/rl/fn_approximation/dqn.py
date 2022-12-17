@@ -25,25 +25,22 @@ class QNetwork(torch.nn.Module):
         self.hidden_layer_size = hidden_layer_size
         self.activation = activation
 
-        self._hidden_layers = []
+        self._hidden_layers = torch.nn.ModuleList()
         input_size = self.input_size
         for _ in range(n_hidden_layers):
-            hidden_layer = torch.nn.Linear(input_size, self.hidden_layer_size)
-            self._hidden_layers.append(hidden_layer)
+            self._hidden_layers.append(torch.nn.Linear(input_size, self.hidden_layer_size))
+            if activation == "relu":
+                self._hidden_layers.append(torch.nn.ReLU())
+            elif activation == "tanh":
+                self._hidden_layers.append(torch.nn.Tanh())
+            else:
+                raise NotImplementedError
             input_size = hidden_layer_size
         self._output_layer = torch.nn.Linear(input_size, output_size)
 
-        if self.activation == "relu":
-            self._activation_fn = torch.nn.functional.relu
-        elif self.activation == "tanh":
-            self._activation_fn = torch.nn.functional.tanh
-        else:
-            raise NotImplementedError
-
     def forward(self, x):
-        for layer in self._hidden_layers:
-            x = layer(x)
-            x = self._activation_fn(x)
+        for hidden_layer in self._hidden_layers:
+            x = hidden_layer(x)
         x = self._output_layer(x)
         return x
 
@@ -57,7 +54,7 @@ class DQN(RLAgent):
             epsilon: float | str,
             epsilon_max: float | None = None,
             epsilon_min: float | None = None,
-            epsilon_decay_duration: int | None = None,
+            epsilon_decay_episodes: int | None = None,
             learning_rate: float,
             batch_size: int,
             replay_buffer_size: int,
@@ -76,7 +73,7 @@ class DQN(RLAgent):
         self.epsilon = epsilon
         self.epsilon_max = epsilon_max
         self.epsilon_min = epsilon_min
-        self.epsilon_decay_duration = epsilon_decay_duration
+        self.epsilon_decay_episodes = epsilon_decay_episodes
         self.replay_buffer_size = replay_buffer_size
         self.warmup_steps = warmup_steps
         self.batch_size = batch_size
@@ -100,7 +97,7 @@ class DQN(RLAgent):
         )
 
         self._target_q_network = deepcopy(self.q_network)
-        self._replay_buffer = deque(maxlen=replay_buffer_size)
+        self._replay_buffer = deque(maxlen=self.replay_buffer_size)
         self._optimizer = torch.optim.Adam(self.q_network.parameters(), lr=self.learning_rate)
         self._n_updates = 0
 
@@ -113,7 +110,7 @@ class DQN(RLAgent):
         if self.epsilon == "linear_decay":
             assert self.epsilon_max is not None and \
                    self.epsilon_min is not None and \
-                   self.epsilon_decay_duration is not None
+                   self.epsilon_decay_episodes is not None
 
         if self.dueling:
             raise NotImplementedError
@@ -126,10 +123,7 @@ class DQN(RLAgent):
             return stats
 
         # Enable training mode
-        self.q_network.train(mode=True)
-
-        # Clean up gradients
-        self._optimizer.zero_grad()
+        self.q_network.train()
 
         # Sample mini-batch of experiences
         experience_indices = self._rng.choice(len(self._replay_buffer), size=self.batch_size)
@@ -151,7 +145,7 @@ class DQN(RLAgent):
         next_states = torch.as_tensor(
             data=np.asarray([e.next_state for e in experience_batch]),
             dtype=torch.float32,
-            device=self.device
+            device=self.device,
         )
         rewards = torch.as_tensor(
             data=[e.reward for e in experience_batch],
@@ -165,10 +159,11 @@ class DQN(RLAgent):
         )
 
         # Compute targets
-        q_next = self._target_q_network(next_states)        # Q(s',a)
-        assert q_next.shape == (self.batch_size, self._n_actions)
-        targets = rewards + dones.logical_not() * self.discount * q_next.max(axis=1).values
-        assert targets.shape == (self.batch_size,)
+        with torch.no_grad():
+            q_next = self._target_q_network(next_states)    # Q(s',a)
+            assert q_next.shape == (self.batch_size, self._n_actions)
+            targets = rewards + dones.logical_not() * self.discount * q_next.max(axis=1).values
+            assert targets.shape == (self.batch_size,)
 
         # Forward pass
         q = self.q_network(states)                          # Q(s,a)
@@ -178,17 +173,18 @@ class DQN(RLAgent):
         loss = torch.nn.functional.mse_loss(targets, q)
 
         # Backward pass
+        self._optimizer.zero_grad()
         loss.backward()
         torch.nn.utils.clip_grad_norm_(self.q_network.parameters(), max_norm=self.gradient_clipping_value)
         self._optimizer.step()
 
         # Update target network
-        self._n_updates += 1
-        if (self._n_updates % self.target_update_frequency) == 0:
+        self._n_updates = (self._n_updates + 1) % self.target_update_frequency
+        if self._n_updates == 0:
             self._target_q_network = deepcopy(self.q_network)
 
         # Disable training mode
-        self.q_network.train(mode=False)
+        self.q_network.eval()
 
         # Save stats
         stats["loss"] = loss.item()
@@ -204,7 +200,7 @@ class DQN(RLAgent):
         if explore and self.epsilon == "linear_decay":      # if explore=False, we don't care about epsilon
             epsilon = max(
                 self.epsilon_min,
-                self.epsilon_max - (self.epsilon_max-self.epsilon_min) * (episode-1) / (self.epsilon_decay_duration-1)
+                self.epsilon_max - (self.epsilon_max-self.epsilon_min) * (episode-1) / (self.epsilon_decay_episodes - 1)
             )
         else:
             epsilon = self.epsilon
@@ -213,14 +209,15 @@ class DQN(RLAgent):
         if explore and random_decide(self._rng, epsilon):   # exploration (probability eps)
             action = self._rng.choice(self._n_actions)
         else:                                               # exploitation (probability 1-eps)
-            state = torch.as_tensor(
-                data=state.reshape((1,) + state.shape),
-                dtype=torch.float32,
-                device=self.device
-            )
-            q_values = self.q_network(state)
-            assert q_values.shape[0] == 1
-            action = q_values.argmax().item()
+            with torch.no_grad():
+                state = torch.as_tensor(
+                    data=state.reshape((1,) + state.shape),
+                    dtype=torch.float32,
+                    device=self.device
+                )
+                q_values = self.q_network(state)
+                assert q_values.shape[0] == 1
+                action = q_values.argmax().item()
 
         return action
 
@@ -233,7 +230,7 @@ class DQN(RLAgent):
 
     @staticmethod
     def load(filepath):
-        with open(filepath, mode="r") as file:
+        with open(filepath, mode="rb") as file:
             dqn = pickle.load(file)
         assert isinstance(dqn, DQN)
         return dqn

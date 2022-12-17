@@ -119,7 +119,7 @@ class RLAgent(Agent, ABC):
             )
 
             if early_stopping_reward is not None and avg_episode_reward >= early_stopping_reward:
-                print("Early stopping")
+                print("Early stopping: environment solved!")
                 break
 
         return history_stats
