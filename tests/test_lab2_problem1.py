@@ -20,7 +20,7 @@ import gym
 import torch
 from tqdm import trange
 from pathlib import Path
-from el2805.agents.rl import DQN
+from el2805.agents.rl.deep import DQN
 from el2805.agents.common.utils import get_device
 
 

@@ -7,7 +7,8 @@ from el2805.environments.common.grid_world import Move
 from el2805.environments.maze import MazeCell
 from el2805.environments.minotaur_maze import Progress
 from el2805.agents.mdp import MDPAgent, DynamicProgramming, ValueIteration
-from el2805.agents.rl import RLAgent, QLearning, Sarsa
+from el2805.agents.rl import RLAgent
+from el2805.agents.rl.tabular import QLearning, Sarsa
 from utils import print_and_write_line, minotaur_maze_exit_probability, train_rl_agent_one_episode
 
 SEED = 1

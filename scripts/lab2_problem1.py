@@ -3,7 +3,7 @@ import numpy as np
 import torch
 import matplotlib.pyplot as plt
 from pathlib import Path
-from el2805.agents.rl import DQN
+from el2805.agents.rl.deep import DQN
 from el2805.agents.common.utils import running_average, get_device
 
 

@@ -5,8 +5,8 @@ from abc import ABC, abstractmethod
 from tqdm import trange
 from collections import defaultdict
 from el2805.agents.common.agent import Agent
-from el2805.agents.rl.deep.common.fc_network import Experience
 from el2805.agents.common.utils import running_average
+from el2805.agents.rl.common.experience import Experience
 
 
 class RLAgent(Agent, ABC):
