@@ -21,7 +21,7 @@ import torch
 from tqdm import trange
 from pathlib import Path
 from el2805.agents.rl import DQN
-from el2805.agents.utils import get_device
+from el2805.agents.common.utils import get_device
 
 
 class DQNTestCase(unittest.TestCase):

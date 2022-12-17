@@ -4,7 +4,7 @@ from typing import Any
 from gym.utils.seeding import np_random
 
 
-class RLProblem(gym.Env, ABC):
+class TabularRLProblem(gym.Env, ABC):
     """Interface for a RL problem with discrete state and action spaces."""
 
     def __init__(self, horizon: int | None = None):

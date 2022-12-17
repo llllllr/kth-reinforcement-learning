@@ -1,19 +1,19 @@
 import numpy as np
 from abc import ABC
 from typing import Any
-from el2805.agents.rl.rl_agent import RLAgent
-from el2805.agents.rl.utils import Experience
-from el2805.environments import RLProblem
-from el2805.utils import random_decide
+from el2805.agents.rl.common.rl_agent import RLAgent
+from el2805.agents.rl.deep.common.fc_network import Experience
+from el2805.environments import TabularRLProblem
+from el2805.common.utils import random_decide
 
 
 class QAgent(RLAgent, ABC):
-    """Interface for a RL algorithm learning the Q-function."""
+    """Interface for a RL algorithm learning the Q-function with discrete state and action spaces."""
 
     def __init__(
             self,
             *,
-            environment: RLProblem,
+            environment: TabularRLProblem,
             discount: float,
             learning_rate: float | str,
             alpha: float | None = None,
@@ -25,10 +25,10 @@ class QAgent(RLAgent, ABC):
             q_init: float = 0,
             seed: int | None = None
     ):
-        """Initializes a QAgent.
+        """Initializes a tabular QAgent.
 
         :param environment: RL environment
-        :type environment: RLProblem
+        :type environment: TabularRLProblem
         :param discount: discount factor
         :type discount: float
         :param learning_rate: learning rate (e.g., 1e-3) or learning rate method (e.g., "decay")

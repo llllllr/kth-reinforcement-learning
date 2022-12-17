@@ -1,17 +1,17 @@
 import numpy as np
 from abc import ABC, abstractmethod
 from typing import Any
-from el2805.agents.agent import Agent
-from el2805.environments import MDP
+from el2805.agents.common.agent import Agent
+from el2805.environments import TabularMDP
 
 
 class MDPAgent(Agent, ABC):
     """Interface for an algorithm solving MDPs."""
 
-    def __init__(self, *, environment: MDP, discount: float | None = None):
+    def __init__(self, *, environment: TabularMDP, discount: float | None = None):
         """
         :param environment: MDP problem
-        :type environment: MDP
+        :type environment: TabularMDP
         :param discount: discount factor
         :type discount: float, optional
         """

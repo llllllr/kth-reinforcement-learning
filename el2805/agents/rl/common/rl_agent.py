@@ -4,9 +4,9 @@ import torch
 from abc import ABC, abstractmethod
 from tqdm import trange
 from collections import defaultdict
-from el2805.agents.agent import Agent
-from el2805.agents.rl.utils import Experience
-from el2805.agents.utils import running_average
+from el2805.agents.common.agent import Agent
+from el2805.agents.rl.deep.common.fc_network import Experience
+from el2805.agents.common.utils import running_average
 
 
 class RLAgent(Agent, ABC):

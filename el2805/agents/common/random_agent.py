@@ -1,5 +1,5 @@
 import numpy as np
-from el2805.agents.agent import Agent
+from el2805.agents.common.agent import Agent
 
 
 class RandomAgent(Agent):

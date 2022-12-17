@@ -1,11 +1,11 @@
 import numpy as np
 from typing import Any
-from el2805.agents.mdp.mdp_agent import MDPAgent
-from el2805.environments import MDP
+from el2805.agents.mdp.common.mdp_agent import MDPAgent
+from el2805.environments import TabularMDP
 
 
 class DynamicProgramming(MDPAgent):
-    def __init__(self, *, environment: MDP):
+    def __init__(self, *, environment: TabularMDP):
         super().__init__(environment=environment)
         assert self.env.finite_horizon()
 

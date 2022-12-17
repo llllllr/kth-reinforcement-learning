@@ -3,12 +3,15 @@ import numpy as np
 import torch
 from collections import deque
 from copy import deepcopy
-from el2805.agents.rl.rl_agent import RLAgent
-from el2805.agents.rl.utils import Experience
-from el2805.utils import random_decide
+from el2805.agents.rl.common.rl_agent import RLAgent
+from el2805.agents.rl.common.experience import Experience
+from el2805.agents.rl.deep.common.fc_network import FCNetwork
+from el2805.common.utils import random_decide
 
 
 class DQN(RLAgent):
+    """DQN (Deep Q-Network) agent."""
+
     def __init__(
             self,
             *,
@@ -232,9 +235,10 @@ class DQN(RLAgent):
         return action
 
 
-class QNetwork(torch.nn.Module):
+class QNetwork(FCNetwork):
     def __init__(
             self,
+            *,
             n_state_features: int,
             n_actions: int,
             n_hidden_layers: int,
@@ -242,44 +246,30 @@ class QNetwork(torch.nn.Module):
             activation: str,
             dueling: bool
     ):
-        super().__init__()
-        self.n_state_features = n_state_features
-        self.n_actions = n_actions
-        self.n_hidden_layers = n_hidden_layers
-        self.hidden_layer_size = hidden_layer_size
-        self.activation = activation
+        super().__init__(
+            input_size=n_state_features,
+            n_hidden_layers=n_hidden_layers,
+            hidden_layer_size=hidden_layer_size,
+            activation=activation,
+            output_size=n_actions,
+            include_top=not dueling     # in case of dueling DQN, we will define the particular top here
+        )
         self.dueling = dueling
 
-        self._hidden_layers = torch.nn.ModuleList()
-        self._output_layer = None
-        self._v_layer = None
-        self._advantage_layer = None
-
-        input_size = self.n_state_features
-        for _ in range(n_hidden_layers):
-            self._hidden_layers.append(torch.nn.Linear(input_size, self.hidden_layer_size))
-            if activation == "relu":
-                self._hidden_layers.append(torch.nn.ReLU())
-            elif activation == "tanh":
-                self._hidden_layers.append(torch.nn.Tanh())
-            else:
-                raise NotImplementedError
-            input_size = hidden_layer_size
-
         if self.dueling:
-            self._v_layer = torch.nn.Linear(input_size, 1)
-            self._advantage_layer = torch.nn.Linear(input_size, self.n_actions)
+            self._v_layer = torch.nn.Linear(self.hidden_layer_size, 1)
+            self._advantage_layer = torch.nn.Linear(self.hidden_layer_size, self.output_size)
         else:
-            self._output_layer = torch.nn.Linear(input_size, self.n_actions)
+            self._v_layer = None
+            self._advantage_layer = None
 
     def forward(self, x):
-        for hidden_layer in self._hidden_layers:
-            x = hidden_layer(x)
+        x = super().forward(x)
         if self.dueling:
             v = self._v_layer(x)
             advantage = self._advantage_layer(x)
             avg_advantage = advantage.mean(dim=1, keepdim=True)
             q = v + advantage - avg_advantage
         else:
-            q = self._output_layer(x)
+            q = x
         return q

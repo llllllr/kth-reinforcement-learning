@@ -1,7 +1,7 @@
 import numpy as np
 from el2805.environments import Maze, PluckingBerries, MinotaurMaze
-from el2805.environments.grid_world import Move
-from el2805.agents.rl.utils import Experience
+from el2805.environments.common.grid_world import Move
+from el2805.agents.rl.deep.common.fc_network import Experience
 
 
 def best_maze_path(env, agent):

@@ -20,8 +20,8 @@ import torch
 import matplotlib.pyplot as plt
 from collections import deque
 from el2805.agents.rl import RLAgent
-from el2805.agents.rl.fn_approximation.dqn import QNetwork
-from utils import get_device
+from el2805.agents.rl.deep.common.fc_network import FCNetwork
+from el2805.agents.common.utils import get_device
 
 
 class Agent(RLAgent):
@@ -43,13 +43,13 @@ class Agent(RLAgent):
         self._n_actions = environment.action_space.n
 
         self.device = device
-        self.neural_network = QNetwork(
-            n_state_features=n_state_features,
-            n_actions=self._n_actions,
+        self.neural_network = FCNetwork(
+            input_size=n_state_features,
             n_hidden_layers=self._n_hidden_layers,
             hidden_layer_size=self._hidden_layer_size,
             activation="relu",
-            dueling=False
+            output_size=self._n_actions,
+            include_top=True
         ).to(device)
 
         self._replay_buffer = deque(maxlen=self._replay_buffer_size)
