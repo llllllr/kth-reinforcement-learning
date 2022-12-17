@@ -17,6 +17,11 @@ class RLAgent(Agent, ABC):
             environment: gym.Env,
             discount: float,
             learning_rate: float | str,
+            epsilon: float | str,
+            epsilon_max: float | None = None,
+            epsilon_min: float | None = None,
+            epsilon_decay_episodes: int | None = None,
+            delta: float | None = None,
             seed: int | None = None
     ):
         """Initializes a RLAgent.
@@ -27,13 +32,29 @@ class RLAgent(Agent, ABC):
         :type discount: float
         :param learning_rate: learning rate (e.g., 1e-3) or learning rate method (e.g., "decay")
         :type learning_rate: float or str
+        :param epsilon: probability of exploration (eps-greedy policy) or strategy to schedule it
+        :type epsilon: float or str
+        :param epsilon_max: initial probability of exploration (eps-greedy policy)
+        :type epsilon_max: float, optional
+        :param epsilon_min: final probability of exploration (eps-greedy policy)
+        :type epsilon_min: float, optional
+        :param epsilon_decay_episodes: duration of epsilon decay in episodes (eps-greedy policy)
+        :type epsilon_decay_episodes: int, optional
+        :param delta: exponent in epsilon decay 1/(episode**delta) (eps-greedy policy)
+        :type delta: float, optional
         :param seed: seed
         :type seed: int, optional
         """
         super().__init__(environment=environment, discount=discount)
         self.learning_rate = learning_rate
+        self.epsilon = epsilon
+        self.epsilon_max = epsilon_max
+        self.epsilon_min = epsilon_min
+        self.epsilon_decay_episodes = epsilon_decay_episodes
+        self.delta = delta
         self._rng = None
         self.seed(seed)
+        _ = self._get_epsilon(1)    # try epsilon to raise errors now if it is not correct
 
     @abstractmethod
     def update(self) -> dict:
@@ -46,12 +67,52 @@ class RLAgent(Agent, ABC):
 
     @abstractmethod
     def record_experience(self, experience: Experience) -> None:
-        """Store a new experience, which is supposed to be used for training.
+        """Stores a new experience, which is supposed to be used for training.
 
         :param experience: new experience to store
         :type experience: Experience
         """
         raise NotImplementedError
+
+    def train(self, n_episodes: int, early_stopping_reward: float | None = None) -> dict:
+        """Trains the RL agent for the specified number of episodes.
+
+        :param n_episodes: number of training episodes
+        :type n_episodes: int
+        :param early_stopping_reward: average reward considered as problem solved
+        :type early_stopping_reward: float, optional
+        :return: dictionary of training stats (per episode or per time step, depending on the metric)
+        :rtype: dict
+        """
+        stats = self._train_or_test(
+            n_episodes=n_episodes,
+            train=True,
+            early_stopping_reward=early_stopping_reward
+        )
+        return stats
+
+    def test(self, n_episodes: int, render: bool) -> dict:
+        """Tests the RL agent for the specified number of episodes.
+
+        :param n_episodes: number of test episodes
+        :type n_episodes: int
+        :return: dictionary of test stats (per episode or per time step, depending on the metric)
+        :rtype: dict
+        """
+        stats = self._train_or_test(
+            n_episodes=n_episodes,
+            train=False,
+            render=render
+        )
+        return stats
+
+    def seed(self, seed: int | None = None) -> None:
+        """Sets the seed of the agent's internal RNG.
+
+        :param seed: seed
+        :type seed: int, optional
+        """
+        self._rng = np.random.RandomState(seed)
 
     def _train_or_test(
             self,
@@ -61,7 +122,7 @@ class RLAgent(Agent, ABC):
             early_stopping_reward: float | None = None
     ) -> dict:
         assert not (train and render)
-        history_stats = defaultdict(list)
+        stats = defaultdict(list)
         episodes = trange(1, n_episodes + 1, desc='Episode: ', leave=True)
 
         for episode in episodes:
@@ -96,7 +157,7 @@ class RLAgent(Agent, ABC):
 
                     # Update stats
                     for k, v in update_stats.items():
-                        history_stats[k].append(v)
+                        stats[k].append(v)
                 episode_reward += reward
                 episode_length += 1
 
@@ -104,12 +165,12 @@ class RLAgent(Agent, ABC):
                 state = next_state
 
             # Update stats
-            history_stats["episode_reward"].append(episode_reward)
-            history_stats["episode_length"].append(episode_length)
+            stats["episode_reward"].append(episode_reward)
+            stats["episode_length"].append(episode_length)
 
             # Show progress
-            avg_episode_length = running_average(history_stats["episode_length"])[-1]
-            avg_episode_reward = running_average(history_stats["episode_reward"])[-1]
+            avg_episode_length = running_average(stats["episode_length"])[-1]
+            avg_episode_reward = running_average(stats["episode_reward"])[-1]
             episodes.set_description(
                 f"Episode {episode} - "
                 f"Reward: {episode_reward:.1f} - "
@@ -122,23 +183,25 @@ class RLAgent(Agent, ABC):
                 print("Early stopping: environment solved!")
                 break
 
-        return history_stats
-
-    def train(self, n_episodes: int, early_stopping_reward: float | None = None) -> dict:
-        stats = self._train_or_test(
-            n_episodes=n_episodes,
-            train=True,
-            early_stopping_reward=early_stopping_reward
-        )
         return stats
 
-    def test(self, n_episodes: int, render: bool) -> dict:
-        stats = self._train_or_test(
-            n_episodes=n_episodes,
-            train=False,
-            render=render
-        )
-        return stats
-
-    def seed(self, seed: int | None = None) -> None:
-        self._rng = np.random.RandomState(seed)
+    def _get_epsilon(self, episode: int) -> float:
+        if isinstance(self.epsilon, float):
+            epsilon = self.epsilon
+        elif self.epsilon == "delta":
+            epsilon = 1 / (episode ** self.delta)
+        elif self.epsilon == "linear":
+            epsilon = max(
+                self.epsilon_min,
+                self.epsilon_max -
+                (self.epsilon_max - self.epsilon_min) * (episode - 1) / (self.epsilon_decay_episodes - 1)
+            )
+        elif self.epsilon == "exponential":
+            epsilon = max(
+                self.epsilon_min,
+                self.epsilon_max *
+                (self.epsilon_min / self.epsilon_max) ** ((episode - 1) / (self.epsilon_decay_episodes - 1))
+            )
+        else:
+            raise NotImplementedError
+        return epsilon

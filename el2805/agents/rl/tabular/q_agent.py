@@ -16,8 +16,11 @@ class QAgent(RLAgent, ABC):
             environment: RLProblem,
             discount: float,
             learning_rate: float | str,
-            epsilon: float | str,
             alpha: float | None = None,
+            epsilon: float | str,
+            epsilon_max: float | None = None,
+            epsilon_min: float | None = None,
+            epsilon_decay_episodes: int | None = None,
             delta: float | None = None,
             q_init: float = 0,
             seed: int | None = None
@@ -30,10 +33,16 @@ class QAgent(RLAgent, ABC):
         :type discount: float
         :param learning_rate: learning rate (e.g., 1e-3) or learning rate method (e.g., "decay")
         :type learning_rate: float or str
-        :param epsilon: probability of exploration (eps-greedy policy) or strategy to calculate it (e.g., "decay")
-        :type epsilon: float or str
         :param alpha: parameter for the learning rate decay 1/n(s,a)**alpha
         :type alpha: float, optional
+        :param epsilon: probability of exploration (eps-greedy policy) or strategy to calculate it (e.g., "decay")
+        :type epsilon: float or str
+        :param epsilon_max: initial probability of exploration (eps-greedy policy)
+        :type epsilon_max: float, optional
+        :param epsilon_min: final probability of exploration (eps-greedy policy)
+        :type epsilon_min: float, optional
+        :param epsilon_decay_episodes: duration of epsilon decay in episodes (eps-greedy policy)
+        :type epsilon_decay_episodes: int, optional
         :param delta: parameter for epsilon decay in eps-greedy policy
         :type delta: float, optional
         :param q_init: value for Q-function initialization (except for terminal states)
@@ -41,7 +50,18 @@ class QAgent(RLAgent, ABC):
         :param seed: seed
         :type seed: int, optional
         """
-        super().__init__(environment=environment, discount=discount, learning_rate=learning_rate, seed=seed)
+        super().__init__(
+            environment=environment,
+            discount=discount,
+            learning_rate=learning_rate,
+            epsilon=epsilon,
+            epsilon_max=epsilon_max,
+            epsilon_min=epsilon_min,
+            epsilon_decay_episodes=epsilon_decay_episodes,
+            delta=delta,
+            seed=seed
+        )
+
         self.environment = environment  # to avoid warnings of type hints
         self.epsilon = epsilon
         self.alpha = alpha
@@ -53,8 +73,6 @@ class QAgent(RLAgent, ABC):
             raise NotImplementedError
         else:
             assert self.alpha is not None
-
-        assert (self.epsilon == "decay") is (self.delta is not None)
 
         # Notes:
         # - List of 1D ndarray (not just 2D ndarray) because the set of available actions for each state is different.
@@ -109,7 +127,7 @@ class QAgent(RLAgent, ABC):
         """
         _ = kwargs
         valid_actions = self.environment.valid_actions(state)
-        epsilon = 1 / (episode ** self.delta) if self.epsilon == "decay" else self.epsilon
+        epsilon = self._get_epsilon(episode)
 
         # eps-greedy policy: exploration mode with epsilon probability
         if explore and random_decide(self._rng, epsilon):
@@ -142,11 +160,3 @@ class QAgent(RLAgent, ABC):
         """
         valid_actions = self.environment.valid_actions(state)
         return valid_actions.index(action)
-
-    def seed(self, seed: int | None = None) -> None:
-        """Sets the seed of the agent's internal RNG.
-
-        :param seed: seed
-        :type seed: int, optional
-        """
-        self._rng = np.random.RandomState(seed)

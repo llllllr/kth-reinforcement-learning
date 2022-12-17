@@ -55,11 +55,12 @@ class DQN(RLAgent):
             epsilon_max: float | None = None,
             epsilon_min: float | None = None,
             epsilon_decay_episodes: int | None = None,
+            delta: float | None = None,
             learning_rate: float,
             batch_size: int,
             replay_buffer_size: int,
-            warmup_steps: int,
-            target_update_frequency: int,
+            replay_buffer_min: int,
+            target_update_period: int,
             gradient_clipping_value: float,
             n_hidden_layers: int,
             hidden_layer_size: int,
@@ -68,16 +69,25 @@ class DQN(RLAgent):
             dueling: bool,
             device: str
     ):
-        super().__init__(environment=environment, discount=discount, learning_rate=learning_rate)
+        super().__init__(
+            environment=environment,
+            discount=discount,
+            learning_rate=learning_rate,
+            epsilon=epsilon,
+            epsilon_max=epsilon_max,
+            epsilon_min=epsilon_min,
+            epsilon_decay_episodes=epsilon_decay_episodes,
+            delta=delta
+        )
 
         self.epsilon = epsilon
         self.epsilon_max = epsilon_max
         self.epsilon_min = epsilon_min
         self.epsilon_decay_episodes = epsilon_decay_episodes
         self.replay_buffer_size = replay_buffer_size
-        self.warmup_steps = warmup_steps
+        self.replay_buffer_min = replay_buffer_min
         self.batch_size = batch_size
-        self.target_update_frequency = target_update_frequency
+        self.target_update_period = target_update_period
         self.gradient_clipping_value = gradient_clipping_value
         self.cer = cer
         self.dueling = dueling
@@ -104,14 +114,6 @@ class DQN(RLAgent):
         self.q_network = self.q_network.to(self.device)
         self._target_q_network = self._target_q_network.to(self.device)
 
-        # TODO: implement exponential decay
-        if self.epsilon != "linear_decay" and not isinstance(self.epsilon, float):
-            raise NotImplementedError
-        if self.epsilon == "linear_decay":
-            assert self.epsilon_max is not None and \
-                   self.epsilon_min is not None and \
-                   self.epsilon_decay_episodes is not None
-
         if self.dueling:
             raise NotImplementedError
 
@@ -119,7 +121,7 @@ class DQN(RLAgent):
         stats = {}
 
         # Check if buffer has been filled in enough
-        if len(self._replay_buffer) < self.warmup_steps:
+        if len(self._replay_buffer) < self.replay_buffer_min:
             return stats
 
         # Enable training mode
@@ -179,7 +181,7 @@ class DQN(RLAgent):
         self._optimizer.step()
 
         # Update target network
-        self._n_updates = (self._n_updates + 1) % self.target_update_frequency
+        self._n_updates = (self._n_updates + 1) % self.target_update_period
         if self._n_updates == 0:
             self._target_q_network = deepcopy(self.q_network)
 
@@ -196,16 +198,8 @@ class DQN(RLAgent):
     def compute_action(self, *, state: np.ndarray, episode: int, explore: bool = True, **kwargs) -> int:
         _ = kwargs
 
-        # Calculate epsilon
-        if explore and self.epsilon == "linear_decay":      # if explore=False, we don't care about epsilon
-            epsilon = max(
-                self.epsilon_min,
-                self.epsilon_max - (self.epsilon_max-self.epsilon_min) * (episode-1) / (self.epsilon_decay_episodes - 1)
-            )
-        else:
-            epsilon = self.epsilon
-
         # Epsilon-greedy policy (or greedy policy if explore=False)
+        epsilon = self._get_epsilon(episode)
         if explore and random_decide(self._rng, epsilon):   # exploration (probability eps)
             action = self._rng.choice(self._n_actions)
         else:                                               # exploitation (probability 1-eps)
@@ -221,12 +215,9 @@ class DQN(RLAgent):
 
         return action
 
-    def save(self, filepath, only_nn: bool = False):
+    def save(self, filepath):
         with open(filepath, mode="wb") as file:
-            if only_nn:
-                torch.save(self.q_network, file)
-            else:
-                pickle.dump(self, file)
+            pickle.dump(self, file)
 
     @staticmethod
     def load(filepath):

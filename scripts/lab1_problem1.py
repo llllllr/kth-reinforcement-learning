@@ -152,7 +152,7 @@ def part_ij(map_filepath, results_dir):
             learning_rate="decay",
             discount=discount,
             alpha=alpha,
-            epsilon="decay",    # TODO: adjust the parameters according to hyper-parameters under study
+            epsilon="delta",    # TODO: adjust the parameters according to hyper-parameters under study
             delta=delta,
             q_init=1,
             seed=SEED
@@ -207,7 +207,7 @@ def part_k(map_filepath, results_dir):
         learning_rate="decay",
         discount=discount,
         alpha=0.65,
-        epsilon="decay",
+        epsilon="delta",
         delta=0.95,
         q_init=1,
         seed=SEED
