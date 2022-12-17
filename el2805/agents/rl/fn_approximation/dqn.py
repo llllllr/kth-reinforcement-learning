@@ -12,21 +12,27 @@ from el2805.utils import random_decide
 class QNetwork(torch.nn.Module):
     def __init__(
             self,
-            input_size: int,
-            output_size: int,
+            n_state_features: int,
+            n_actions: int,
             n_hidden_layers: int,
             hidden_layer_size: int,
-            activation: str
+            activation: str,
+            dueling: bool
     ):
         super().__init__()
-        self.input_size = input_size
-        self.output_size = output_size
+        self.n_state_features = n_state_features
+        self.n_actions = n_actions
         self.n_hidden_layers = n_hidden_layers
         self.hidden_layer_size = hidden_layer_size
         self.activation = activation
+        self.dueling = dueling
 
         self._hidden_layers = torch.nn.ModuleList()
-        input_size = self.input_size
+        self._output_layer = None
+        self._v_layer = None
+        self._advantage_layer = None
+
+        input_size = self.n_state_features
         for _ in range(n_hidden_layers):
             self._hidden_layers.append(torch.nn.Linear(input_size, self.hidden_layer_size))
             if activation == "relu":
@@ -36,13 +42,24 @@ class QNetwork(torch.nn.Module):
             else:
                 raise NotImplementedError
             input_size = hidden_layer_size
-        self._output_layer = torch.nn.Linear(input_size, output_size)
+
+        if self.dueling:
+            self._v_layer = torch.nn.Linear(input_size, 1)
+            self._advantage_layer = torch.nn.Linear(input_size, self.n_actions)
+        else:
+            self._output_layer = torch.nn.Linear(input_size, self.n_actions)
 
     def forward(self, x):
         for hidden_layer in self._hidden_layers:
             x = hidden_layer(x)
-        x = self._output_layer(x)
-        return x
+        if self.dueling:
+            v = self._v_layer(x)
+            advantage = self._advantage_layer(x)
+            avg_advantage = advantage.mean(dim=1, keepdim=True)
+            q = v + advantage - avg_advantage
+        else:
+            q = self._output_layer(x)
+        return q
 
 
 class DQN(RLAgent):
@@ -89,6 +106,8 @@ class DQN(RLAgent):
         self.batch_size = batch_size
         self.target_update_period = target_update_period
         self.gradient_clipping_value = gradient_clipping_value
+        self.n_hidden_layers = n_hidden_layers
+        self.hidden_layer_size = hidden_layer_size
         self.cer = cer
         self.dueling = dueling
         self.device = device
@@ -99,11 +118,12 @@ class DQN(RLAgent):
         self._n_actions = environment.action_space.n
 
         self.q_network = QNetwork(
-            input_size=n_state_features,
-            output_size=self._n_actions,
-            n_hidden_layers=n_hidden_layers,
-            hidden_layer_size=hidden_layer_size,
-            activation=activation
+            n_state_features=n_state_features,
+            n_actions=self._n_actions,
+            n_hidden_layers=self.n_hidden_layers,
+            hidden_layer_size=self.hidden_layer_size,
+            activation=activation,
+            dueling=self.dueling
         )
 
         self._target_q_network = deepcopy(self.q_network)
@@ -113,9 +133,6 @@ class DQN(RLAgent):
 
         self.q_network = self.q_network.to(self.device)
         self._target_q_network = self._target_q_network.to(self.device)
-
-        if self.dueling:
-            raise NotImplementedError
 
     def update(self) -> dict:
         stats = {}

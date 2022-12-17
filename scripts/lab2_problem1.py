@@ -30,6 +30,8 @@ def train(results_dir, agent_path):
     activation = "relu"
     gradient_clipping_value = 2
     early_stopping_reward = 200
+    cer = True
+    dueling = True
 
     # Agent
     agent = DQN(
@@ -48,8 +50,8 @@ def train(results_dir, agent_path):
         n_hidden_layers=n_hidden_layers,
         hidden_layer_size=hidden_layer_size,
         activation=activation,
-        cer=True,
-        dueling=False,
+        cer=cer,
+        dueling=dueling,
         device=get_device()
     )
 

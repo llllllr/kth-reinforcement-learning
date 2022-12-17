@@ -38,11 +38,12 @@ class Agent(RLAgent):
 
         self.device = device
         self.neural_network = QNetwork(
-            input_size=n_state_features,
-            output_size=self._n_actions,
+            n_state_features=n_state_features,
+            n_actions=self._n_actions,
             n_hidden_layers=self._n_hidden_layers,
             hidden_layer_size=self._hidden_layer_size,
-            activation="relu"
+            activation="relu",
+            dueling=False
         ).to(device)
 
         self._replay_buffer = deque(maxlen=self._replay_buffer_size)
