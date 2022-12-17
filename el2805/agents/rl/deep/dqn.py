@@ -80,13 +80,9 @@ class DQN(RLAgent):
         :param seed: seed
         :type seed: int, optional
         """
-        super().__init__(
-            environment=environment,
-            discount=discount,
-            learning_rate=learning_rate,
-            seed=seed
-        )
-
+        super().__init__(environment=environment, seed=seed)
+        self.discount = discount
+        self.learning_rate = learning_rate
         self.epsilon = epsilon
         self.epsilon_max = epsilon_max
         self.epsilon_min = epsilon_min
@@ -99,36 +95,34 @@ class DQN(RLAgent):
         self.gradient_clipping_max_norm = gradient_clipping_max_norm
         self.n_hidden_layers = n_hidden_layers
         self.hidden_layer_size = hidden_layer_size
+        self.activation = activation
         self.cer = cer
         self.dueling = dueling
         self.device = device
 
         assert isinstance(environment.observation_space, gym.spaces.Box)
-        n_state_features = len(environment.observation_space.low)
+        state_dim = len(environment.observation_space.low)
         assert isinstance(environment.action_space, gym.spaces.Discrete)
         self._n_actions = environment.action_space.n
 
         self.q_network = QNetwork(
-            n_state_features=n_state_features,
+            state_dim=state_dim,
             n_actions=self._n_actions,
             n_hidden_layers=self.n_hidden_layers,
             hidden_layer_size=self.hidden_layer_size,
-            activation=activation,
+            activation=self.activation,
             dueling=self.dueling
-        )
+        ).to(self.device)
 
-        self._target_q_network = deepcopy(self.q_network)
+        self._target_q_network = deepcopy(self.q_network).to(self.device)
         self._replay_buffer = deque(maxlen=self.replay_buffer_size)
         self._optimizer = torch.optim.Adam(self.q_network.parameters(), lr=self.learning_rate)
         self._n_updates = 0
 
-        self.q_network = self.q_network.to(self.device)
-        self._target_q_network = self._target_q_network.to(self.device)
-
     def update(self) -> dict:
         stats = {}
 
-        # Check if buffer has been filled in enough
+        # Skip update if buffer does not contain enough experiences
         if len(self._replay_buffer) < self.replay_buffer_min:
             return stats
 
@@ -214,7 +208,7 @@ class DQN(RLAgent):
         _ = kwargs
         assert not (explore and episode is None)
 
-        # Calculate epsilon according to exploration strategy
+        # Compute epsilon according to exploration strategy
         if explore:
             epsilon = get_epsilon(
                 epsilon=self.epsilon,
@@ -248,7 +242,7 @@ class QNetwork(FCNetwork):
     def __init__(
             self,
             *,
-            n_state_features: int,
+            state_dim: int,
             n_actions: int,
             n_hidden_layers: int,
             hidden_layer_size: int,
@@ -256,7 +250,7 @@ class QNetwork(FCNetwork):
             dueling: bool
     ):
         super().__init__(
-            input_size=n_state_features,
+            input_size=state_dim,
             n_hidden_layers=n_hidden_layers,
             hidden_layer_size=hidden_layer_size,
             activation=activation,

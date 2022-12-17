@@ -29,22 +29,17 @@ class Agent(RLAgent):
     _batch_size = 3
     _n_hidden_layers = 1
     _hidden_layer_size = 8
+    _learning_rate = 1e-3
 
     def __init__(self, *, environment, device, seed):
-        super().__init__(
-            environment=environment,
-            discount=1,
-            learning_rate=1e-3,
-            epsilon=0,
-            seed=seed
-        )
+        super().__init__(environment=environment, seed=seed)
 
-        n_state_features = len(environment.observation_space.low)
+        state_dim = len(environment.observation_space.low)
         self._n_actions = environment.action_space.n
 
         self.device = device
         self.neural_network = FCNetwork(
-            input_size=n_state_features,
+            input_size=state_dim,
             n_hidden_layers=self._n_hidden_layers,
             hidden_layer_size=self._hidden_layer_size,
             activation="relu",
@@ -53,7 +48,7 @@ class Agent(RLAgent):
         ).to(device)
 
         self._replay_buffer = deque(maxlen=self._replay_buffer_size)
-        self._optimizer = torch.optim.Adam(self.neural_network.parameters(), lr=self.learning_rate)
+        self._optimizer = torch.optim.Adam(self.neural_network.parameters(), lr=self._learning_rate)
 
     def update(self) -> dict:
         stats = {}

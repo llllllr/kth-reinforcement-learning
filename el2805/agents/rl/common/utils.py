@@ -6,7 +6,7 @@ def get_epsilon(
         epsilon_min: float | None = None,
         epsilon_decay_duration: int | None = None,
         delta: float | None = None
-):
+) -> float:
     if isinstance(epsilon, float) or isinstance(epsilon, int):
         epsilon = epsilon
     elif epsilon == "delta":

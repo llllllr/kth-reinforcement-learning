@@ -12,33 +12,22 @@ from el2805.agents.rl.common.experience import Experience
 class RLAgent(Agent, ABC):
     """Interface for a RL algorithm."""
 
-    def __init__(
-            self,
-            *,
-            environment: gym.Env,
-            discount: float,
-            learning_rate: float | str,
-            seed: int | None = None
-    ):
+    def __init__(self, environment: gym.Env, seed: int | None = None):
         """Initializes a RLAgent.
 
         :param environment: RL environment
         :type environment: gym.Env
-        :param discount: discount factor of the MDP
-        :type discount: float
-        :param learning_rate: learning rate (e.g., 1e-3) or learning rate method (e.g., "decay")
-        :type learning_rate: float or str
         :param seed: seed
         :type seed: int, optional
         """
-        super().__init__(environment=environment, discount=discount)
-        self.learning_rate = learning_rate
+        super().__init__(environment=environment)
         self._rng = None
         self.seed(seed)
 
     @abstractmethod
     def update(self) -> dict:
-        """Updates the policy (or value function, or Q-function) from stored observations.
+        """Updates the policy (or value function, or Q-function) from stored observations. This function is called
+        after each interaction with the environment.
 
         :return: statistics for the update
         :rtype: dict
@@ -138,7 +127,10 @@ class RLAgent(Agent, ABC):
 
                     # Update stats
                     for k, v in update_stats.items():
-                        stats[k].append(v)
+                        if isinstance(v, list):
+                            stats[k].extend(v)
+                        else:
+                            stats[k].append(v)
                 episode_reward += reward
                 episode_length += 1
 

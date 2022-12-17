@@ -51,14 +51,10 @@ class QAgent(RLAgent, ABC):
         :param seed: seed
         :type seed: int, optional
         """
-        super().__init__(
-            environment=environment,
-            discount=discount,
-            learning_rate=learning_rate,
-            seed=seed
-        )
-
+        super().__init__(environment=environment, seed=seed)
         self.environment = environment  # to avoid warnings of type hints
+        self.discount = discount
+        self.learning_rate = learning_rate
         self.epsilon = epsilon
         self.epsilon_max = epsilon_max
         self.epsilon_min = epsilon_min
@@ -135,7 +131,7 @@ class QAgent(RLAgent, ABC):
         assert not (explore and episode is None)
         valid_actions = self.environment.valid_actions(state)
 
-        # Calculate epsilon according to exploration strategy
+        # Compute epsilon according to exploration strategy
         if explore:
             epsilon = get_epsilon(
                 epsilon=self.epsilon,
