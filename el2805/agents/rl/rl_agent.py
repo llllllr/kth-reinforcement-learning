@@ -186,7 +186,7 @@ class RLAgent(Agent, ABC):
         return stats
 
     def _get_epsilon(self, episode: int) -> float:
-        if isinstance(self.epsilon, float):
+        if isinstance(self.epsilon, float) or isinstance(self.epsilon, int):
             epsilon = self.epsilon
         elif self.epsilon == "delta":
             epsilon = 1 / (episode ** self.delta)

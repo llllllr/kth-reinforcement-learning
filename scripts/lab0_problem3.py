@@ -30,8 +30,14 @@ class Agent(RLAgent):
     _n_hidden_layers = 1
     _hidden_layer_size = 8
 
-    def __init__(self, *, environment, device):
-        super().__init__(environment=environment, discount=1, learning_rate=1e-3)
+    def __init__(self, *, environment, device, seed):
+        super().__init__(
+            environment=environment,
+            discount=1,
+            learning_rate=1e-3,
+            epsilon=0,
+            seed=seed
+        )
 
         n_state_features = len(environment.observation_space.low)
         self._n_actions = environment.action_space.n
@@ -79,6 +85,10 @@ class Agent(RLAgent):
         stats["loss"] = loss.item()
         return stats
 
+    def seed(self, seed: int | None = None) -> None:
+        super().seed(seed)
+        torch.manual_seed(seed)
+
     def record_experience(self, experience):
         self._replay_buffer.append(experience)
 
@@ -92,16 +102,20 @@ class Agent(RLAgent):
 
 
 def main():
+    seed = 2
+
     environment = gym.make("CartPole-v0")
+    environment.seed(seed)
+
     agent = Agent(
         environment=environment,
-        device=get_device()
+        device=get_device(),
+        seed=seed
     )
-    history_stats = agent.train(n_episodes=100)
-    environment.close()
+    training_stats = agent.train(n_episodes=100)
 
     figure, axes = plt.subplots()
-    axes.plot(np.arange(1, len(history_stats["loss"])+1), history_stats["loss"])
+    axes.plot(np.arange(1, len(training_stats["loss"])+1), training_stats["loss"])
     axes.set_xlabel("time step")
     axes.set_ylabel("loss")
     figure.show()

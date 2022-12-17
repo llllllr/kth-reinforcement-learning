@@ -9,11 +9,8 @@ from utils import get_device
 
 
 def train(results_dir, agent_path):
-    # Environment
-    environment = gym.make('LunarLander-v2')
-    environment.reset()
-
     # Hyper-parameters
+    seed = 1
     n_episodes = 1000
     discount = .99
     epsilon = "exponential"
@@ -32,6 +29,10 @@ def train(results_dir, agent_path):
     early_stopping_reward = 200
     cer = True
     dueling = True
+
+    # Environment
+    environment = gym.make('LunarLander-v2')
+    environment.seed(seed)
 
     # Agent
     agent = DQN(
@@ -52,7 +53,8 @@ def train(results_dir, agent_path):
         activation=activation,
         cer=cer,
         dueling=dueling,
-        device=get_device()
+        device=get_device(),
+        seed=seed
     )
 
     # Train and save agent

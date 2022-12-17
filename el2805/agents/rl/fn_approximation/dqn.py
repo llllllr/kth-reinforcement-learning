@@ -84,7 +84,8 @@ class DQN(RLAgent):
             activation: str,
             cer: bool,
             dueling: bool,
-            device: str
+            device: str,
+            seed: int | None = None
     ):
         super().__init__(
             environment=environment,
@@ -94,7 +95,8 @@ class DQN(RLAgent):
             epsilon_max=epsilon_max,
             epsilon_min=epsilon_min,
             epsilon_decay_episodes=epsilon_decay_episodes,
-            delta=delta
+            delta=delta,
+            seed=seed
         )
 
         self.epsilon = epsilon
@@ -242,3 +244,7 @@ class DQN(RLAgent):
             dqn = pickle.load(file)
         assert isinstance(dqn, DQN)
         return dqn
+
+    def seed(self, seed: int | None = None) -> None:
+        super().seed(seed)
+        torch.manual_seed(seed)
