@@ -5,6 +5,7 @@ from collections import deque
 from copy import deepcopy
 from el2805.agents.rl.common.rl_agent import RLAgent
 from el2805.agents.rl.common.experience import Experience
+from el2805.agents.rl.common.utils import get_epsilon
 from el2805.agents.rl.deep.common.fc_network import FCNetwork
 from el2805.common.utils import random_decide
 
@@ -83,11 +84,6 @@ class DQN(RLAgent):
             environment=environment,
             discount=discount,
             learning_rate=learning_rate,
-            epsilon=epsilon,
-            epsilon_max=epsilon_max,
-            epsilon_min=epsilon_min,
-            epsilon_decay_duration=epsilon_decay_duration,
-            delta=delta,
             seed=seed
         )
 
@@ -95,6 +91,7 @@ class DQN(RLAgent):
         self.epsilon_max = epsilon_max
         self.epsilon_min = epsilon_min
         self.epsilon_decay_episodes = epsilon_decay_duration
+        self.delta = delta
         self.replay_buffer_size = replay_buffer_size
         self.replay_buffer_min = replay_buffer_min
         self.batch_size = batch_size
@@ -217,8 +214,20 @@ class DQN(RLAgent):
         _ = kwargs
         assert not (explore and episode is None)
 
+        # Calculate epsilon according to exploration strategy
+        if explore:
+            epsilon = get_epsilon(
+                epsilon=self.epsilon,
+                episode=episode,
+                epsilon_max=self.epsilon_max,
+                epsilon_min=self.epsilon_min,
+                epsilon_decay_duration=self.epsilon_decay_episodes,
+                delta=self.delta
+            )
+        else:
+            epsilon = None
+
         # Epsilon-greedy policy (or greedy policy if explore=False)
-        epsilon = self._get_epsilon(episode) if explore else None
         if explore and random_decide(self._rng, epsilon):   # exploration (probability eps)
             action = self._rng.choice(self._n_actions)
         else:                                               # exploitation (probability 1-eps)

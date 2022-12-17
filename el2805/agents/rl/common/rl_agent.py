@@ -18,11 +18,6 @@ class RLAgent(Agent, ABC):
             environment: gym.Env,
             discount: float,
             learning_rate: float | str,
-            epsilon: float | str,
-            epsilon_max: float | None = None,
-            epsilon_min: float | None = None,
-            epsilon_decay_duration: int | None = None,
-            delta: float | None = None,
             seed: int | None = None
     ):
         """Initializes a RLAgent.
@@ -33,29 +28,13 @@ class RLAgent(Agent, ABC):
         :type discount: float
         :param learning_rate: learning rate (e.g., 1e-3) or learning rate method (e.g., "decay")
         :type learning_rate: float or str
-        :param epsilon: probability of exploration (eps-greedy policy) or strategy to schedule it
-        :type epsilon: float or str
-        :param epsilon_max: initial probability of exploration (eps-greedy policy)
-        :type epsilon_max: float, optional
-        :param epsilon_min: final probability of exploration (eps-greedy policy)
-        :type epsilon_min: float, optional
-        :param epsilon_decay_duration: duration of epsilon decay in episodes (eps-greedy policy)
-        :type epsilon_decay_duration: int, optional
-        :param delta: exponent in epsilon decay 1/(episode**delta) (eps-greedy policy)
-        :type delta: float, optional
         :param seed: seed
         :type seed: int, optional
         """
         super().__init__(environment=environment, discount=discount)
         self.learning_rate = learning_rate
-        self.epsilon = epsilon
-        self.epsilon_max = epsilon_max
-        self.epsilon_min = epsilon_min
-        self.epsilon_decay_duration = epsilon_decay_duration
-        self.delta = delta
         self._rng = None
         self.seed(seed)
-        _ = self._get_epsilon(1)    # try epsilon to raise errors now if it is not correct
 
     @abstractmethod
     def update(self) -> dict:
@@ -186,24 +165,3 @@ class RLAgent(Agent, ABC):
                 break
 
         return stats
-
-    def _get_epsilon(self, episode: int) -> float:
-        if isinstance(self.epsilon, float) or isinstance(self.epsilon, int):
-            epsilon = self.epsilon
-        elif self.epsilon == "delta":
-            epsilon = 1 / (episode ** self.delta)
-        elif self.epsilon == "linear":
-            epsilon = max(
-                self.epsilon_min,
-                self.epsilon_max -
-                (self.epsilon_max - self.epsilon_min) * (episode - 1) / (self.epsilon_decay_duration - 1)
-            )
-        elif self.epsilon == "exponential":
-            epsilon = max(
-                self.epsilon_min,
-                self.epsilon_max *
-                (self.epsilon_min / self.epsilon_max) ** ((episode - 1) / (self.epsilon_decay_duration - 1))
-            )
-        else:
-            raise NotImplementedError
-        return epsilon

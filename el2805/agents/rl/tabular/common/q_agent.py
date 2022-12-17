@@ -3,6 +3,7 @@ from abc import ABC
 from typing import Any
 from el2805.agents.rl.common.rl_agent import RLAgent
 from el2805.agents.rl.common.experience import Experience
+from el2805.agents.rl.common.utils import get_epsilon
 from el2805.environments import TabularRLProblem
 from el2805.common.utils import random_decide
 
@@ -54,18 +55,16 @@ class QAgent(RLAgent, ABC):
             environment=environment,
             discount=discount,
             learning_rate=learning_rate,
-            epsilon=epsilon,
-            epsilon_max=epsilon_max,
-            epsilon_min=epsilon_min,
-            epsilon_decay_duration=epsilon_decay_duration,
-            delta=delta,
             seed=seed
         )
 
         self.environment = environment  # to avoid warnings of type hints
         self.epsilon = epsilon
-        self.alpha = alpha
+        self.epsilon_max = epsilon_max
+        self.epsilon_min = epsilon_min
+        self.epsilon_decay_episodes = epsilon_decay_duration
         self.delta = delta
+        self.alpha = alpha
         self.q_init = q_init
         self._exploration_decay = self.delta is not None
 
@@ -136,8 +135,20 @@ class QAgent(RLAgent, ABC):
         assert not (explore and episode is None)
         valid_actions = self.environment.valid_actions(state)
 
-        # eps-greedy policy: exploration mode with epsilon probability
-        epsilon = self._get_epsilon(episode) if explore else None
+        # Calculate epsilon according to exploration strategy
+        if explore:
+            epsilon = get_epsilon(
+                epsilon=self.epsilon,
+                episode=episode,
+                epsilon_max=self.epsilon_max,
+                epsilon_min=self.epsilon_min,
+                epsilon_decay_duration=self.epsilon_decay_episodes,
+                delta=self.delta
+            )
+        else:
+            epsilon = None
+
+        # Epsilon-greedy policy (or greedy policy if explore=False)
         if explore and random_decide(self._rng, epsilon):
             action = self._rng.choice(valid_actions)
         else:
