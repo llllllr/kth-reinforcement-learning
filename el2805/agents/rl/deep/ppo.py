@@ -25,7 +25,7 @@ class PPO(RLAgent):
             actor_mean_hidden_layer_sizes: list[int],
             actor_var_hidden_layer_sizes: list[int],
             actor_hidden_layer_activation: str,
-            objective_clipping_eps: float,
+            policy_ratio_clip_range: float,
             gradient_max_norm: float,
             device: str,
             seed: int | None = None
@@ -41,7 +41,7 @@ class PPO(RLAgent):
         self.actor_mean_hidden_layer_sizes = actor_mean_hidden_layer_sizes
         self.actor_var_hidden_layer_sizes = actor_var_hidden_layer_sizes
         self.actor_hidden_layer_activation = actor_hidden_layer_activation
-        self.objective_clipping_eps = objective_clipping_eps
+        self.policy_ratio_clip_range = policy_ratio_clip_range
         self.gradient_max_norm = gradient_max_norm
         self.device = device
 
@@ -84,7 +84,7 @@ class PPO(RLAgent):
             device=self.device
         )
         actions = torch.as_tensor(
-            data=[e.action for e in self._episodic_buffer],
+            data=np.asarray([e.action for e in self._episodic_buffer]),
             dtype=torch.float32,
             device=self.device
         )
@@ -92,7 +92,7 @@ class PPO(RLAgent):
         # Compute Monte Carlo targets
         g = []
         discounted_reward = 0
-        for r in rewards[::-1]:
+        for r in reversed(rewards):
             discounted_reward = r + self.discount * discounted_reward
             g.append(discounted_reward)
         g = torch.as_tensor(
@@ -101,7 +101,12 @@ class PPO(RLAgent):
             device=self.device
         )
 
-        # Compute actions from old policy
+        # Compute advantages
+        v = self.critic(states)
+        v = v.detach()  # we don't want to update the critic with the backward pass on the actor
+        psi = g - v
+
+        # Compute action probabilities from old policy
         mean, var = self.actor(states)
         pi_old = normal_pdf(actions, mean, var).prod(dim=1)     # assumption: independent action dimensions
         pi_old = pi_old.detach()
@@ -115,23 +120,20 @@ class PPO(RLAgent):
             # Backward pass by critic
             self._critic_optimizer.zero_grad()
             critic_loss.backward()
-            # TODO: if it works without gradient clipping, remove it from constructor
-            # torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=self.gradient_clipping_max_norm)
+            torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=self.gradient_max_norm)
             self._critic_optimizer.step()
 
             # Forward pass by actor
-            v = v.detach()      # fix critic, we don't want to update the critic with the backward pass on the actor
-            psi = g - v
             mean, var = self.actor(states)
             pi = normal_pdf(actions, mean, var).prod(dim=1)     # assumption: independent action dimensions
             r = pi / pi_old
-            r_clipped = r.clip(min=1-self.objective_clipping_eps, max=1+self.objective_clipping_eps)
-            actor_loss = - torch.mean(torch.minimum(r * psi, r_clipped * psi))
+            r_clipped = r.clip(min=1-self.policy_ratio_clip_range, max=1+self.policy_ratio_clip_range)
+            actor_loss = - torch.minimum(r * psi, r_clipped * psi).mean()
 
             # Backward pass by actor
             self._actor_optimizer.zero_grad()
             actor_loss.backward()
-            # torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=self.gradient_clipping_max_norm)
+            torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=self.gradient_max_norm)
             self._actor_optimizer.step()
 
             # Save stats
@@ -162,9 +164,7 @@ class PPO(RLAgent):
             mean, var = self.actor(state)
             assert mean.shape == (1, self._action_dim) and var.shape == (1, self._action_dim)
             mean, var = mean.reshape(-1), var.reshape(-1)
-            action = self._rng.normal(mean, var) if explore else mean
-            action = action.clip(min=self.environment.action_space.low, max=self.environment.action_space.high)
-
+            action = self._rng.normal(loc=mean, scale=torch.sqrt(var)) if explore else mean.numpy()
         return action
 
 
@@ -204,7 +204,7 @@ class PPOActor(torch.nn.Module):
         self.var_hidden_layer_sizes = var_hidden_layer_sizes
         self.hidden_layer_activation = hidden_layer_activation
 
-        self._shared_hidden_layers = MultiLayerPerceptron(
+        self._shared_layers = MultiLayerPerceptron(
             input_size=self.state_dim,
             hidden_layer_sizes=self.shared_hidden_layer_sizes,
             hidden_layer_activation=self.hidden_layer_activation,
@@ -212,7 +212,10 @@ class PPOActor(torch.nn.Module):
         )
         input_size = self.shared_hidden_layer_sizes[-1]
 
-        self._mean_hidden_layers = MultiLayerPerceptron(
+        # The randomized policy is modeled as a multi-variate Gaussian distribution
+        # Key assumption: independent action dimensions
+        # Therefore, the randomized policy is parametrized with mean and variance of each action dimension
+        self._mean_head = MultiLayerPerceptron(
             input_size=input_size,
             hidden_layer_sizes=self.mean_hidden_layer_sizes,
             hidden_layer_activation=self.hidden_layer_activation,
@@ -220,8 +223,7 @@ class PPOActor(torch.nn.Module):
             output_layer_activation="tanh",
             include_top=True
         )
-
-        self._var_hidden_layers = MultiLayerPerceptron(
+        self._var_head = MultiLayerPerceptron(
             input_size=input_size,
             hidden_layer_sizes=self.var_hidden_layer_sizes,
             hidden_layer_activation=self.hidden_layer_activation,
@@ -231,8 +233,8 @@ class PPOActor(torch.nn.Module):
         )
 
     def forward(self, x):
-        x = self._shared_hidden_layers(x)
-        mean = self._mean_hidden_layers(x)
-        var = self._var_hidden_layers(x)
+        x = self._shared_layers(x)
+        mean = self._mean_head(x)
+        var = self._var_head(x)
         return mean, var
 

@@ -137,7 +137,7 @@ class DQN(RLAgent):
             device=self.device
         )
         actions = torch.as_tensor(
-            data=[e.action for e in experience_batch],
+            data=np.asarra([e.action for e in experience_batch]),
             dtype=torch.long,
             device=self.device
         )

@@ -67,7 +67,7 @@ class PPOTestCase(unittest.TestCase):
             actor_n_hidden_layers=actor_n_hidden_layers,
             actor_hidden_layer_sizes=actor_hidden_layer_size,
             actor_hidden_layer_activation=actor_activation,
-            objective_clipping_eps=objective_clipping_eps,
+            policy_ratio_clip_range=objective_clipping_eps,
             gradient_max_norm=gradient_max_norm,
             device=get_device(),
             seed=seed

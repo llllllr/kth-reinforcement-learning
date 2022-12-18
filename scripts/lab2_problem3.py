@@ -9,7 +9,7 @@ from utils import plot_training_stats, test_rl_agent
 def train(results_dir, agent_path):
     # Hyper-parameters
     seed = 1
-    n_episodes = 1600
+    n_episodes = 2000
     discount = .99
     n_epochs_per_update = 10
     critic_learning_rate = 1e-3
@@ -17,10 +17,10 @@ def train(results_dir, agent_path):
     critic_hidden_layer_activation = "relu"
     actor_learning_rate = 1e-5
     actor_shared_hidden_layer_sizes = [400]
-    actor_mu_hidden_layer_sizes = [200]
-    actor_sigma_hidden_layer_sizes = [200]
+    actor_mean_hidden_layer_sizes = [200]
+    actor_var_hidden_layer_sizes = [200]
     actor_hidden_layer_activation = "relu"
-    objective_clipping_eps = .2
+    policy_ratio_clip_range = .2
     gradient_max_norm = 2
     early_stopping_reward = 200
 
@@ -37,10 +37,10 @@ def train(results_dir, agent_path):
         critic_hidden_layer_activation=critic_hidden_layer_activation,
         actor_learning_rate=actor_learning_rate,
         actor_shared_hidden_layer_sizes=actor_shared_hidden_layer_sizes,
-        actor_mean_hidden_layer_sizes=actor_mu_hidden_layer_sizes,
-        actor_var_hidden_layer_sizes=actor_sigma_hidden_layer_sizes,
+        actor_mean_hidden_layer_sizes=actor_mean_hidden_layer_sizes,
+        actor_var_hidden_layer_sizes=actor_var_hidden_layer_sizes,
         actor_hidden_layer_activation=actor_hidden_layer_activation,
-        objective_clipping_eps=objective_clipping_eps,
+        policy_ratio_clip_range=policy_ratio_clip_range,
         gradient_max_norm=gradient_max_norm,
         device=get_device(),
         seed=seed
