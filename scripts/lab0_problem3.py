@@ -20,15 +20,15 @@ import torch
 import matplotlib.pyplot as plt
 from collections import deque
 from el2805.agents.rl import RLAgent
-from el2805.agents.rl.deep.common.fc_network import FCNetwork
-from el2805.agents.common.utils import get_device
+from el2805.agents.rl.deep.common.multi_layer_perceptron import MultiLayerPerceptron
+from el2805.agents.rl.deep.common.utils import get_device
 
 
 class Agent(RLAgent):
     _replay_buffer_size = 128
     _batch_size = 3
-    _n_hidden_layers = 1
-    _hidden_layer_size = 8
+    _hidden_layer_sizes = [8]
+    _hidden_layer_activation = "relu"
     _learning_rate = 1e-3
 
     def __init__(self, *, environment, device, seed):
@@ -38,11 +38,10 @@ class Agent(RLAgent):
         self._n_actions = environment.action_space.n
 
         self.device = device
-        self.neural_network = FCNetwork(
+        self.neural_network = MultiLayerPerceptron(
             input_size=state_dim,
-            n_hidden_layers=self._n_hidden_layers,
-            hidden_layer_size=self._hidden_layer_size,
-            activation="relu",
+            hidden_layer_sizes=self._hidden_layer_sizes,
+            hidden_layer_activation=self._hidden_layer_activation,
             output_size=self._n_actions,
             include_top=True
         ).to(device)

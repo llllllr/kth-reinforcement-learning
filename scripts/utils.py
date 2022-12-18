@@ -1,7 +1,9 @@
 import numpy as np
+import matplotlib.pyplot as plt
 from el2805.environments import Maze, PluckingBerries, MinotaurMaze
 from el2805.environments.common.grid_world import Move
-from el2805.agents.rl import Experience
+from el2805.agents.rl import Experience, RLAgent
+from el2805.agents.common.utils import running_average
 
 
 def best_maze_path(env, agent):
@@ -59,7 +61,29 @@ def train_rl_agent_one_episode(environment, agent, episode):
         state = next_state
 
 
+def test_rl_agent(agent_path):
+    n_episodes = 10
+    agent = RLAgent.load(agent_path)
+    agent.test(n_episodes=n_episodes, render=True)
+
+
 def print_and_write_line(filepath, output, mode):
     print(output)
     with open(filepath, mode=mode) as f:
         f.write(output + "\n")
+
+
+def plot_training_stats(stats, results_dir):
+    for metric_name, metric_values in stats.items():
+        metric_name_readable = metric_name.replace("_", " ")
+        x = np.arange(1, len(metric_values) + 1)
+        x_label = "episode" if metric_name.startswith("episode") else "time step"
+
+        figure, axes = plt.subplots()
+        axes.plot(x, metric_values, label=metric_name_readable)
+        axes.plot(x, running_average(metric_values), label=f"avg {metric_name_readable}")
+        axes.set_xlabel(x_label)
+        axes.set_ylabel(metric_name_readable)
+        axes.legend()
+        figure.savefig(results_dir / f"{metric_name}.pdf")
+        figure.show()

@@ -15,8 +15,9 @@ class MDPAgent(Agent, ABC):
         :param discount: discount factor
         :type discount: float, optional
         """
-        super().__init__(environment=environment, discount=discount)
-        self.env = environment  # to avoid warning for type hints
+        super().__init__(environment=environment)
+        self.environment = environment  # to avoid warning for type hints
+        self.discount = discount
         self._policy = None
 
     @abstractmethod
@@ -54,8 +55,8 @@ class MDPAgent(Agent, ABC):
         :rtype: float
         """
         # note that we ask for the mean reward instead of a reward sample to support random rewards
-        next_states, transition_probabilities = self.env.next_states(state, action)
-        s_next = [self.env.state_index(next_state) for next_state in next_states]    # indices of next states
+        next_states, transition_probabilities = self.environment.next_states(state, action)
+        s_next = [self.environment.state_index(next_state) for next_state in next_states]    # indices of next states
         v = v[s_next]   # V(s',a) for all the possible next states
-        q = self.env.reward(state, action, mean=True) + self.discount * transition_probabilities.dot(v)
+        q = self.environment.reward(state, action, mean=True) + self.discount * transition_probabilities.dot(v)
         return q

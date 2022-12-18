@@ -1,7 +1,10 @@
 import gym
+import numpy as np
 import pickle
 from abc import ABC, abstractmethod
 from pathlib import Path
+from copy import deepcopy
+from typing import Union
 
 
 class Agent(ABC):
@@ -12,11 +15,15 @@ class Agent(ABC):
         :param environment: RL environment
         :type environment: gym.Env
         """
-        self.environment = environment
+        self.environment = deepcopy(environment)
 
     @abstractmethod
-    def compute_action(self, **kwargs) -> int:
-        """Calculates the best action according to the agent's policy. The parameters depend on the algorithm."""
+    def compute_action(self, **kwargs) -> Union[int, np.array]:
+        """Calculates the best action according to the agent's policy. The parameters depend on the algorithm.
+
+        :return: action
+        :rtype: int (single-dimension discrete action space) or np.array (multi-dimension action space)
+        """
         raise NotImplementedError
 
     def save(self, filepath: str | Path):

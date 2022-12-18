@@ -7,22 +7,22 @@ from el2805.environments import TabularMDP
 class DynamicProgramming(MDPAgent):
     def __init__(self, *, environment: TabularMDP):
         super().__init__(environment=environment)
-        assert self.env.finite_horizon()
+        assert self.environment.finite_horizon()
 
     def solve(self) -> None:
-        n_states = len(self.env.states)
+        n_states = len(self.environment.states)
         u = np.zeros(n_states)
-        self.policy = np.zeros((self.env.horizon, n_states), dtype=np.int32)    # optimal policy (non-stationary)
+        self.policy = np.zeros((self.environment.horizon, n_states), dtype=np.int32)  # optimal policy (non-stationary)
 
-        for t in range(self.env.horizon-1, -1, -1):
-            last_time_step = t == self.env.horizon - 1              # terminal case?
+        for t in range(self.environment.horizon - 1, -1, -1):
+            last_time_step = t == self.environment.horizon - 1              # terminal case?
             u_next = u.copy() if not last_time_step else None       # u*_{t+1}
 
-            for s, state in enumerate(self.env.states):
+            for s, state in enumerate(self.environment.states):
                 # Q_t(s,a) for each a in A_s
-                valid_actions = self.env.valid_actions(state)
+                valid_actions = self.environment.valid_actions(state)
                 if last_time_step:
-                    q = np.asarray([self.env.reward(state, action, mean=True) for action in valid_actions])
+                    q = np.asarray([self.environment.reward(state, action, mean=True) for action in valid_actions])
                 else:
                     q = np.asarray([self.q(state, action, u_next) for action in valid_actions])
 
@@ -36,6 +36,6 @@ class DynamicProgramming(MDPAgent):
     def compute_action(self, *, state: Any, time_step: int, **kwargs) -> int:
         _ = kwargs
         assert self.policy is not None
-        s = self.env.state_index(state)
+        s = self.environment.state_index(state)
         action = self.policy[time_step, s]
         return action

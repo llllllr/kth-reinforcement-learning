@@ -22,7 +22,8 @@ class RLAgent(Agent, ABC):
         """
         super().__init__(environment=environment)
         self._rng = None
-        self.seed(seed)
+        if seed is not None:
+            self.seed(seed)
 
     @abstractmethod
     def update(self) -> dict:
@@ -75,13 +76,14 @@ class RLAgent(Agent, ABC):
         )
         return stats
 
-    def seed(self, seed: int | None = None) -> None:
+    def seed(self, seed: int) -> None:
         """Sets the seed of the agent's internal RNG.
 
         :param seed: seed
         :type seed: int, optional
         """
         self._rng = np.random.RandomState(seed)
+        self.environment.seed(seed)
         torch.manual_seed(seed)
 
     def _train_or_test(
@@ -99,7 +101,7 @@ class RLAgent(Agent, ABC):
             # Reset environment data and initialize variables
             done = False
             state = self.environment.reset()
-            episode_reward = 0.
+            episode_reward = 0
             episode_length = 0
             if render:
                 self.environment.render()

@@ -20,16 +20,17 @@ import gym
 import torch
 from tqdm import trange
 from pathlib import Path
-from el2805.agents.rl.deep import DQN
+from el2805.agents.rl.deep import PPO
 from el2805.agents.rl.deep.common.utils import get_device
 
 
-class DQNTestCase(unittest.TestCase):
+# TODO: fix and avoid duplicated code
+class PPOTestCase(unittest.TestCase):
     seed = 1
     environment = None
 
     def setUp(self):
-        self.environment = gym.make('LunarLander-v2')
+        self.environment = gym.make('LunarLanderContinuous-v2')
         self.environment.seed(self.seed)
 
     def tearDown(self):
@@ -40,42 +41,36 @@ class DQNTestCase(unittest.TestCase):
         seed = 1
         n_episodes = 1000
         discount = .99
-        epsilon = "exponential"
-        epsilon_max = .99
-        epsilon_min = .05
-        epsilon_decay_episodes = int(.9 * n_episodes)
-        learning_rate = 5e-4
-        batch_size = 64
-        replay_buffer_size = 10000
-        replay_buffer_min = int(.2 * replay_buffer_size)
-        target_update_period = replay_buffer_size // batch_size
-        hidden_layer_sizes = [64, 64]
-        hidden_layer_activation = "relu"
+        n_epochs_per_update = 1
+        critic_learning_rate = 1e-3
+        critic_n_hidden_layers = 2
+        critic_hidden_layer_size = 64
+        critic_activation = "relu"
+        actor_learning_rate = 1e-3
+        actor_n_hidden_layers = 2
+        actor_hidden_layer_size = 64
+        actor_activation = "relu"
+        objective_clipping_eps = .1
         gradient_max_norm = 2
-        cer = True
-        dueling = True
         early_stopping_reward = 200
 
         # Agent
-        agent = DQN(
+        agent = PPO(
             environment=self.environment,
             discount=discount,
-            learning_rate=learning_rate,
-            replay_buffer_size=replay_buffer_size,
-            replay_buffer_min=replay_buffer_min,
-            batch_size=batch_size,
-            target_update_period=target_update_period,
-            epsilon=epsilon,
-            epsilon_max=epsilon_max,
-            epsilon_min=epsilon_min,
-            epsilon_decay_duration=epsilon_decay_episodes,
+            n_epochs_per_update=n_epochs_per_update,
+            critic_learning_rate=critic_learning_rate,
+            critic_n_hidden_layers=critic_n_hidden_layers,
+            critic_hidden_layer_sizes=critic_hidden_layer_size,
+            critic_hidden_layer_activation=critic_activation,
+            actor_learning_rate=actor_learning_rate,
+            actor_n_hidden_layers=actor_n_hidden_layers,
+            actor_hidden_layer_sizes=actor_hidden_layer_size,
+            actor_hidden_layer_activation=actor_activation,
+            objective_clipping_eps=objective_clipping_eps,
             gradient_max_norm=gradient_max_norm,
-            hidden_layer_sizes=hidden_layer_sizes,
-            hidden_layer_activation=hidden_layer_activation,
-            cer=cer,
-            dueling=dueling,
             device=get_device(),
-            seed=self.seed
+            seed=seed
         )
         agent.train(n_episodes=n_episodes, early_stopping_reward=early_stopping_reward)
 
@@ -86,7 +81,7 @@ class DQNTestCase(unittest.TestCase):
         self._test(compute_action)
 
     def test_saved_model(self):
-        model_path = Path(__file__).parent.parent / "results" / "lab2" / "problem1" / "neural-network-1.pth"
+        model_path = Path(__file__).parent.parent / "results" / "lab2" / "problem3" / "neural-network-3-actor.pth"
         model = torch.load(model_path)
 
         def compute_action(state):
@@ -102,7 +97,7 @@ class DQNTestCase(unittest.TestCase):
 
     def _test(self, compute_action):
         n_episodes = 50
-        confidence_pass = 50
+        confidence_pass = 125
 
         episode_rewards = []
         episodes = trange(n_episodes, desc='Episode: ', leave=True)

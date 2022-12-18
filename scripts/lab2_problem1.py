@@ -1,10 +1,9 @@
 import gym
-import numpy as np
 import torch
-import matplotlib.pyplot as plt
 from pathlib import Path
 from el2805.agents.rl.deep import DQN
-from el2805.agents.common.utils import running_average, get_device
+from el2805.agents.rl.deep.common.utils import get_device
+from utils import plot_training_stats, test_rl_agent
 
 
 def train(results_dir, agent_path):
@@ -21,16 +20,15 @@ def train(results_dir, agent_path):
     replay_buffer_size = 10000
     replay_buffer_min = int(.2 * replay_buffer_size)
     target_update_period = replay_buffer_size // batch_size
-    n_hidden_layers = 2
-    hidden_layer_size = 64
-    activation = "relu"
-    gradient_clipping_value = 2
-    early_stopping_reward = 200
+    hidden_layer_sizes = [64, 64]
+    hidden_layer_activation = "relu"
+    gradient_max_norm = 2
     cer = True
     dueling = True
+    early_stopping_reward = 200
 
     # Environment
-    environment = gym.make('LunarLander-v2')
+    environment = gym.make("LunarLander-v2")
     environment.seed(seed)
 
     # Agent
@@ -46,41 +44,20 @@ def train(results_dir, agent_path):
         epsilon_max=epsilon_max,
         epsilon_min=epsilon_min,
         epsilon_decay_duration=epsilon_decay_episodes,
-        gradient_clipping_max_norm=gradient_clipping_value,
-        n_hidden_layers=n_hidden_layers,
-        hidden_layer_size=hidden_layer_size,
-        activation=activation,
+        gradient_max_norm=gradient_max_norm,
+        hidden_layer_sizes=hidden_layer_sizes,
+        hidden_layer_activation=hidden_layer_activation,
         cer=cer,
         dueling=dueling,
         device=get_device(),
         seed=seed
     )
 
-    # Train and save agent
+    # Train agent
     training_stats = agent.train(n_episodes=n_episodes, early_stopping_reward=early_stopping_reward)
     agent.save(agent_path)
     torch.save(agent.q_network, results_dir / "neural-network-1.pth")
-
-    # Plot training stats
-    for metric_name, metric_values in training_stats.items():
-        metric_name_readable = metric_name.replace("_", " ")
-        x = np.arange(1, len(metric_values) + 1)
-        x_label = "episode" if metric_name.startswith("episode") else "time step"
-
-        figure, axes = plt.subplots()
-        axes.plot(x, metric_values, label=metric_name_readable)
-        axes.plot(x, running_average(metric_values), label=f"avg {metric_name_readable}")
-        axes.set_xlabel(x_label)
-        axes.set_ylabel(metric_name_readable)
-        axes.legend()
-        figure.savefig(results_dir / f"{metric_name}.pdf")
-        figure.show()
-
-
-def test(agent_path):
-    n_episodes = 10
-    agent = DQN.load(agent_path)
-    agent.test(n_episodes=n_episodes, render=True)
+    plot_training_stats(training_stats, results_dir)
 
 
 def main():
@@ -89,7 +66,7 @@ def main():
     agent_path = results_dir / "dqn.pickle"
 
     train(results_dir, agent_path)
-    test(agent_path)
+    test_rl_agent(agent_path)
 
 
 if __name__ == "__main__":

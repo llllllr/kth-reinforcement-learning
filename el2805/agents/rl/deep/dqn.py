@@ -6,7 +6,7 @@ from copy import deepcopy
 from el2805.agents.rl.common.rl_agent import RLAgent
 from el2805.agents.rl.common.experience import Experience
 from el2805.agents.rl.common.utils import get_epsilon
-from el2805.agents.rl.deep.common.fc_network import FCNetwork
+from el2805.agents.rl.deep.common.multi_layer_perceptron import MultiLayerPerceptron
 from el2805.common.utils import random_decide
 
 
@@ -28,10 +28,9 @@ class DQN(RLAgent):
             replay_buffer_size: int,
             replay_buffer_min: int,
             target_update_period: int,
-            gradient_clipping_max_norm: float,
-            n_hidden_layers: int,
-            hidden_layer_size: int,
-            activation: str,
+            gradient_max_norm: float,
+            hidden_layer_sizes: list[int],
+            hidden_layer_activation: str,
             cer: bool,
             dueling: bool,
             device: str,
@@ -63,14 +62,12 @@ class DQN(RLAgent):
         :type replay_buffer_min: int
         :param target_update_period: period for refreshing target network, expressed in number of steps
         :type target_update_period: int
-        :param gradient_clipping_max_norm: maximum norm used for gradient clipping
-        :type gradient_clipping_max_norm: float
-        :param n_hidden_layers: number of hidden layers in the Q-network
-        :type n_hidden_layers: int
-        :param hidden_layer_size: number of neurons in each hidden layer of the Q-network
-        :type hidden_layer_size: int
-        :param activation: activation function for hidden layers in the Q-network
-        :type activation: str
+        :param gradient_max_norm: maximum norm used for gradient clipping
+        :type gradient_max_norm: float
+        :param hidden_layer_sizes: number of neurons in each hidden layer of the Q-network
+        :type hidden_layer_sizes: list[int]
+        :param hidden_layer_activation: activation function for hidden layers in the Q-network
+        :type hidden_layer_activation: str
         :param cer: enables CER (combined experience replay)
         :type cer: bool
         :param dueling: enables dueling DQN
@@ -92,10 +89,9 @@ class DQN(RLAgent):
         self.replay_buffer_min = replay_buffer_min
         self.batch_size = batch_size
         self.target_update_period = target_update_period
-        self.gradient_clipping_max_norm = gradient_clipping_max_norm
-        self.n_hidden_layers = n_hidden_layers
-        self.hidden_layer_size = hidden_layer_size
-        self.activation = activation
+        self.gradient_max_norm = gradient_max_norm
+        self.hidden_layer_sizes = hidden_layer_sizes
+        self.hidden_layer_activation = hidden_layer_activation
         self.cer = cer
         self.dueling = dueling
         self.device = device
@@ -108,9 +104,8 @@ class DQN(RLAgent):
         self.q_network = QNetwork(
             state_dim=state_dim,
             n_actions=self._n_actions,
-            n_hidden_layers=self.n_hidden_layers,
-            hidden_layer_size=self.hidden_layer_size,
-            activation=self.activation,
+            hidden_layer_sizes=self.hidden_layer_sizes,
+            hidden_layer_activation=self.hidden_layer_activation,
             dueling=self.dueling
         ).to(self.device)
 
@@ -165,21 +160,17 @@ class DQN(RLAgent):
         # Compute targets
         with torch.no_grad():
             q_next = self._target_q_network(next_states)    # Q(s',a)
-            assert q_next.shape == (self.batch_size, self._n_actions)
             targets = rewards + dones.logical_not() * self.discount * q_next.max(axis=1).values
-            assert targets.shape == (self.batch_size,)
 
         # Forward pass
         q = self.q_network(states)                          # Q(s,a)
-        assert q.shape == (self.batch_size, self._n_actions)
         q = q[torch.arange(self.batch_size), actions]       # Q(s,a*), where a* is the action taken in the experience
-        assert q.shape == (self.batch_size,)
         loss = torch.nn.functional.mse_loss(targets, q)
 
         # Backward pass
         self._optimizer.zero_grad()
         loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.q_network.parameters(), max_norm=self.gradient_clipping_max_norm)
+        torch.nn.utils.clip_grad_norm_(self.q_network.parameters(), max_norm=self.gradient_max_norm)
         self._optimizer.step()
 
         # Update target network
@@ -231,48 +222,54 @@ class DQN(RLAgent):
                     dtype=torch.float32,
                     device=self.device
                 )
-                q_values = self.q_network(state)
-                assert q_values.shape[0] == 1
-                action = q_values.argmax().item()
+                q = self.q_network(state)
+                assert q.shape == (1, self._n_actions)
+                action = q.argmax().item()
 
         return action
 
 
-class QNetwork(FCNetwork):
+class QNetwork(torch.nn.Module):
     def __init__(
             self,
             *,
             state_dim: int,
             n_actions: int,
-            n_hidden_layers: int,
-            hidden_layer_size: int,
-            activation: str,
+            hidden_layer_sizes: list[int],
+            hidden_layer_activation: str,
             dueling: bool
     ):
-        super().__init__(
-            input_size=state_dim,
-            n_hidden_layers=n_hidden_layers,
-            hidden_layer_size=hidden_layer_size,
-            activation=activation,
-            output_size=n_actions,
-            include_top=not dueling     # in case of dueling DQN, we will define the particular top here
-        )
+        super().__init__()
+        self.state_dim = state_dim
+        self.n_actions = n_actions
+        self.hidden_layer_sizes = hidden_layer_sizes
+        self.hidden_layer_activation = hidden_layer_activation
         self.dueling = dueling
 
+        self._hidden_layers = MultiLayerPerceptron(
+            input_size=self.state_dim,
+            hidden_layer_sizes=self.hidden_layer_sizes,
+            hidden_layer_activation=self.hidden_layer_activation,
+            include_top=False
+        )
+
+        input_size = self.hidden_layer_sizes[-1]
         if self.dueling:
-            self._v_layer = torch.nn.Linear(self.hidden_layer_size, 1)
-            self._advantage_layer = torch.nn.Linear(self.hidden_layer_size, self.output_size)
+            self._v_layer = torch.nn.Linear(input_size, 1)
+            self._advantage_layer = torch.nn.Linear(input_size, self.n_actions)
+            self._output_layer = None
         else:
             self._v_layer = None
             self._advantage_layer = None
+            self._output_layer = torch.nn.Linear(input_size, self.n_actions)
 
     def forward(self, x):
-        x = super().forward(x)
+        x = self._hidden_layers(x)
         if self.dueling:
             v = self._v_layer(x)
             advantage = self._advantage_layer(x)
             avg_advantage = advantage.mean(dim=1, keepdim=True)
             q = v + advantage - avg_advantage
         else:
-            q = x
+            q = self._output_layer(x)
         return q
