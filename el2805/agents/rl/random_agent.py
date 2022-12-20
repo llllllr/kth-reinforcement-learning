@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Union
-from el2805.agents.rl.common.experience import Experience
-from el2805.agents.rl.common.rl_agent import RLAgent
+from el2805.agents.rl.rl_agent import RLAgent
+from el2805.agents.rl.utils import Experience
 
 
 class RandomAgent(RLAgent):

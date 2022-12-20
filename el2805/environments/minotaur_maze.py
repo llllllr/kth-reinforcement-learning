@@ -5,8 +5,8 @@ from pathlib import Path
 from enum import Enum, IntEnum
 from termcolor import colored
 from el2805.environments.maze import Maze, MazeCell
-from el2805.environments.common.grid_world import Move, Position
-from el2805.common.utils import random_decide
+from el2805.environments.grid_world import Move, Position
+from el2805.utils import random_decide
 
 
 class Progress(IntEnum):

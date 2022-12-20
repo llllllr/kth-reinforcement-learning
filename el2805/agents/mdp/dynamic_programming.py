@@ -1,6 +1,6 @@
 import numpy as np
 from typing import Any
-from el2805.agents.mdp.common.mdp_agent import MDPAgent
+from el2805.agents.mdp.mdp_agent import MDPAgent
 from el2805.environments import TabularMDP
 
 

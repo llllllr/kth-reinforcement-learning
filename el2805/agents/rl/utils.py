@@ -1,3 +1,7 @@
+import numpy as np
+from typing import NamedTuple
+
+
 def get_epsilon(
         epsilon: float | str,
         *,
@@ -27,3 +31,12 @@ def get_epsilon(
     else:
         raise NotImplementedError
     return epsilon
+
+
+class Experience(NamedTuple):
+    episode: int
+    state: np.ndarray
+    action: int
+    reward: float
+    next_state: np.ndarray
+    done: bool

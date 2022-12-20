@@ -1,7 +1,7 @@
 import numpy as np
 from abc import ABC, abstractmethod
 from typing import Any
-from el2805.agents.common.agent import Agent
+from el2805.agents.agent import Agent
 from el2805.environments import TabularMDP
 
 
@@ -17,7 +17,7 @@ class MDPAgent(Agent, ABC):
         """
         super().__init__(environment=environment)
         self.environment = environment  # to avoid warning for type hints
-        self.discount = discount
+        self.discount = discount if discount is not None else 1
         self._policy = None
 
     @abstractmethod

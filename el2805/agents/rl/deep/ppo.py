@@ -2,10 +2,9 @@ import gym
 import numpy as np
 import torch
 from collections import defaultdict
-from el2805.agents.rl.common.rl_agent import RLAgent
-from el2805.agents.rl.common.experience import Experience
-from el2805.agents.rl.deep.common.multi_layer_perceptron import MultiLayerPerceptron
-from el2805.agents.rl.deep.common.utils import normal_pdf
+from el2805.agents.rl.rl_agent import RLAgent
+from el2805.agents.rl.utils import Experience
+from el2805.agents.rl.deep.utils import MultiLayerPerceptron, normal_pdf
 
 
 class PPO(RLAgent):

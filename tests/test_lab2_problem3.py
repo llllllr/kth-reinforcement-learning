@@ -21,7 +21,7 @@ import torch
 from tqdm import trange
 from pathlib import Path
 from el2805.agents.rl.deep import PPO
-from el2805.agents.rl.deep.common.utils import get_device
+from el2805.agents.rl.deep.utils import get_device
 
 
 # TODO: fix and avoid duplicated code

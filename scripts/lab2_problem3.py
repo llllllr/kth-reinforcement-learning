@@ -2,7 +2,7 @@ import gym
 import torch
 from pathlib import Path
 from el2805.agents.rl.deep import PPO
-from el2805.agents.rl.deep.common.utils import get_device
+from el2805.agents.rl.deep.utils import get_device
 from utils import plot_training_stats, test_rl_agent
 
 
@@ -24,7 +24,7 @@ def train(results_dir, agent_path):
     actor_hidden_layer_activation = "relu"
     policy_ratio_clip_range = .9
     gradient_max_norm = 1
-    early_stopping_reward = 200
+    early_stopping_reward = 250
 
     # Environment
     environment = gym.make("LunarLanderContinuous-v2")

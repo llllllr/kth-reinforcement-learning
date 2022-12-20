@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 from tqdm import trange
 from el2805.environments import MinotaurMaze
-from el2805.environments.common.grid_world import Move
+from el2805.environments.grid_world import Move
 from el2805.environments.maze import MazeCell
 from el2805.environments.minotaur_maze import Progress
 from el2805.agents.mdp import MDPAgent, DynamicProgramming, ValueIteration

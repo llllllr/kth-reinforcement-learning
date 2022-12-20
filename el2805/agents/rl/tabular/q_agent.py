@@ -1,11 +1,10 @@
 import numpy as np
 from abc import ABC
 from typing import Any
-from el2805.agents.rl.common.rl_agent import RLAgent
-from el2805.agents.rl.common.experience import Experience
-from el2805.agents.rl.common.utils import get_epsilon
+from el2805.agents.rl.rl_agent import RLAgent
+from el2805.agents.rl.utils import get_epsilon, Experience
 from el2805.environments import TabularRLProblem
-from el2805.common.utils import random_decide
+from el2805.utils import random_decide
 
 
 class QAgent(RLAgent, ABC):

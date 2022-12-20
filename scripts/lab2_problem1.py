@@ -2,7 +2,7 @@ import gym
 import torch
 from pathlib import Path
 from el2805.agents.rl.deep import DQN
-from el2805.agents.rl.deep.common.utils import get_device
+from el2805.agents.rl.deep.utils import get_device
 from utils import plot_training_stats, test_rl_agent
 
 
@@ -22,10 +22,10 @@ def train(results_dir, agent_path):
     target_update_period = replay_buffer_size // batch_size
     hidden_layer_sizes = [64, 64]
     hidden_layer_activation = "relu"
-    gradient_max_norm = 2
+    gradient_max_norm = 1
     cer = True
     dueling = True
-    early_stopping_reward = 200
+    early_stopping_reward = 250
 
     # Environment
     environment = gym.make("LunarLander-v2")

@@ -1,9 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from el2805.environments import Maze, PluckingBerries, MinotaurMaze
-from el2805.environments.common.grid_world import Move
-from el2805.agents.rl import Experience, RLAgent
-from el2805.agents.common.utils import running_average
+from el2805.environments.grid_world import Move
+from el2805.agents.rl import RLAgent
+from el2805.agents.rl.utils import Experience
+from el2805.agents.utils import running_average
 
 
 def best_maze_path(env, agent):
