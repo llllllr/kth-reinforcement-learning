@@ -3,11 +3,10 @@ import numpy as np
 import torch
 from collections import deque
 from copy import deepcopy
-from el2805.agents.rl.common.rl_agent import RLAgent
-from el2805.agents.rl.common.experience import Experience
-from el2805.agents.rl.common.utils import get_epsilon
-from el2805.agents.rl.deep.common.multi_layer_perceptron import MultiLayerPerceptron
-from el2805.common.utils import random_decide
+from el2805.agents.rl.rl_agent import RLAgent
+from el2805.agents.rl.utils import Experience, get_epsilon
+from el2805.agents.rl.deep.utils import MultiLayerPerceptron
+from el2805.utils import random_decide
 
 
 class DQN(RLAgent):
@@ -107,7 +106,7 @@ class DQN(RLAgent):
             hidden_layer_sizes=self.hidden_layer_sizes,
             hidden_layer_activation=self.hidden_layer_activation,
             dueling=self.dueling
-        ).to(self.device)
+        ).double().to(self.device)
 
         self._target_q_network = deepcopy(self.q_network).to(self.device)
         self._replay_buffer = deque(maxlen=self.replay_buffer_size)
@@ -133,22 +132,22 @@ class DQN(RLAgent):
         # Unpack experiences
         states = torch.as_tensor(
             data=np.asarray([e.state for e in experience_batch]),
-            dtype=torch.float32,
+            dtype=torch.float64,
             device=self.device
         )
         actions = torch.as_tensor(
-            data=np.asarra([e.action for e in experience_batch]),
+            data=np.asarray([e.action for e in experience_batch]),
             dtype=torch.long,
             device=self.device
         )
         next_states = torch.as_tensor(
             data=np.asarray([e.next_state for e in experience_batch]),
-            dtype=torch.float32,
+            dtype=torch.float64,
             device=self.device,
         )
         rewards = torch.as_tensor(
             data=[e.reward for e in experience_batch],
-            dtype=torch.float32,
+            dtype=torch.float64,
             device=self.device
         )
         dones = torch.as_tensor(
@@ -219,7 +218,7 @@ class DQN(RLAgent):
             with torch.no_grad():
                 state = torch.as_tensor(
                     data=state.reshape((1,) + state.shape),
-                    dtype=torch.float32,
+                    dtype=torch.float64,
                     device=self.device
                 )
                 q = self.q_network(state)
