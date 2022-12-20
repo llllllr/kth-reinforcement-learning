@@ -137,23 +137,23 @@ def part_ij(map_filepath, results_dir):
     values_baseline = np.full(n_episodes, v)
     x = np.arange(1, n_episodes+1)
 
-    filename = "part_j3"     # TODO: adjust the filename according to algorithm selected
+    # TODO: update parameters below
+    filename = "part_j3"
     figure, axes = plt.subplots()
 
-    for delta, alpha in zip(        # TODO: put here the hyper-parameters under study
+    for delta, alpha in zip(
         [0.55, 0.55, 0.75, 0.75, 0.95, 0.95],
         [0.65, 0.85, 0.65, 0.85, 0.65, 0.85],
     ):
-        # TODO: adjust the label for the plot legend according to hyper-parameters under study
         label = rf"$\delta$={delta:.2f} - $\alpha$={alpha:.2f}"
 
-        # agent = QLearning(    # TODO: select the algorithm by commenting/uncommenting
+        # agent = QLearning(
         agent = Sarsa(
             environment=environment,
             learning_rate="decay",
             discount=discount,
             alpha=alpha,
-            epsilon="delta",    # TODO: adjust the parameters according to hyper-parameters under study
+            epsilon="delta",
             delta=delta,
             q_init=1,
             seed=SEED

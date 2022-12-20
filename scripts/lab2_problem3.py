@@ -7,9 +7,11 @@ from utils import plot_training_stats, test_rl_agent
 
 
 def train(results_dir, agent_path):
+    torch.autograd.set_detect_anomaly(True)
+
     # Hyper-parameters
     seed = 1
-    n_episodes = 2000
+    n_episodes = 1600
     discount = .99
     n_epochs_per_update = 10
     critic_learning_rate = 1e-3
@@ -20,8 +22,8 @@ def train(results_dir, agent_path):
     actor_mean_hidden_layer_sizes = [200]
     actor_var_hidden_layer_sizes = [200]
     actor_hidden_layer_activation = "relu"
-    policy_ratio_clip_range = .2
-    gradient_max_norm = 2
+    policy_ratio_clip_range = .9
+    gradient_max_norm = 1
     early_stopping_reward = 200
 
     # Environment
@@ -45,6 +47,13 @@ def train(results_dir, agent_path):
         device=get_device(),
         seed=seed
     )
+    # print(agent.actor)
+    # print(agent.critic)
+
+    # for param in agent.actor.parameters():
+    #     print(param.data)
+    # for param in agent.critic.parameters():
+    #     print(param.data)
 
     # Train agent
     training_stats = agent.train(n_episodes=n_episodes, early_stopping_reward=early_stopping_reward)

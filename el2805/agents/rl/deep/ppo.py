@@ -54,7 +54,7 @@ class PPO(RLAgent):
             state_dim=state_dim,
             hidden_layer_sizes=self.critic_hidden_layer_sizes,
             hidden_layer_activation=self.critic_hidden_layer_activation
-        ).to(self.device)
+        ).double().to(self.device)
 
         self.actor = PPOActor(
             state_dim=state_dim,
@@ -63,7 +63,7 @@ class PPO(RLAgent):
             mean_hidden_layer_sizes=self.actor_mean_hidden_layer_sizes,
             var_hidden_layer_sizes=self.actor_var_hidden_layer_sizes,
             hidden_layer_activation=self.actor_hidden_layer_activation
-        ).to(self.device)
+        ).double().to(self.device)
 
         self._critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=self.critic_learning_rate)
         self._actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=self.actor_learning_rate)
@@ -77,15 +77,20 @@ class PPO(RLAgent):
             return stats
 
         # Unpack experiences
-        rewards = np.asarray([e.reward for e in self._episodic_buffer])
+        n = len(self._episodic_buffer)
+        rewards = torch.as_tensor(
+            data=np.asarray([e.reward for e in self._episodic_buffer]),
+            dtype=torch.float64,
+            device=self.device
+        )
         states = torch.as_tensor(
             data=np.asarray([e.state for e in self._episodic_buffer]),
-            dtype=torch.float32,
+            dtype=torch.float64,
             device=self.device
         )
         actions = torch.as_tensor(
             data=np.asarray([e.action for e in self._episodic_buffer]),
-            dtype=torch.float32,
+            dtype=torch.float64,
             device=self.device
         )
 
@@ -97,23 +102,28 @@ class PPO(RLAgent):
             g.append(discounted_reward)
         g = torch.as_tensor(
             np.asarray(g[::-1]),    # reverse
-            dtype=torch.float32,
+            dtype=torch.float64,
             device=self.device
         )
+        assert g.shape == (n,)
 
-        # Compute advantages
-        v = self.critic(states)
-        v = v.detach()  # we don't want to update the critic with the backward pass on the actor
-        psi = g - v
+        with torch.no_grad():
+            # Compute advantages
+            v = self.critic(states)
+            assert v.shape == (n, 1)
+            v = v.reshape(-1)
+            psi = g - v
 
-        # Compute action probabilities from old policy
-        mean, var = self.actor(states)
-        pi_old = normal_pdf(actions, mean, var).prod(dim=1)     # assumption: independent action dimensions
-        pi_old = pi_old.detach()
+            # Compute action probabilities from old policy
+            mean, var = self.actor(states)
+            assert mean.shape == (n, self._action_dim) and var.shape == (n, self._action_dim)
+            pi_old = normal_pdf(actions, mean, var).prod(dim=1)     # assumption: independent action dimensions
+            assert pi_old.shape == (n,)
 
         for _ in range(self.n_epochs_per_update):
             # Forward pass by critic
             v = self.critic(states)
+            assert v.shape == (n, 1)
             v = v.reshape(-1)
             critic_loss = torch.nn.functional.mse_loss(g, v)
 
@@ -125,9 +135,13 @@ class PPO(RLAgent):
 
             # Forward pass by actor
             mean, var = self.actor(states)
+            assert mean.shape == (n, self._action_dim) and var.shape == (n, self._action_dim)
             pi = normal_pdf(actions, mean, var).prod(dim=1)     # assumption: independent action dimensions
+            assert pi.shape == (n,)
             r = pi / pi_old
+            assert r.shape == (n,)
             r_clipped = r.clip(min=1-self.policy_ratio_clip_range, max=1+self.policy_ratio_clip_range)
+            assert r_clipped.shape == (n,)
             actor_loss = - torch.minimum(r * psi, r_clipped * psi).mean()
 
             # Backward pass by actor
@@ -158,13 +172,13 @@ class PPO(RLAgent):
         with torch.no_grad():
             state = torch.as_tensor(
                 data=state.reshape((1,) + state.shape),
-                dtype=torch.float32,
+                dtype=torch.float64,
                 device=self.device
             )
             mean, var = self.actor(state)
-            assert mean.shape == (1, self._action_dim) and var.shape == (1, self._action_dim)
             mean, var = mean.reshape(-1), var.reshape(-1)
-            action = self._rng.normal(loc=mean, scale=torch.sqrt(var)) if explore else mean.numpy()
+            action = torch.normal(mean, torch.sqrt(var)) if explore else mean
+            action = action.numpy()
         return action
 
 
@@ -237,4 +251,3 @@ class PPOActor(torch.nn.Module):
         mean = self._mean_head(x)
         var = self._var_head(x)
         return mean, var
-

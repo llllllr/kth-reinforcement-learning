@@ -59,6 +59,5 @@ class MultiLayerPerceptron(torch.nn.Module):
         for hidden_layer in self._hidden_layers:
             x = hidden_layer(x)
         if self.include_top:
-
             x = self._output_layer(x)
         return x

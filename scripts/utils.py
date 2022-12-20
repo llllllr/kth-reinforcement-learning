@@ -77,7 +77,7 @@ def plot_training_stats(stats, results_dir):
     for metric_name, metric_values in stats.items():
         metric_name_readable = metric_name.replace("_", " ")
         x = np.arange(1, len(metric_values) + 1)
-        x_label = "episode" if metric_name.startswith("episode") else "time step"
+        x_label = "episode" if metric_name.startswith("episode") else "update"
 
         figure, axes = plt.subplots()
         axes.plot(x, metric_values, label=metric_name_readable)

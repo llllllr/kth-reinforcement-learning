@@ -4,8 +4,8 @@ from typing import NamedTuple
 
 class Experience(NamedTuple):
     episode: int
-    state: np.array
+    state: np.ndarray
     action: int
     reward: float
-    next_state: np.array
+    next_state: np.ndarray
     done: bool

@@ -85,6 +85,8 @@ class RLAgent(Agent, ABC):
         self.environment.seed(seed)
         if seed is not None:
             torch.manual_seed(seed)
+            if torch.cuda.is_available():
+                torch.cuda.manual_seed_all(seed)
 
     def _train_or_test(
             self,

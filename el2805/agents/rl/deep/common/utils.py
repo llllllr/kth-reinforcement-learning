@@ -12,7 +12,5 @@ def get_device():
 
 
 def normal_pdf(x, mean, var):
-    distribution = torch.distributions.Normal(loc=mean, scale=torch.sqrt(var))
-    log_pdf = distribution.log_prob(x)
-    pdf = torch.exp(log_pdf)
+    pdf = 1 / torch.sqrt(2 * torch.pi * var) * torch.exp(-1/2 * (x - mean)**2 / var)
     return pdf
