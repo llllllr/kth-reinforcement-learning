@@ -15,7 +15,8 @@ class PPO(RLAgent):
             *,
             environment: gym.Env,
             discount: float,
-            n_epochs_per_update: int,
+            n_epochs_per_step: int,
+            epsilon: float,
             critic_learning_rate: float,
             critic_hidden_layer_sizes: list[int],
             critic_hidden_layer_activation: str,
@@ -24,14 +25,14 @@ class PPO(RLAgent):
             actor_mean_hidden_layer_sizes: list[int],
             actor_var_hidden_layer_sizes: list[int],
             actor_hidden_layer_activation: str,
-            policy_ratio_clip_range: float,
             gradient_max_norm: float,
             device: str,
             seed: int | None = None
     ):
         super().__init__(environment=environment, seed=seed)
         self.discount = discount
-        self.n_epochs_per_update = n_epochs_per_update
+        self.n_epochs_per_step = n_epochs_per_step
+        self.epsilon = epsilon
         self.critic_learning_rate = critic_learning_rate
         self.critic_hidden_layer_sizes = critic_hidden_layer_sizes
         self.critic_hidden_layer_activation = critic_hidden_layer_activation
@@ -40,7 +41,6 @@ class PPO(RLAgent):
         self.actor_mean_hidden_layer_sizes = actor_mean_hidden_layer_sizes
         self.actor_var_hidden_layer_sizes = actor_var_hidden_layer_sizes
         self.actor_hidden_layer_activation = actor_hidden_layer_activation
-        self.policy_ratio_clip_range = policy_ratio_clip_range
         self.gradient_max_norm = gradient_max_norm
         self.device = device
 
@@ -113,13 +113,10 @@ class PPO(RLAgent):
             v = v.reshape(-1)
             psi = g - v
 
-            # Compute action probabilities from old policy
-            mean, var = self.actor(states)
-            assert mean.shape == (n, self._action_dim) and var.shape == (n, self._action_dim)
-            pi_old = normal_pdf(actions, mean, var).prod(dim=1)     # assumption: independent action dimensions
-            assert pi_old.shape == (n,)
+            # Compute action likelihood from old policy
+            pi_old = self._compute_actions_likelihood(states, actions)
 
-        for _ in range(self.n_epochs_per_update):
+        for _ in range(self.n_epochs_per_step):
             # Forward pass by critic
             v = self.critic(states)
             assert v.shape == (n, 1)
@@ -133,13 +130,10 @@ class PPO(RLAgent):
             self._critic_optimizer.step()
 
             # Forward pass by actor
-            mean, var = self.actor(states)
-            assert mean.shape == (n, self._action_dim) and var.shape == (n, self._action_dim)
-            pi = normal_pdf(actions, mean, var).prod(dim=1)     # assumption: independent action dimensions
-            assert pi.shape == (n,)
+            pi = self._compute_actions_likelihood(states, actions)
             r = pi / pi_old
             assert r.shape == (n,)
-            r_clipped = r.clip(min=1-self.policy_ratio_clip_range, max=1+self.policy_ratio_clip_range)
+            r_clipped = r.clip(min=1-self.epsilon, max=1 + self.epsilon)
             assert r_clipped.shape == (n,)
             actor_loss = - torch.minimum(r * psi, r_clipped * psi).mean()
 
@@ -173,6 +167,14 @@ class PPO(RLAgent):
             action = torch.normal(mean, torch.sqrt(var))
             action = action.numpy()
         return action
+
+    def _compute_actions_likelihood(self, states, actions):
+        assert len(states) == len(actions)
+        n = len(states)
+        mean, var = self.actor(states)
+        pi = normal_pdf(actions, mean, var).prod(dim=1)     # assumption: independent action dimensions
+        assert mean.shape == (n, self._action_dim) and var.shape == (n, self._action_dim) and pi.shape == (n,)
+        return pi
 
 
 class PPOCritic(MultiLayerPerceptron):

@@ -15,7 +15,6 @@ SEED = 1
 
 
 def part_c(map_filepath, results_dir):
-    results_dir = results_dir / "part_c"
     results_dir.mkdir(parents=True, exist_ok=True)
 
     environment = MinotaurMaze(map_filepath=map_filepath, horizon=20)
@@ -54,7 +53,6 @@ def part_c(map_filepath, results_dir):
 
 
 def part_d(map_filepath, results_dir):
-    results_dir = results_dir / "part_d"
     results_dir.mkdir(parents=True, exist_ok=True)
 
     figure, axes = plt.subplots()
@@ -97,7 +95,6 @@ def part_d(map_filepath, results_dir):
 
 
 def part_f(map_filepath, results_dir):
-    results_dir = results_dir / "part_f"
     results_dir.mkdir(parents=True, exist_ok=True)
 
     expected_life = 30
@@ -115,7 +112,6 @@ def part_f(map_filepath, results_dir):
 
 
 def part_ij(map_filepath, results_dir):
-    results_dir = results_dir / "part_ij"
     results_dir.mkdir(parents=True, exist_ok=True)
 
     expected_life = 50
@@ -176,7 +172,6 @@ def part_ij(map_filepath, results_dir):
 
 
 def part_k(map_filepath, results_dir):
-    results_dir = results_dir / "part_k"
     results_dir.mkdir(parents=True, exist_ok=True)
 
     expected_life = 50
@@ -256,23 +251,23 @@ def main():
     map_filepath_key = Path(__file__).parent.parent / "data" / "maze_minotaur_key.txt"
 
     print("Part (c)")
-    part_c(map_filepath, results_dir)
+    part_c(map_filepath, results_dir / "part_c")
     print()
 
     print("Part (d)")
-    part_d(map_filepath, results_dir)
+    part_d(map_filepath, results_dir / "part_d")
     print()
 
     print("Part (f)")
-    part_f(map_filepath, results_dir)
+    part_f(map_filepath, results_dir / "part_f")
     print()
 
     print("Part (i-j)")
-    part_ij(map_filepath_key, results_dir)
+    part_ij(map_filepath_key, results_dir / "part_ij")
     print()
 
     print("Part (k)")
-    part_k(map_filepath_key, results_dir)
+    part_k(map_filepath_key, results_dir / "part_k")
     print()
 
 

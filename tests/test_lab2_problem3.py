@@ -42,6 +42,7 @@ class PPOTestCase(unittest.TestCase):
         n_episodes = 1600
         discount = .99
         n_epochs_per_update = 10
+        epsilon = .2
         critic_learning_rate = 1e-3
         critic_hidden_layer_sizes = [400, 200]
         critic_hidden_layer_activation = "relu"
@@ -50,7 +51,6 @@ class PPOTestCase(unittest.TestCase):
         actor_mean_hidden_layer_sizes = [200]
         actor_var_hidden_layer_sizes = [200]
         actor_hidden_layer_activation = "relu"
-        policy_ratio_clip_range = .9
         gradient_max_norm = 1
         early_stopping_reward = 250
 
@@ -58,7 +58,7 @@ class PPOTestCase(unittest.TestCase):
         agent = PPO(
             environment=self.environment,
             discount=discount,
-            n_epochs_per_update=n_epochs_per_update,
+            n_epochs_per_step=n_epochs_per_update,
             critic_learning_rate=critic_learning_rate,
             critic_hidden_layer_sizes=critic_hidden_layer_sizes,
             critic_hidden_layer_activation=critic_hidden_layer_activation,
@@ -67,7 +67,7 @@ class PPOTestCase(unittest.TestCase):
             actor_mean_hidden_layer_sizes=actor_mean_hidden_layer_sizes,
             actor_var_hidden_layer_sizes=actor_var_hidden_layer_sizes,
             actor_hidden_layer_activation=actor_hidden_layer_activation,
-            policy_ratio_clip_range=policy_ratio_clip_range,
+            epsilon=epsilon,
             gradient_max_norm=gradient_max_norm,
             device=get_device(),
             seed=self.seed

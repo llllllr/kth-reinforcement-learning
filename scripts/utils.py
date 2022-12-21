@@ -74,17 +74,31 @@ def print_and_write_line(filepath, output, mode):
         f.write(output + "\n")
 
 
-def plot_training_stats(stats, results_dir):
+def plot_training_stats(stats, results_dir, label=None, figures=None):
+    if figures is None:
+        figures = {metric_name: plt.subplots()[0] for metric_name in stats.keys()}
+    else:
+        for metric_name in stats.keys():
+            assert metric_name in figures
+
     for metric_name, metric_values in stats.items():
+        figure = figures[metric_name]
+        assert len(figure.axes) == 1
+        axes = figure.axes[0]
+
         metric_name_readable = metric_name.replace("_", " ")
         x = np.arange(1, len(metric_values) + 1)
         x_label = "episode" if metric_name.startswith("episode") else "update"
 
-        figure, axes = plt.subplots()
-        axes.plot(x, metric_values, label=metric_name_readable)
-        axes.plot(x, running_average(metric_values), label=f"avg {metric_name_readable}")
+        plots = axes.plot(x, running_average(metric_values), label=label)
+        color = plots[0].get_color()
+        axes.plot(x, metric_values, alpha=.2, color=color)
         axes.set_xlabel(x_label)
         axes.set_ylabel(metric_name_readable)
-        axes.legend()
+        if label is not None:
+            axes.legend()
+
         figure.savefig(results_dir / f"{metric_name}.pdf")
         figure.show()
+
+    return figures
