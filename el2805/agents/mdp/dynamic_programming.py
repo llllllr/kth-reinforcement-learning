@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Any
 from el2805.agents.mdp.mdp_agent import MDPAgent
-from el2805.environments import TabularMDP
+from el2805.envs import TabularMDP
 
 
 class DynamicProgramming(MDPAgent):

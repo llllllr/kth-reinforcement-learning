@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from enum import IntEnum
 from termcolor import colored
-from el2805.environments.tabular_mdp import TabularMDP
+from el2805.envs.tabular_mdp import TabularMDP
 
 
 class Move(IntEnum):

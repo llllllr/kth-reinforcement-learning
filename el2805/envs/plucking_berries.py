@@ -1,6 +1,6 @@
 import numpy as np
 from pathlib import Path
-from el2805.environments.grid_world import GridWorld, Move, Position
+from el2805.envs.grid_world import GridWorld, Move, Position
 
 
 class Cell:

@@ -2,7 +2,7 @@ import numpy as np
 from abc import ABC, abstractmethod
 from typing import Any
 from el2805.agents.agent import Agent
-from el2805.environments import TabularMDP
+from el2805.envs import TabularMDP
 
 
 class MDPAgent(Agent, ABC):
@@ -18,30 +18,12 @@ class MDPAgent(Agent, ABC):
         super().__init__(environment=environment)
         self.environment = environment  # to avoid warning for type hints
         self.discount = discount if discount is not None else 1
-        self._policy = None
+        self.policy = None
 
     @abstractmethod
     def solve(self) -> None:
         """Calculates the optimal policy for the MDP."""
         raise NotImplementedError
-
-    @property
-    def policy(self) -> np.ndarray:
-        """Getter for the agent's policy.
-
-        :return: policy
-        :rtype: ndarray
-        """
-        return self._policy
-
-    @policy.setter
-    def policy(self, policy: np.ndarray):
-        """Setter for the agent's policy.
-
-        :param policy: policy
-        :type policy: ndarray
-        """
-        self._policy = policy
 
     def q(self, state: Any, action: int, v: np.ndarray) -> float:
         """Calculates the Q-function.

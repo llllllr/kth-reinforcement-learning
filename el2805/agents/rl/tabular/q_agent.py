@@ -3,7 +3,7 @@ from abc import ABC
 from typing import Any
 from el2805.agents.rl.rl_agent import RLAgent
 from el2805.agents.rl.utils import get_epsilon, Experience
-from el2805.environments import TabularRLProblem
+from el2805.envs import TabularRLProblem
 from el2805.utils import random_decide
 
 

@@ -1,5 +1,5 @@
 from pathlib import Path
-from el2805.environments import Maze
+from el2805.envs import Maze
 from el2805.agents.mdp import DynamicProgramming, ValueIteration
 from utils import best_maze_path
 
