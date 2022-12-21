@@ -18,41 +18,41 @@ import unittest
 import numpy as np
 import gym
 import torch
-from tqdm import trange
 from pathlib import Path
 from el2805.agents.rl.deep import PPO
 from el2805.agents.rl.deep.utils import get_device
+from .utils import test
 
 
-# TODO: fix and avoid duplicated code
 class PPOTestCase(unittest.TestCase):
     seed = 1
     environment = None
+    rng = None
 
     def setUp(self):
         self.environment = gym.make('LunarLanderContinuous-v2')
         self.environment.seed(self.seed)
+        self.rng = np.random.RandomState(self.seed)
 
     def tearDown(self):
         self.environment.close()
 
     def test_training(self):
         # Hyper-parameters
-        seed = 1
-        n_episodes = 1000
+        n_episodes = 1600
         discount = .99
-        n_epochs_per_update = 1
+        n_epochs_per_update = 10
         critic_learning_rate = 1e-3
-        critic_n_hidden_layers = 2
-        critic_hidden_layer_size = 64
-        critic_activation = "relu"
-        actor_learning_rate = 1e-3
-        actor_n_hidden_layers = 2
-        actor_hidden_layer_size = 64
-        actor_activation = "relu"
-        objective_clipping_eps = .1
-        gradient_max_norm = 2
-        early_stopping_reward = 200
+        critic_hidden_layer_sizes = [400, 200]
+        critic_hidden_layer_activation = "relu"
+        actor_learning_rate = 1e-5
+        actor_shared_hidden_layer_sizes = [400]
+        actor_mean_hidden_layer_sizes = [200]
+        actor_var_hidden_layer_sizes = [200]
+        actor_hidden_layer_activation = "relu"
+        policy_ratio_clip_range = .9
+        gradient_max_norm = 1
+        early_stopping_reward = 250
 
         # Agent
         agent = PPO(
@@ -60,73 +60,43 @@ class PPOTestCase(unittest.TestCase):
             discount=discount,
             n_epochs_per_update=n_epochs_per_update,
             critic_learning_rate=critic_learning_rate,
-            critic_n_hidden_layers=critic_n_hidden_layers,
-            critic_hidden_layer_sizes=critic_hidden_layer_size,
-            critic_hidden_layer_activation=critic_activation,
+            critic_hidden_layer_sizes=critic_hidden_layer_sizes,
+            critic_hidden_layer_activation=critic_hidden_layer_activation,
             actor_learning_rate=actor_learning_rate,
-            actor_n_hidden_layers=actor_n_hidden_layers,
-            actor_hidden_layer_sizes=actor_hidden_layer_size,
-            actor_hidden_layer_activation=actor_activation,
-            policy_ratio_clip_range=objective_clipping_eps,
+            actor_shared_hidden_layer_sizes=actor_shared_hidden_layer_sizes,
+            actor_mean_hidden_layer_sizes=actor_mean_hidden_layer_sizes,
+            actor_var_hidden_layer_sizes=actor_var_hidden_layer_sizes,
+            actor_hidden_layer_activation=actor_hidden_layer_activation,
+            policy_ratio_clip_range=policy_ratio_clip_range,
             gradient_max_norm=gradient_max_norm,
             device=get_device(),
-            seed=seed
+            seed=self.seed
         )
         agent.train(n_episodes=n_episodes, early_stopping_reward=early_stopping_reward)
 
         def compute_action(state):
-            action = agent.compute_action(state, explore=False)
+            action = agent.compute_action(state, explore=True)
             return action
 
-        self._test(compute_action)
+        test(self, self.environment, compute_action)
 
     def test_saved_model(self):
         model_path = Path(__file__).parent.parent / "results" / "lab2" / "problem3" / "neural-network-3-actor.pth"
         model = torch.load(model_path)
 
         def compute_action(state):
-            state = torch.as_tensor(
-                data=state.reshape((1,) + state.shape),
-                dtype=torch.float32
-            )
-            q_values = model(state)
-            action = q_values.argmax().item()
+            with torch.no_grad():
+                state = torch.as_tensor(
+                    data=state.reshape((1,) + state.shape),
+                    dtype=torch.float64
+                )
+                mean, var = model(state)
+                mean, var = mean.reshape(-1), var.reshape(-1)
+                action = torch.normal(mean, torch.sqrt(var))
+                action = action.numpy()
             return action
 
-        self._test(compute_action)
-
-    def _test(self, compute_action):
-        n_episodes = 50
-        confidence_pass = 125
-
-        episode_rewards = []
-        episodes = trange(n_episodes, desc='Episode: ', leave=True)
-        for episode in episodes:
-            episodes.set_description(f"Episode {episode}")
-            done = False
-            state = self.environment.reset()
-            episode_reward = 0.
-            while not done:
-                action = compute_action(state)
-                next_state, reward, done, _ = self.environment.step(action)
-                episode_reward += reward
-                state = next_state
-
-            episode_rewards.append(episode_reward)
-            self.environment.close()
-
-        # Assumption: episode reward has Gaussian distribution
-        # Goal: estimate the mean value by taking the sample mean
-        # Problem: how close the sample mean is from the true mean value?
-        #
-        # Confidence level: 0.95
-        # Confidence interval: (sample_mean - confidence, sample_mean + confidence)
-        # Confidence: confidence = q_0.975 * std_reward / sqrt(n)
-        #
-        # See "Philosophy of Science and Research Methodology" course
-        avg_reward = np.mean(episode_rewards)
-        confidence = np.std(episode_rewards) * 1.96 / np.sqrt(n_episodes)
-        self.assertTrue(avg_reward - confidence >= confidence_pass)
+        test(self, self.environment, compute_action)
 
 
 if __name__ == '__main__':

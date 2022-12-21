@@ -15,13 +15,12 @@
 # Modified by: [Franco Ruggeri - fruggeri@kth.se]
 
 import unittest
-import numpy as np
 import gym
 import torch
-from tqdm import trange
 from pathlib import Path
 from el2805.agents.rl.deep import DQN
 from el2805.agents.rl.deep.utils import get_device
+from .utils import test
 
 
 class DQNTestCase(unittest.TestCase):
@@ -37,7 +36,6 @@ class DQNTestCase(unittest.TestCase):
 
     def test_training(self):
         # Hyper-parameters
-        seed = 1
         n_episodes = 1000
         discount = .99
         epsilon = "exponential"
@@ -51,10 +49,10 @@ class DQNTestCase(unittest.TestCase):
         target_update_period = replay_buffer_size // batch_size
         hidden_layer_sizes = [64, 64]
         hidden_layer_activation = "relu"
-        gradient_max_norm = 2
+        gradient_max_norm = 1
         cer = True
         dueling = True
-        early_stopping_reward = 200
+        early_stopping_reward = 250
 
         # Agent
         agent = DQN(
@@ -83,55 +81,23 @@ class DQNTestCase(unittest.TestCase):
             action = agent.compute_action(state, explore=False)
             return action
 
-        self._test(compute_action)
+        test(self, self.environment, compute_action)
 
     def test_saved_model(self):
         model_path = Path(__file__).parent.parent / "results" / "lab2" / "problem1" / "neural-network-1.pth"
         model = torch.load(model_path)
 
         def compute_action(state):
-            state = torch.as_tensor(
-                data=state.reshape((1,) + state.shape),
-                dtype=torch.float32
-            )
-            q_values = model(state)
-            action = q_values.argmax().item()
+            with torch.no_grad():
+                state = torch.as_tensor(
+                    data=state.reshape((1,) + state.shape),
+                    dtype=torch.float64
+                )
+                q_values = model(state)
+                action = q_values.argmax().item()
             return action
 
-        self._test(compute_action)
-
-    def _test(self, compute_action):
-        n_episodes = 50
-        confidence_pass = 50
-
-        episode_rewards = []
-        episodes = trange(n_episodes, desc='Episode: ', leave=True)
-        for episode in episodes:
-            episodes.set_description(f"Episode {episode}")
-            done = False
-            state = self.environment.reset()
-            episode_reward = 0.
-            while not done:
-                action = compute_action(state)
-                next_state, reward, done, _ = self.environment.step(action)
-                episode_reward += reward
-                state = next_state
-
-            episode_rewards.append(episode_reward)
-            self.environment.close()
-
-        # Assumption: episode reward has Gaussian distribution
-        # Goal: estimate the mean value by taking the sample mean
-        # Problem: how close the sample mean is from the true mean value?
-        #
-        # Confidence level: 0.95
-        # Confidence interval: (sample_mean - confidence, sample_mean + confidence)
-        # Confidence: confidence = q_0.975 * std_reward / sqrt(n)
-        #
-        # See "Philosophy of Science and Research Methodology" course
-        avg_reward = np.mean(episode_rewards)
-        confidence = np.std(episode_rewards) * 1.96 / np.sqrt(n_episodes)
-        self.assertTrue(avg_reward - confidence >= confidence_pass)
+        test(self, self.environment, compute_action)
 
 
 if __name__ == '__main__':
