@@ -102,3 +102,13 @@ def plot_training_stats(stats, results_dir, label=None, figures=None):
         figure.show()
 
     return figures
+
+
+def plot_3d(x, y, z, x_label, y_label, z_label, filepath):
+    figure, axes = plt.subplots(subplot_kw={"projection": "3d"})
+    axes.plot_surface(x, y, z, cmap="coolwarm_r")
+    axes.set_xlabel(x_label)
+    axes.set_ylabel(y_label)
+    axes.set_zlabel(z_label)
+    figure.savefig(filepath)
+    figure.show()
