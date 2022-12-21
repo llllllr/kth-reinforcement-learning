@@ -161,13 +161,7 @@ class PPO(RLAgent):
     def record_experience(self, experience: Experience) -> None:
         self._episodic_buffer.append(experience)
 
-    def compute_action(
-            self,
-            state: np.ndarray,
-            *,
-            explore: bool = True,
-            **kwargs
-    ) -> np.ndarray:
+    def compute_action(self, state: np.ndarray, **kwargs) -> np.ndarray:
         with torch.no_grad():
             state = torch.as_tensor(
                 data=state.reshape((1,) + state.shape),
@@ -176,7 +170,7 @@ class PPO(RLAgent):
             )
             mean, var = self.actor(state)
             mean, var = mean.reshape(-1), var.reshape(-1)
-            action = torch.normal(mean, torch.sqrt(var)) if explore else mean
+            action = torch.normal(mean, torch.sqrt(var))
             action = action.numpy()
         return action
 

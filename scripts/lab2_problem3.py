@@ -6,9 +6,7 @@ from el2805.agents.rl.deep.utils import get_device
 from utils import plot_training_stats, test_rl_agent
 
 
-def train(results_dir, agent_path):
-    torch.autograd.set_detect_anomaly(True)
-
+def train_ppo(results_dir, agent_path):
     # Hyper-parameters
     seed = 1
     n_episodes = 1600
@@ -47,13 +45,6 @@ def train(results_dir, agent_path):
         device=get_device(),
         seed=seed
     )
-    # print(agent.actor)
-    # print(agent.critic)
-
-    # for param in agent.actor.parameters():
-    #     print(param.data)
-    # for param in agent.critic.parameters():
-    #     print(param.data)
 
     # Train agent
     training_stats = agent.train(n_episodes=n_episodes, early_stopping_reward=early_stopping_reward)
@@ -68,7 +59,7 @@ def main():
     results_dir.mkdir(parents=True, exist_ok=True)
     agent_path = results_dir / "ppo.pickle"
 
-    train(results_dir, agent_path)
+    train_ppo(results_dir, agent_path)
     test_rl_agent(agent_path)
 
 

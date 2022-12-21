@@ -63,7 +63,7 @@ def train_rl_agent_one_episode(environment, agent, episode):
 
 
 def test_rl_agent(agent_path):
-    n_episodes = 10
+    n_episodes = 50
     agent = RLAgent.load(agent_path)
     agent.test(n_episodes=n_episodes, render=True)
 

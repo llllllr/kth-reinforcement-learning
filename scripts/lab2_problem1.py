@@ -6,7 +6,7 @@ from el2805.agents.rl.deep.utils import get_device
 from utils import plot_training_stats, test_rl_agent
 
 
-def train(results_dir, agent_path):
+def train_dqn(results_dir, agent_path):
     # Hyper-parameters
     seed = 1
     n_episodes = 1000
@@ -65,7 +65,7 @@ def main():
     results_dir.mkdir(parents=True, exist_ok=True)
     agent_path = results_dir / "dqn.pickle"
 
-    train(results_dir, agent_path)
+    train_dqn(results_dir, agent_path)
     test_rl_agent(agent_path)
 
 
