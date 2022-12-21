@@ -11,8 +11,7 @@ class RandomAgent(RLAgent):
     def record_experience(self, experience: Experience) -> None:
         pass
 
-    def compute_action(self, *, state: np.ndarray, **kwargs) -> Union[int, np.array]:
+    def compute_action(self, **kwargs) -> Union[int, np.array]:
         _ = kwargs
-        _ = state
         action = self.environment.action_space.sample()
         return action

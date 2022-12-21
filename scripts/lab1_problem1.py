@@ -9,7 +9,7 @@ from el2805.envs.minotaur_maze import Progress
 from el2805.agents.mdp import MDPAgent, DynamicProgramming, ValueIteration
 from el2805.agents.rl import RLAgent
 from el2805.agents.rl.tabular import QLearning, Sarsa
-from utils import print_and_write_line, minotaur_maze_exit_probability, train_rl_agent_one_episode
+from utils import print_and_write_line, minotaur_maze_exit_probability, train_rl_agent_one_episode, plot_bar
 
 SEED = 1
 
@@ -234,15 +234,12 @@ def part_k(map_filepath, results_dir):
         write_mode = "a"    # append after the first time
         print()
 
-    figure, axes = plt.subplots()
-    axes.bar_label(axes.bar(
-        x=np.arange(len(exit_probabilities)),
-        height=exit_probabilities,
-        tick_label=agent_names
-    ))
-    axes.set_ylabel(r"$\mathbb{P}$('exit alive')")
-    figure.savefig(results_dir / "probability_exit.pdf")
-    figure.show()
+    plot_bar(
+        heights=exit_probabilities,
+        x_tick_labels=agent_names,
+        y_label=r"$\mathbb{P}$('exit alive')",
+        filepath=results_dir / "probability_exit.pdf"
+    )
 
 
 def main():

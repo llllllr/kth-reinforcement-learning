@@ -9,12 +9,12 @@ from utils import plot_training_stats, test_rl_agent
 def train_dqn(results_dir, agent_path):
     # Hyper-parameters
     seed = 1
-    n_episodes = 1000
+    n_train_episodes = 1000
     discount = .99
     epsilon = "exponential"
     epsilon_max = .99
     epsilon_min = .05
-    epsilon_decay_episodes = int(.9 * n_episodes)
+    epsilon_decay_episodes = int(.9 * n_train_episodes)
     learning_rate = 5e-4
     batch_size = 64
     replay_buffer_size = 10000
@@ -54,19 +54,20 @@ def train_dqn(results_dir, agent_path):
     )
 
     # Train agent
-    training_stats = agent.train(n_episodes=n_episodes, early_stopping_reward=early_stopping_reward)
+    training_stats = agent.train(n_episodes=n_train_episodes, early_stopping_reward=early_stopping_reward)
     agent.save(agent_path)
     torch.save(agent.q_network, results_dir / "neural-network-1.pth")
     plot_training_stats(training_stats, results_dir)
+
+    # Test agent
+    agent.test(n_episodes=50, render=True)
 
 
 def main():
     results_dir = Path(__file__).parent.parent / "results" / "lab2" / "problem1"
     results_dir.mkdir(parents=True, exist_ok=True)
     agent_path = results_dir / "dqn.pickle"
-
     train_dqn(results_dir, agent_path)
-    test_rl_agent(agent_path)
 
 
 if __name__ == "__main__":

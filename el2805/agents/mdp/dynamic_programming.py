@@ -5,7 +5,7 @@ from el2805.envs import TabularMDP
 
 
 class DynamicProgramming(MDPAgent):
-    def __init__(self, *, environment: TabularMDP):
+    def __init__(self, environment: TabularMDP):
         super().__init__(environment=environment)
         assert self.environment.finite_horizon()
 

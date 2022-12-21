@@ -1,15 +1,17 @@
 import gym
 import torch
 import numpy as np
-import matplotlib.pyplot as plt
 from pathlib import Path
 from copy import deepcopy
 from el2805.agents.rl.deep import PPO
 from el2805.agents.rl.deep.utils import get_device
-from utils import plot_training_stats, plot_3d
+from el2805.agents.rl import RandomAgent
+from utils import plot_training_stats, plot_bar, plot_surface, print_and_write_line
 
-n_episodes = 1600
+n_train_episodes = 1600
+n_test_episodes = 50
 early_stopping_reward = 250
+
 agent_config = {
     "seed": 1,
     "environment": gym.make("LunarLanderContinuous-v2"),
@@ -34,7 +36,7 @@ def part_c(results_dir, agent_path):
 
     # Train agent
     agent = PPO(**agent_config)
-    training_stats = agent.train(n_episodes=n_episodes, early_stopping_reward=early_stopping_reward)
+    training_stats = agent.train(n_episodes=n_train_episodes, early_stopping_reward=early_stopping_reward)
 
     # Save results
     agent.save(agent_path)
@@ -54,7 +56,7 @@ def part_e2(results_dir):
 
         # Train agent
         agent = PPO(**agent_config_)
-        training_stats = agent.train(n_episodes=n_episodes, early_stopping_reward=early_stopping_reward)
+        training_stats = agent.train(n_episodes=n_train_episodes, early_stopping_reward=early_stopping_reward)
 
         # Save results
         figures = plot_training_stats(
@@ -76,7 +78,7 @@ def part_e3(results_dir):
 
         # Train agent
         agent = PPO(**agent_config_)
-        training_stats = agent.train(n_episodes=n_episodes, early_stopping_reward=early_stopping_reward)
+        training_stats = agent.train(n_episodes=n_train_episodes, early_stopping_reward=early_stopping_reward)
 
         # Save results
         figures = plot_training_stats(
@@ -110,7 +112,7 @@ def part_f(results_dir, agent_path):
         mean_side_engine = mean_side_engine.reshape(y_grid.shape)
 
     # Plot results
-    plot_3d(
+    plot_surface(
         x=y_grid,
         y=w_grid,
         z=mean_side_engine,
@@ -119,7 +121,7 @@ def part_f(results_dir, agent_path):
         z_label=r"$\mu_{\theta,2}(s)$",
         filepath=results_dir / "actor.pdf"
     )
-    plot_3d(
+    plot_surface(
         x=y_grid,
         y=w_grid,
         z=v,
@@ -131,7 +133,25 @@ def part_f(results_dir, agent_path):
 
 
 def part_g(results_dir, agent_path):
-    pass
+    results_dir.mkdir(parents=True, exist_ok=True)
+
+    agent_ppo = PPO.load(agent_path)
+    agent_random = RandomAgent(agent_ppo.environment, seed=agent_config["seed"])
+    agents = [agent_ppo, agent_random]
+    agent_names = ["ppo", "random"]
+
+    avg_episode_rewards = []
+    for agent_name, agent in zip(agent_names, agents):
+        test_stats = agent.test(n_episodes=n_test_episodes, render=False)
+        avg_episode_reward = np.mean(test_stats["episode_reward"])
+        avg_episode_rewards.append(avg_episode_reward)
+
+    plot_bar(
+        heights=avg_episode_rewards,
+        x_tick_labels=agent_names,
+        y_label="avg. episode reward",
+        filepath=results_dir / "episode_reward.pdf"
+    )
 
 
 def main():
@@ -152,6 +172,10 @@ def main():
 
     print("Part (f)")
     part_f(results_dir / "part_f", agent_path)
+    print()
+
+    print("Part (g)")
+    part_g(results_dir / "part_g", agent_path)
     print()
 
 

@@ -5,7 +5,7 @@ from el2805.envs.tabular_mdp import TabularMDP
 
 
 class ValueIteration(MDPAgent):
-    def __init__(self, *, environment: TabularMDP, discount: float, precision: float):
+    def __init__(self, environment: TabularMDP, discount: float, precision: float):
         super().__init__(environment=environment, discount=discount)
         self.discount = discount
         self.precision = precision

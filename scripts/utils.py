@@ -97,7 +97,19 @@ def plot_training_stats(stats, results_dir, label=None, figures=None):
     return figures
 
 
-def plot_3d(x, y, z, x_label, y_label, z_label, filepath):
+def plot_bar(heights, x_tick_labels, y_label, filepath):
+    figure, axes = plt.subplots()
+    axes.bar_label(axes.bar(
+        x=np.arange(len(heights)),
+        height=heights,
+        tick_label=x_tick_labels
+    ))
+    axes.set_ylabel(y_label)
+    figure.savefig(filepath)
+    figure.show()
+
+
+def plot_surface(x, y, z, x_label, y_label, z_label, filepath):
     figure, axes = plt.subplots(subplot_kw={"projection": "3d"})
     axes.plot_surface(x, y, z, cmap="coolwarm_r")
     axes.set_xlabel(x_label)
