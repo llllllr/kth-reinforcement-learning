@@ -1,7 +1,9 @@
 import numpy as np
+import torch
 import matplotlib.pyplot as plt
 from el2805.envs import Maze, PluckingBerries, MinotaurMaze
 from el2805.envs.grid_world import Move
+from el2805.agents.rl import RLAgent, RandomAgent
 from el2805.agents.rl.utils import Experience
 from el2805.agents.utils import running_average
 
@@ -61,6 +63,59 @@ def train_rl_agent_one_episode(environment, agent, episode):
         state = next_state
 
 
+def analyze_lunar_lander_agent(agent_path, agent_function, z_label, filepath):
+    agent = RLAgent.load(agent_path)
+
+    # Prepare grid of states
+    w = torch.linspace(start=-torch.pi, end=torch.pi, steps=100, dtype=torch.float64)
+    y = torch.linspace(start=0, end=1.5, steps=100, dtype=torch.float64)
+    w_grid, y_grid = torch.meshgrid(w, y, indexing="ij")
+    n_states = len(y_grid.reshape(-1))
+    state_dim = len(agent.environment.observation_space.low)
+    states = torch.zeros((n_states, state_dim), dtype=torch.float64)
+    states[:, 1] = y_grid.reshape(-1)
+    states[:, 4] = w_grid.reshape(-1)
+
+    # Agent output
+    with torch.no_grad():
+        z = agent_function(agent, states)
+        z_grid = z.reshape(y_grid.shape)
+
+    # Plot results
+    figure, axes = plt.subplots(subplot_kw={"projection": "3d"})
+    plot = axes.plot_surface(w_grid, y_grid, z_grid, cmap="coolwarm")
+    axes.set_xlabel("angle")
+    axes.set_ylabel("height")
+    axes.set_zlabel(z_label)
+    figure.colorbar(plot, location="left")
+    figure.savefig(filepath)
+    figure.show()
+
+
+def compare_rl_agent_with_random(agent_path, agent_name, n_episodes, seed, results_dir):
+    # Test agents
+    agent = RLAgent.load(agent_path)
+    agent_random = RandomAgent(agent.environment, seed=seed)
+    agents = [agent, agent_random]
+    agent_names = [agent_name, "random"]
+    avg_episode_rewards = []
+    for agent_name, agent in zip(agent_names, agents):
+        test_stats = agent.test(n_episodes=n_episodes, render=False)
+        avg_episode_reward = np.mean(test_stats["episode_reward"])
+        avg_episode_rewards.append(avg_episode_reward)
+
+    # Plot results
+    figure, axes = plt.subplots()
+    axes.bar_label(axes.bar(
+        x=np.arange(len(avg_episode_rewards)),
+        height=avg_episode_rewards,
+        tick_label=agent_names
+    ))
+    axes.set_ylabel("avg. episode reward")
+    figure.savefig(results_dir / f"{agent_name}_vs_random.pdf")
+    figure.show()
+
+
 def print_and_write_line(filepath, output, mode):
     print(output)
     with open(filepath, mode=mode) as f:
@@ -95,25 +150,3 @@ def plot_training_stats(stats, results_dir, label=None, figures=None):
         figure.show()
 
     return figures
-
-
-def plot_bar(heights, x_tick_labels, y_label, filepath):
-    figure, axes = plt.subplots()
-    axes.bar_label(axes.bar(
-        x=np.arange(len(heights)),
-        height=heights,
-        tick_label=x_tick_labels
-    ))
-    axes.set_ylabel(y_label)
-    figure.savefig(filepath)
-    figure.show()
-
-
-def plot_surface(x, y, z, x_label, y_label, z_label, filepath):
-    figure, axes = plt.subplots(subplot_kw={"projection": "3d"})
-    axes.plot_surface(x, y, z, cmap="coolwarm_r")
-    axes.set_xlabel(x_label)
-    axes.set_ylabel(y_label)
-    axes.set_zlabel(z_label)
-    figure.savefig(filepath)
-    figure.show()

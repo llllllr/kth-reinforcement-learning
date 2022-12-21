@@ -43,20 +43,20 @@ class RLAgent(Agent, ABC):
         """
         raise NotImplementedError
 
-    def train(self, n_episodes: int, early_stopping_reward: float | None = None) -> dict:
+    def train(self, n_episodes: int, early_stop_reward: float | None = None) -> dict:
         """Trains the RL agent for the specified number of episodes.
 
         :param n_episodes: number of training episodes
         :type n_episodes: int
-        :param early_stopping_reward: average reward considered as problem solved
-        :type early_stopping_reward: float, optional
+        :param early_stop_reward: average reward considered as problem solved
+        :type early_stop_reward: float, optional
         :return: dictionary of training stats (per episode or per time step, depending on the metric)
         :rtype: dict
         """
         stats = self._train_or_test(
             n_episodes=n_episodes,
             train=True,
-            early_stopping_reward=early_stopping_reward
+            early_stop_reward=early_stop_reward
         )
         return stats
 
@@ -93,7 +93,7 @@ class RLAgent(Agent, ABC):
             n_episodes: int,
             train: bool,
             render: bool = False,
-            early_stopping_reward: float | None = None
+            early_stop_reward: float | None = None
     ) -> dict:
         assert not (train and render)
         stats = defaultdict(list)
@@ -156,7 +156,7 @@ class RLAgent(Agent, ABC):
                 f"Avg length: {avg_episode_length:.1f}"
             )
 
-            if early_stopping_reward is not None and avg_episode_reward >= early_stopping_reward:
+            if early_stop_reward is not None and avg_episode_reward >= early_stop_reward:
                 print("Early stopping: environment solved!")
                 break
 

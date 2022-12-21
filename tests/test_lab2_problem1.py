@@ -20,7 +20,7 @@ import torch
 from pathlib import Path
 from el2805.agents.rl.deep import DQN
 from el2805.agents.rl.deep.utils import get_device
-from .utils import test
+from utils import test
 
 
 class DQNTestCase(unittest.TestCase):
@@ -41,7 +41,7 @@ class DQNTestCase(unittest.TestCase):
         epsilon = "exponential"
         epsilon_max = .99
         epsilon_min = .05
-        epsilon_decay_episodes = int(.9 * n_episodes)
+        epsilon_decay_duration = int(.9 * n_episodes)
         learning_rate = 5e-4
         batch_size = 64
         replay_buffer_size = 10000
@@ -66,7 +66,7 @@ class DQNTestCase(unittest.TestCase):
             epsilon=epsilon,
             epsilon_max=epsilon_max,
             epsilon_min=epsilon_min,
-            epsilon_decay_duration=epsilon_decay_episodes,
+            epsilon_decay_duration=epsilon_decay_duration,
             gradient_max_norm=gradient_max_norm,
             hidden_layer_sizes=hidden_layer_sizes,
             hidden_layer_activation=hidden_layer_activation,
@@ -75,7 +75,7 @@ class DQNTestCase(unittest.TestCase):
             device=get_device(),
             seed=self.seed
         )
-        agent.train(n_episodes=n_episodes, early_stopping_reward=early_stopping_reward)
+        agent.train(n_episodes=n_episodes, early_stop_reward=early_stopping_reward)
 
         def compute_action(state):
             action = agent.compute_action(state, explore=False)

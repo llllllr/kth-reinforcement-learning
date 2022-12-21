@@ -21,7 +21,7 @@ import torch
 from pathlib import Path
 from el2805.agents.rl.deep import PPO
 from el2805.agents.rl.deep.utils import get_device
-from .utils import test
+from utils import test
 
 
 class PPOTestCase(unittest.TestCase):
@@ -72,7 +72,7 @@ class PPOTestCase(unittest.TestCase):
             device=get_device(),
             seed=self.seed
         )
-        agent.train(n_episodes=n_episodes, early_stopping_reward=early_stopping_reward)
+        agent.train(n_episodes=n_episodes, early_stop_reward=early_stopping_reward)
 
         def compute_action(state):
             action = agent.compute_action(state, explore=True)
