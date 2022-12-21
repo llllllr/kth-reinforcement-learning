@@ -2,7 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from el2805.envs import Maze, PluckingBerries, MinotaurMaze
 from el2805.envs.grid_world import Move
-from el2805.agents.rl import RLAgent
 from el2805.agents.rl.utils import Experience
 from el2805.agents.utils import running_average
 
@@ -34,9 +33,9 @@ def minotaur_maze_exit_probability(environment, agent):
         state = environment.reset()
         while not done:
             action = agent.compute_action(state=state, time_step=time_step, explore=False)
-            state, _, done, _ = environment.step(action)
+            state, _, done, info = environment.step(action)
             time_step += 1
-        n_wins += 1 if environment.won() else 0
+            n_wins += info["won"]
     exit_probability = n_wins / n_episodes
     return exit_probability
 
@@ -60,12 +59,6 @@ def train_rl_agent_one_episode(environment, agent, episode):
         agent.update()
 
         state = next_state
-
-
-def test_rl_agent(agent_path):
-    n_episodes = 50
-    agent = RLAgent.load(agent_path)
-    agent.test(n_episodes=n_episodes, render=True)
 
 
 def print_and_write_line(filepath, output, mode):

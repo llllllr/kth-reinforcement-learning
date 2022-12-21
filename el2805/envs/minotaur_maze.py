@@ -276,7 +276,7 @@ class MinotaurMaze(Maze):
 
         return states
 
-    def won(self):
+    def _won(self):
         _, _, progress = self._current_state
         return progress is Progress.EXITED
 
