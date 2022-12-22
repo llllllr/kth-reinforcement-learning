@@ -78,7 +78,7 @@ def part_e3(results_dir):
     agent = DQN(**AGENT_CONFIG)
     training_stats = agent.train(
         n_episodes=5000,
-        early_stop_reward=EARLY_STOP_REWARD
+        early_stop_reward=None
     )
     plot_training_stats(training_stats, results_dir)
 
@@ -88,6 +88,7 @@ def part_e3(results_dir):
         # Update config
         agent_config_ = deepcopy(AGENT_CONFIG)
         agent_config_["replay_buffer_size"] = replay_buffer_size
+        agent_config_["replay_buffer_min"] = int(.2 * replay_buffer_size)
 
         # Train agent
         agent = DQN(**agent_config_)

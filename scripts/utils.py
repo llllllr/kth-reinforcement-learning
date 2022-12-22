@@ -67,8 +67,9 @@ def analyze_lunar_lander_agent(agent_path, agent_function, z_label, filepath):
     agent = RLAgent.load(agent_path)
 
     # Prepare grid of states
-    w = torch.linspace(start=-torch.pi, end=torch.pi, steps=100, dtype=torch.float64)
-    y = torch.linspace(start=0, end=1.5, steps=100, dtype=torch.float64)
+    n_steps = 100
+    w = torch.linspace(start=-torch.pi, end=torch.pi, steps=n_steps, dtype=torch.float64)
+    y = torch.linspace(start=0, end=1.5, steps=n_steps, dtype=torch.float64)
     w_grid, y_grid = torch.meshgrid(w, y, indexing="ij")
     n_states = len(y_grid.reshape(-1))
     state_dim = len(agent.environment.observation_space.low)
@@ -84,8 +85,8 @@ def analyze_lunar_lander_agent(agent_path, agent_function, z_label, filepath):
     # Plot results
     figure, axes = plt.subplots(subplot_kw={"projection": "3d"})
     plot = axes.plot_surface(w_grid, y_grid, z_grid, cmap="coolwarm")
-    axes.set_xlabel("angle")
-    axes.set_ylabel("height")
+    axes.set_xlabel(r"$\omega$")
+    axes.set_ylabel(r"$y$")
     axes.set_zlabel(z_label)
     figure.colorbar(plot, location="left")
     figure.savefig(filepath)
@@ -127,7 +128,7 @@ def plot_training_stats(stats, results_dir, label=None, figures=None):
         figures = {metric_name: plt.subplots()[0] for metric_name in stats.keys()}
     else:
         for metric_name in stats.keys():
-            assert metric_name in figures
+            assert metric_name in figures, f"{metric_name}, {figures}"  # TODO
 
     for metric_name, metric_values in stats.items():
         figure = figures[metric_name]

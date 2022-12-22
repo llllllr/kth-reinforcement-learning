@@ -71,7 +71,7 @@ def part_e3(results_dir):
     results_dir.mkdir(parents=True, exist_ok=True)
 
     figures = None
-    for epsilon in [0.01, 0.2, 0.8]:
+    for epsilon in [0.01, 0.2, 0.5]:
         # Update config
         agent_config_ = deepcopy(AGENT_CONFIG)
         agent_config_["epsilon"] = epsilon
