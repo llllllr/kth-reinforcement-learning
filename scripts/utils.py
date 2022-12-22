@@ -1,6 +1,8 @@
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
+from gym.envs.box2d import LunarLander
+from copy import deepcopy
 from el2805.envs import Maze, PluckingBerries, MinotaurMaze
 from el2805.envs.grid_world import Move
 from el2805.agents.rl import RLAgent, RandomAgent
@@ -63,23 +65,21 @@ def train_rl_agent_one_episode(environment, agent, episode):
         state = next_state
 
 
-def analyze_lunar_lander_agent(agent_path, agent_function, z_label, filepath):
-    agent = RLAgent.load(agent_path)
-
+def analyze_lunar_lander_agent(agent_function, z_label, filepath):
     # Prepare grid of states
     n_steps = 100
     w = torch.linspace(start=-torch.pi, end=torch.pi, steps=n_steps, dtype=torch.float64)
     y = torch.linspace(start=0, end=1.5, steps=n_steps, dtype=torch.float64)
     w_grid, y_grid = torch.meshgrid(w, y, indexing="ij")
     n_states = len(y_grid.reshape(-1))
-    state_dim = len(agent.environment.observation_space.low)
+    state_dim = len(LunarLander.observation_space.low)
     states = torch.zeros((n_states, state_dim), dtype=torch.float64)
     states[:, 1] = y_grid.reshape(-1)
     states[:, 4] = w_grid.reshape(-1)
 
     # Agent output
     with torch.no_grad():
-        z = agent_function(agent, states)
+        z = agent_function(states)
         z_grid = z.reshape(y_grid.shape)
 
     # Plot results
@@ -91,6 +91,32 @@ def analyze_lunar_lander_agent(agent_path, agent_function, z_label, filepath):
     figure.colorbar(plot, location="left")
     figure.savefig(filepath)
     figure.show()
+
+
+def analyze_hyperparameter(
+        agent_class,
+        agent_config,
+        hyperparameter_name,
+        hyperparameter_values,
+        n_train_episodes,
+        early_stop_reward,
+        results_dir
+):
+    figures = None
+    for hyperparameter_value in hyperparameter_values:
+        # Train agent
+        agent_config_tmp = deepcopy(agent_config)
+        agent_config_tmp[hyperparameter_name] = hyperparameter_value
+        agent = agent_class(**agent_config_tmp)
+        training_stats = agent.train(n_episodes=n_train_episodes, early_stop_reward=early_stop_reward)
+
+        # Save results
+        figures = plot_training_stats(
+            stats=training_stats,
+            results_dir=results_dir,
+            label=f"{hyperparameter_name}={hyperparameter_value}",
+            figures=figures
+        )
 
 
 def compare_rl_agent_with_random(agent_path, agent_name, n_episodes, seed, results_dir):
@@ -128,7 +154,7 @@ def plot_training_stats(stats, results_dir, label=None, figures=None):
         figures = {metric_name: plt.subplots()[0] for metric_name in stats.keys()}
     else:
         for metric_name in stats.keys():
-            assert metric_name in figures, f"{metric_name}, {figures}"  # TODO
+            assert metric_name in figures
 
     for metric_name, metric_values in stats.items():
         figure = figures[metric_name]

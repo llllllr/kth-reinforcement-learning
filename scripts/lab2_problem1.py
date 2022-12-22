@@ -1,10 +1,9 @@
 import gym
 import torch
 from pathlib import Path
-from copy import deepcopy
 from el2805.agents.rl.deep import DQN
 from el2805.agents.rl.deep.utils import get_device
-from utils import plot_training_stats, analyze_lunar_lander_agent, compare_rl_agent_with_random
+from utils import plot_training_stats, analyze_lunar_lander_agent, analyze_hyperparameter, compare_rl_agent_with_random
 
 N_TRAIN_EPISODES = 1000
 SEED = 1
@@ -51,80 +50,63 @@ def part_c(results_dir, agent_path):
 
 def part_e2(results_dir):
     results_dir.mkdir(parents=True, exist_ok=True)
-
-    figures = None
-    for discount in [0.5, 0.99, 1]:
-        # Update config
-        agent_config_ = deepcopy(AGENT_CONFIG)
-        agent_config_["discount"] = discount
-
-        # Train agent
-        agent = DQN(**agent_config_)
-        training_stats = agent.train(n_episodes=N_TRAIN_EPISODES, early_stop_reward=EARLY_STOP_REWARD)
-
-        # Save results
-        figures = plot_training_stats(
-            stats=training_stats,
-            results_dir=results_dir,
-            label=rf"$\gamma$={discount:.2f}",
-            figures=figures
-        )
+    analyze_hyperparameter(
+        agent_class=DQN,
+        agent_config=AGENT_CONFIG,
+        hyperparameter_name="discount",
+        hyperparameter_values=[0.5, 0.99, 1],
+        n_train_episodes=N_TRAIN_EPISODES,
+        early_stop_reward=EARLY_STOP_REWARD,
+        results_dir=results_dir
+    )
 
 
 def part_e3(results_dir):
     results_dir.mkdir(parents=True, exist_ok=True)
 
     # Effect of number of episodes
+    results_dir_tmp = results_dir / "n_episodes"
+    results_dir_tmp.mkdir(parents=True, exist_ok=True)
     agent = DQN(**AGENT_CONFIG)
     training_stats = agent.train(
         n_episodes=5000,
         early_stop_reward=None
     )
-    plot_training_stats(training_stats, results_dir)
+    plot_training_stats(training_stats, results_dir_tmp)
 
     # Effect of memory size
-    figures = None
-    for replay_buffer_size in [100, 10000, 100000]:
-        # Update config
-        agent_config_ = deepcopy(AGENT_CONFIG)
-        agent_config_["replay_buffer_size"] = replay_buffer_size
-        agent_config_["replay_buffer_min"] = int(.2 * replay_buffer_size)
-
-        # Train agent
-        agent = DQN(**agent_config_)
-        training_stats = agent.train(n_episodes=N_TRAIN_EPISODES, early_stop_reward=EARLY_STOP_REWARD)
-
-        # Save results
-        figures = plot_training_stats(
-            stats=training_stats,
-            results_dir=results_dir,
-            label=f"memory size={replay_buffer_size}",
-            figures=figures
-        )
+    analyze_hyperparameter(
+        agent_class=DQN,
+        agent_config=AGENT_CONFIG,
+        hyperparameter_name="replay_buffer_size",
+        hyperparameter_values=[100, 10000, 100000],
+        n_train_episodes=N_TRAIN_EPISODES,
+        early_stop_reward=EARLY_STOP_REWARD,
+        results_dir=results_dir / "replay_buffer_size"
+    )
 
 
 def part_f(results_dir, agent_path):
     results_dir.mkdir(parents=True, exist_ok=True)
+    agent = DQN.load(agent_path)
 
-    def v(agent, states):
+    def v(states):
         q = agent.q_network(states)
         v_ = q.max(dim=1).values
         return v_
 
-    def actions(agent, states):
+    def actions(states):
         q = agent.q_network(states)
         actions_ = q.argmax(dim=1)
         return actions_
 
     analyze_lunar_lander_agent(
-        agent_path=agent_path,
         agent_function=v,
         z_label=r"$V_{\theta}(s)$",
         filepath=results_dir / "values.pdf"
     )
 
     analyze_lunar_lander_agent(
-        agent_path=agent_path,
         agent_function=actions,
         z_label="action",
         filepath=results_dir / "actions.pdf"
@@ -144,7 +126,7 @@ def part_g(results_dir, agent_path):
 
 def main():
     results_dir = Path(__file__).parent.parent / "results" / "lab2" / "problem1"
-    agent_path = results_dir / "dqn.pickle"
+    agent_path = results_dir / "part_c" / "dqn.pickle"
 
     print("Part (c)")
     part_c(results_dir / "part_c", agent_path)
