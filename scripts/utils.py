@@ -133,15 +133,12 @@ def compare_rl_agent_with_random(agent_path, agent_name, n_episodes, seed, resul
         avg_episode_rewards.append(avg_episode_reward)
 
     # Plot results
-    figure, axes = plt.subplots()
-    axes.bar_label(axes.bar(
-        x=np.arange(len(avg_episode_rewards)),
-        height=avg_episode_rewards,
-        tick_label=agent_names
-    ))
-    axes.set_ylabel("avg. episode reward")
-    figure.savefig(results_dir / f"{agent_name}_vs_random.pdf")
-    figure.show()
+    plot_bar(
+        heights=avg_episode_rewards,
+        x_tick_labels=agent_names,
+        y_label="avg. episode reward",
+        filepath=results_dir / f"{agent_name}_vs_random.pdf"
+    )
 
 
 def print_and_write_line(filepath, output, mode):
@@ -178,3 +175,15 @@ def plot_training_stats(stats, results_dir, label=None, figures=None):
         figure.show()
 
     return figures
+
+
+def plot_bar(heights, x_tick_labels, y_label, filepath):
+    figure, axes = plt.subplots()
+    axes.bar_label(axes.bar(
+        x=np.arange(len(heights)),
+        height=heights,
+        tick_label=x_tick_labels
+    ))
+    axes.set_ylabel(y_label)
+    figure.savefig(filepath)
+    figure.show()
