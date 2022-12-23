@@ -85,12 +85,14 @@ def part_f(results_dir, agent_path):
 
     analyze_lunar_lander_agent(
         agent_function=v,
+        environment=agent.environment,
         z_label=r"$V_{\omega}(s)$",
         filepath=results_dir / "critic.pdf"
     )
 
     analyze_lunar_lander_agent(
         agent_function=mean_side_engine,
+        environment=agent.environment,
         z_label=r"$\mu_{\theta,2}(s)$",
         filepath=results_dir / "actor.pdf"
     )

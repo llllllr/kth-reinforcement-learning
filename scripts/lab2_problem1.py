@@ -65,24 +65,26 @@ def part_e3(results_dir):
     results_dir.mkdir(parents=True, exist_ok=True)
 
     # Effect of number of episodes
-    results_dir_tmp = results_dir / "n_episodes"
-    results_dir_tmp.mkdir(parents=True, exist_ok=True)
-    agent = DQN(**AGENT_CONFIG)
-    training_stats = agent.train(
-        n_episodes=5000,
-        early_stop_reward=None
-    )
-    plot_training_stats(training_stats, results_dir_tmp)
+    # results_dir_tmp = results_dir / "n_episodes"
+    # results_dir_tmp.mkdir(parents=True, exist_ok=True)
+    # agent = DQN(**AGENT_CONFIG)
+    # training_stats = agent.train(
+    #     n_episodes=5000,
+    #     early_stop_reward=None
+    # )
+    # plot_training_stats(training_stats, results_dir_tmp)
 
     # Effect of memory size
+    results_dir_tmp = results_dir / "replay_buffer_size"
+    results_dir_tmp.mkdir(parents=True, exist_ok=True)
     analyze_hyperparameter(
         agent_class=DQN,
         agent_config=AGENT_CONFIG,
         hyperparameter_name="replay_buffer_size",
-        hyperparameter_values=[100, 10000, 100000],
+        hyperparameter_values=[1000, 10000, 100000],
         n_train_episodes=N_TRAIN_EPISODES,
         early_stop_reward=EARLY_STOP_REWARD,
-        results_dir=results_dir / "replay_buffer_size"
+        results_dir=results_dir_tmp
     )
 
 
@@ -95,21 +97,23 @@ def part_f(results_dir, agent_path):
         v_ = q.max(dim=1).values
         return v_
 
-    def actions(states):
+    def policy(states):
         q = agent.q_network(states)
         actions_ = q.argmax(dim=1)
         return actions_
 
     analyze_lunar_lander_agent(
         agent_function=v,
+        environment=agent.environment,
         z_label=r"$V_{\theta}(s)$",
-        filepath=results_dir / "values.pdf"
+        filepath=results_dir / "value_function.pdf"
     )
 
     analyze_lunar_lander_agent(
-        agent_function=actions,
-        z_label="action",
-        filepath=results_dir / "actions.pdf"
+        agent_function=policy,
+        environment=agent.environment,
+        z_label=r"$\pi_{\theta}(s)$",
+        filepath=results_dir / "policy.pdf"
     )
 
 

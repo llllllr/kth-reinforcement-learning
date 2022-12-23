@@ -1,7 +1,6 @@
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
-from gym.envs.box2d import LunarLander
 from copy import deepcopy
 from el2805.envs import Maze, PluckingBerries, MinotaurMaze
 from el2805.envs.grid_world import Move
@@ -65,14 +64,14 @@ def train_rl_agent_one_episode(environment, agent, episode):
         state = next_state
 
 
-def analyze_lunar_lander_agent(agent_function, z_label, filepath):
+def analyze_lunar_lander_agent(agent_function, environment, z_label, filepath):
     # Prepare grid of states
     n_steps = 100
     w = torch.linspace(start=-torch.pi, end=torch.pi, steps=n_steps, dtype=torch.float64)
     y = torch.linspace(start=0, end=1.5, steps=n_steps, dtype=torch.float64)
     w_grid, y_grid = torch.meshgrid(w, y, indexing="ij")
     n_states = len(y_grid.reshape(-1))
-    state_dim = len(LunarLander.observation_space.low)
+    state_dim = len(environment.observation_space.low)
     states = torch.zeros((n_states, state_dim), dtype=torch.float64)
     states[:, 1] = y_grid.reshape(-1)
     states[:, 4] = w_grid.reshape(-1)
@@ -107,6 +106,8 @@ def analyze_hyperparameter(
         # Train agent
         agent_config_tmp = deepcopy(agent_config)
         agent_config_tmp[hyperparameter_name] = hyperparameter_value
+        if hyperparameter_name == "replay_buffer_size":
+            agent_config_tmp["replay_buffer_min"] = int(0.2 * hyperparameter_value)
         agent = agent_class(**agent_config_tmp)
         training_stats = agent.train(n_episodes=n_train_episodes, early_stop_reward=early_stop_reward)
 
