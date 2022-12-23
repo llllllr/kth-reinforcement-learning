@@ -193,6 +193,10 @@ class PPOCritic(MultiLayerPerceptron):
             include_top=True
         )
 
+    def forward(self, x):
+        x = x.to(torch.float64)
+        return super().forward(x)
+
 
 class PPOActor(torch.nn.Module):
     def __init__(
@@ -242,6 +246,7 @@ class PPOActor(torch.nn.Module):
         )
 
     def forward(self, x):
+        x = x.to(torch.float64)
         x = self._shared_layers(x)
         mean = self._mean_head(x)
         var = self._var_head(x)

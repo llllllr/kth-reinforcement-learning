@@ -263,6 +263,7 @@ class QNetwork(torch.nn.Module):
             self._output_layer = torch.nn.Linear(input_size, self.n_actions)
 
     def forward(self, x):
+        x = x.to(torch.float64)
         x = self._hidden_layers(x)
         if self.dueling:
             v = self._v_layer(x)
