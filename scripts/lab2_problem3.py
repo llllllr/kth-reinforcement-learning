@@ -27,7 +27,7 @@ AGENT_CONFIG = {
 }
 
 
-def part_c(results_dir, agent_path):
+def task_c(results_dir, agent_path):
     results_dir.mkdir(parents=True, exist_ok=True)
 
     # Train agent
@@ -44,7 +44,7 @@ def part_c(results_dir, agent_path):
     plot_training_stats(training_stats, results_dir)
 
 
-def part_e2(results_dir):
+def task_e2(results_dir):
     results_dir.mkdir(parents=True, exist_ok=True)
     analyze_hyperparameter(
         agent_class=PPO,
@@ -57,7 +57,7 @@ def part_e2(results_dir):
     )
 
 
-def part_e3(results_dir):
+def task_e3(results_dir):
     results_dir.mkdir(parents=True, exist_ok=True)
     analyze_hyperparameter(
         agent_class=PPO,
@@ -70,7 +70,7 @@ def part_e3(results_dir):
     )
 
 
-def part_f(results_dir, agent_path):
+def task_f(results_dir, agent_path):
     results_dir.mkdir(parents=True, exist_ok=True)
     agent = PPO.load(agent_path)
 
@@ -98,7 +98,7 @@ def part_f(results_dir, agent_path):
     )
 
 
-def part_g(results_dir, agent_path):
+def task_g(results_dir, agent_path):
     results_dir.mkdir(parents=True, exist_ok=True)
     compare_rl_agent_with_random(
         agent_path=agent_path,
@@ -111,26 +111,26 @@ def part_g(results_dir, agent_path):
 
 def main():
     results_dir = Path(__file__).parent.parent / "results" / "lab2" / "problem3"
-    agent_path = results_dir / "part_c" / "ppo.pickle"
+    agent_path = results_dir / "task_c" / "ppo.pickle"
 
-    print("Part (c)")
-    part_c(results_dir / "part_c", agent_path)
+    print("Task (c)")
+    task_c(results_dir / "task_c", agent_path)
     print()
 
-    print("Part (e2)")
-    part_e2(results_dir / "part_e2")
+    print("Task (e2)")
+    task_e2(results_dir / "task_e2")
     print()
 
-    print("Part (e3)")
-    part_e3(results_dir / "part_e3")
+    print("Task (e3)")
+    task_e3(results_dir / "task_e3")
     print()
 
-    print("Part (f)")
-    part_f(results_dir / "part_f", agent_path)
+    print("Task (f)")
+    task_f(results_dir / "task_f", agent_path)
     print()
 
-    print("Part (g)")
-    part_g(results_dir / "part_g", agent_path)
+    print("Task (g)")
+    task_g(results_dir / "task_g", agent_path)
     print()
 
 

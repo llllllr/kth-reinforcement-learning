@@ -14,7 +14,7 @@ from utils import print_and_write_line, minotaur_maze_exit_probability, train_rl
 SEED = 1
 
 
-def part_c(map_filepath, results_dir):
+def task_c(map_filepath, results_dir):
     results_dir.mkdir(parents=True, exist_ok=True)
 
     environment = MinotaurMaze(map_filepath=map_filepath, horizon=20)
@@ -52,7 +52,7 @@ def part_c(map_filepath, results_dir):
         environment.render(mode="policy", policy=map_policy)
 
 
-def part_d(map_filepath, results_dir):
+def task_d(map_filepath, results_dir):
     results_dir.mkdir(parents=True, exist_ok=True)
 
     figure, axes = plt.subplots()
@@ -94,7 +94,7 @@ def part_d(map_filepath, results_dir):
     figure.show()
 
 
-def part_f(map_filepath, results_dir):
+def task_f(map_filepath, results_dir):
     results_dir.mkdir(parents=True, exist_ok=True)
 
     expected_life = 30
@@ -108,10 +108,9 @@ def part_f(map_filepath, results_dir):
         output=f"P('exit alive'|'poisoned')={exit_probability}",
         mode="w"
     )
-    print()
 
 
-def part_ij(map_filepath, results_dir):
+def task_ij(map_filepath, results_dir):
     results_dir.mkdir(parents=True, exist_ok=True)
 
     expected_life = 50
@@ -134,7 +133,7 @@ def part_ij(map_filepath, results_dir):
     x = np.arange(1, n_episodes+1)
 
     # TODO: update parameters below
-    filename = "part_j3"
+    filename = "task_j3"
     figure, axes = plt.subplots()
 
     for delta, alpha in zip(
@@ -171,7 +170,7 @@ def part_ij(map_filepath, results_dir):
     figure.show()
 
 
-def part_k(map_filepath, results_dir):
+def task_k(map_filepath, results_dir):
     results_dir.mkdir(parents=True, exist_ok=True)
 
     expected_life = 50
@@ -247,24 +246,24 @@ def main():
     map_filepath = Path(__file__).parent.parent / "data" / "maze_minotaur.txt"
     map_filepath_key = Path(__file__).parent.parent / "data" / "maze_minotaur_key.txt"
 
-    print("Part (c)")
-    part_c(map_filepath, results_dir / "part_c")
+    print("Task (c)")
+    task_c(map_filepath, results_dir / "task_c")
     print()
 
-    print("Part (d)")
-    part_d(map_filepath, results_dir / "part_d")
+    print("Task (d)")
+    task_d(map_filepath, results_dir / "task_d")
     print()
 
-    print("Part (f)")
-    part_f(map_filepath, results_dir / "part_f")
+    print("Task (f)")
+    task_f(map_filepath, results_dir / "task_f")
     print()
 
-    print("Part (i-j)")
-    part_ij(map_filepath_key, results_dir / "part_ij")
+    print("Task (i-j)")
+    task_ij(map_filepath_key, results_dir / "task_ij")
     print()
 
-    print("Part (k)")
-    part_k(map_filepath_key, results_dir / "part_k")
+    print("Task (k)")
+    task_k(map_filepath_key, results_dir / "task_k")
     print()
 
 
