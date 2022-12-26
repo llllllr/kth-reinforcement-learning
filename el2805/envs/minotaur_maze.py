@@ -35,6 +35,7 @@ class MinotaurMaze(Maze):
 
     def __init__(
             self,
+            *,
             map_filepath: Path,
             horizon: int | None = None,
             minotaur_nop: bool = False,
@@ -275,7 +276,7 @@ class MinotaurMaze(Maze):
 
         return states
 
-    def won(self):
+    def _won(self):
         _, _, progress = self._current_state
         return progress is Progress.EXITED
 

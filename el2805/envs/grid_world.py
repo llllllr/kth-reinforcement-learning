@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from enum import IntEnum
 from termcolor import colored
-from el2805.envs.mdp import MDP
+from el2805.envs.tabular_mdp import TabularMDP
 
 
 class Move(IntEnum):
@@ -33,7 +33,7 @@ class Move(IntEnum):
 Position = tuple[int, int]
 
 
-class GridWorld(MDP, ABC):
+class GridWorld(TabularMDP, ABC):
     action_space = gym.spaces.Discrete(len(Move))
 
     def __init__(self, map_filepath: Path, horizon: int | None = None):

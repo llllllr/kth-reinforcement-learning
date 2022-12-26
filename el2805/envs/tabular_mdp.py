@@ -1,10 +1,10 @@
 import numpy as np
 from abc import ABC, abstractmethod
 from typing import Any
-from el2805.envs.rl_problem import RLProblem
+from el2805.envs.tabular_rl_problem import TabularRLProblem
 
 
-class MDP(RLProblem, ABC):
+class TabularMDP(TabularRLProblem, ABC):
     """Interface for a homogeneous Markov Decision Process with discrete state and action spaces."""
 
     @abstractmethod

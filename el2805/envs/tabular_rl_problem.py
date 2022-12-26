@@ -4,11 +4,12 @@ from typing import Any
 from gym.utils.seeding import np_random
 
 
-class RLProblem(gym.Env, ABC):
+class TabularRLProblem(gym.Env, ABC):
     """Interface for a RL problem with discrete state and action spaces."""
 
     def __init__(self, horizon: int | None = None):
-        """
+        """Initializes a RLProblem.
+
         :param horizon: time horizon, if None then the MDP has infinite horizon
         :type horizon: int, optional
         """
@@ -34,8 +35,6 @@ class RLProblem(gym.Env, ABC):
         :type state: any
         :param action: action taken in the current state
         :type action: int
-        :param mean: if True, returns the mean reward instead of sampling a reward (effect only with random rewards)
-        :type mean: bool, optional
         :return: reward sample (if mean=False) or mean reward (if mean=True)
         :rtype: float
         """

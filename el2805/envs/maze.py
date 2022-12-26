@@ -40,6 +40,13 @@ class Maze(GridWorld):
         ]
         self._state_to_index = {state: s for state, s in zip(self._states, np.arange(len(self._states)))}
 
+    def step(self, action: int) -> tuple[Position, float, bool, dict]:
+        state, reward, done, info = super().step(action)
+        won = self._won()
+        assert not (won and not done)
+        info["won"] = won
+        return state, reward, done, info
+
     def reward(self, state: Position, action: int, mean: bool = False) -> float:
         assert action in self.valid_actions(state)
 
@@ -99,7 +106,7 @@ class Maze(GridWorld):
     def state_index(self, state: Position) -> int:
         return self._state_to_index[state]
 
-    def won(self):
+    def _won(self):
         return self.terminal_state(self._current_state)
 
     def terminal_state(self, state: Position) -> bool:

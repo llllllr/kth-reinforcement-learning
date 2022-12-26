@@ -1,6 +1,6 @@
 from pathlib import Path
 from el2805.envs import Maze
-from el2805.agents import DynamicProgramming, ValueIteration
+from el2805.agents.mdp import DynamicProgramming, ValueIteration
 from utils import best_maze_path
 
 
@@ -12,8 +12,8 @@ def main():
     ]:
         print(f"Map file: {map_filepath}")
 
-        env = Maze(map_filepath=map_filepath, horizon=horizon)
-        agent = DynamicProgramming(env=env)
+        environment = Maze(map_filepath=map_filepath, horizon=horizon)
+        agent = DynamicProgramming(environment=environment)
         agent.solve()
         # for t in range(horizon):
         #     print(f"Dynamic programming - Policy with {horizon-t} remaining time steps")
@@ -21,13 +21,13 @@ def main():
         #     print()
 
         print("Dynamic programming - Shortest path")
-        env.render(mode="policy", policy=best_maze_path(env, agent))
+        environment.render(mode="policy", policy=best_maze_path(environment, agent))
 
         print("Value iteration - Stationary policy")
-        env = Maze(map_filepath=map_filepath)
-        agent = ValueIteration(env=env, discount=0.99, precision=1e-2)
+        environment = Maze(map_filepath=map_filepath)
+        agent = ValueIteration(environment=environment, discount=0.99, precision=1e-2)
         agent.solve()
-        env.render(mode="policy", policy=agent.policy)
+        environment.render(mode="policy", policy=agent.policy)
         print()
 
 

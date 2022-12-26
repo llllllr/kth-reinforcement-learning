@@ -14,121 +14,104 @@
 #
 # Modified by: [Franco Ruggeri - fruggeri@kth.se]
 
-import numpy as np
 import gym
+import numpy as np
 import torch
+import matplotlib.pyplot as plt
 from collections import deque
-from typing import NamedTuple
+from el2805.agents.rl import RLAgent
+from el2805.agents.rl.deep.utils import MultiLayerPerceptron, get_device
 
 
-class Experience(NamedTuple):
-    state: np.array
-    action: int
-    reward: float
-    next_state: np.array
-    done: bool
-
-
-class Agent(torch.nn.Module):
-    _hidden_layer_size = 8
-    _max_replay_buffer_len = 128
+class Agent(RLAgent):
+    _replay_buffer_size = 128
     _batch_size = 3
+    _hidden_layer_sizes = [8]
+    _hidden_layer_activation = "relu"
+    _learning_rate = 1e-3
 
-    def __init__(self, input_size, output_size):
-        super().__init__()
-        self.input_size = input_size
-        self.output_size = output_size
+    def __init__(self, *, environment, device, seed):
+        super().__init__(environment=environment, seed=seed)
 
-        self._hidden_layer_1 = torch.nn.Linear(input_size, self._hidden_layer_size)
-        self._hidden_layer_1_activation = torch.nn.ReLU()
-        self._output_layer = torch.nn.Linear(self._hidden_layer_size, output_size)
+        state_dim = len(environment.observation_space.low)
+        self._n_actions = environment.action_space.n
 
-        self._replay_buffer = deque(maxlen=self._max_replay_buffer_len)
-        self._optimizer = torch.optim.Adam(self.parameters())
-        self._rng = np.random.RandomState(seed=1)
+        self.device = device
+        self.neural_network = MultiLayerPerceptron(
+            input_size=state_dim,
+            hidden_layer_sizes=self._hidden_layer_sizes,
+            hidden_layer_activation=self._hidden_layer_activation,
+            output_size=self._n_actions,
+            include_top=True
+        ).to(device)
 
-    def forward(self, x):
-        x = self._hidden_layer_1(x)
-        x = self._hidden_layer_1_activation(x)
-        x = self._output_layer(x)
-        return x
+        self._replay_buffer = deque(maxlen=self._replay_buffer_size)
+        self._optimizer = torch.optim.Adam(self.neural_network.parameters(), lr=self._learning_rate)
 
-    def compute_action(self, state):
-        state_tensor = torch.tensor(np.asarray([state]))
-        output = self(state_tensor)
-        assert output.shape[0] == 1
-        action = output.argmax().item()
-        return action
-
-    def record_experience(self, experience):
-        self._replay_buffer.append(experience)
-
-    def train_step(self):
+    def update(self) -> dict:
+        stats = {}
         if len(self._replay_buffer) < self._batch_size:
-            print("Not enough experience, skipping training step...")
-            return
-        device = next(self.parameters()).device
+            return stats
 
-        # clean up gradients
-        self._optimizer.zero_grad()
-
-        # sample mini-batch of experiences
+        # Sample mini-batch of experiences
         experience_indices = self._rng.choice(len(self._replay_buffer), size=self._batch_size)
         experience_batch = [self._replay_buffer[i] for i in experience_indices]
 
-        # forward pass
-        states = torch.as_tensor(np.asarray([e.state for e in experience_batch])).to(device)
-        actions = [e.action for e in experience_batch]
-        outputs = self(states)
-        assert outputs.shape == (self._batch_size, self.output_size)
+        # Forward pass
+        states = torch.as_tensor(np.asarray([e.state for e in experience_batch]), device=self.device)
+        actions = torch.as_tensor([e.action for e in experience_batch], device=self.device)
+        outputs = self.neural_network(states)
+        assert outputs.shape == (self._batch_size, self._n_actions)
         outputs = outputs[torch.arange(self._batch_size), actions]
         assert outputs.shape == (self._batch_size,)
         z = outputs
         y = torch.zeros(len(z))
         loss = torch.nn.functional.mse_loss(z, y)
 
-        # backward pass
+        # Backward pass
+        self._optimizer.zero_grad()
         loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm=1)
+        torch.nn.utils.clip_grad_norm_(self.neural_network.parameters(), max_norm=1)
         self._optimizer.step()
+
+        # Save stats
+        stats["loss"] = loss.item()
+        return stats
+
+    def seed(self, seed: int | None = None) -> None:
+        super().seed(seed)
+        torch.manual_seed(seed)
+
+    def record_experience(self, experience):
+        self._replay_buffer.append(experience)
+
+    def compute_action(self, state, **kwargs):
+        _ = kwargs
+        state = torch.tensor(state.reshape((1,) + state.shape))
+        output = self.neural_network(state)
+        assert output.shape[0] == 1
+        action = output.argmax().item()
+        return action
 
 
 def main():
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    seed = 2
 
-    env = gym.make('CartPole-v0')           # Create a CartPole environment
-    n = len(env.observation_space.low)      # State space dimensionality
-    m = env.action_space.n                  # Number of actions
-    agent = Agent(n, m).to(device)
+    environment = gym.make("CartPole-v0")
+    environment.seed(seed)
 
-    for episode in range(5):
-        state = env.reset()                 # Reset environment, returns initial state
-        done = False                        # Boolean variable used to indicate if an episode terminated
+    agent = Agent(
+        environment=environment,
+        device=get_device(),
+        seed=seed
+    )
+    training_stats = agent.train(n_episodes=100)
 
-        while not done:
-            env.render()                    # Render the environment (DO NOT USE during training of the labs...)
-
-            # action = np.random.randint(m)   # Pick a random integer between [0, m-1]
-            action = agent.compute_action(state)
-
-            # The next line takes permits you to take an action in the RL environment
-            # env.step(action) returns 4 variables:
-            # (1) next state; (2) reward; (3) done variable; (4) additional stuff
-            next_state, reward, done, _ = env.step(action)
-
-            experience = Experience(
-                state=state,
-                action=action,
-                reward=reward,
-                next_state=next_state,
-                done=done
-            )
-            agent.record_experience(experience)
-            agent.train_step()
-
-            state = next_state
-
-    env.close()  # Close all the windows
+    figure, axes = plt.subplots()
+    axes.plot(np.arange(1, len(training_stats["loss"])+1), training_stats["loss"])
+    axes.set_xlabel("time step")
+    axes.set_ylabel("loss")
+    figure.show()
 
 
 if __name__ == "__main__":
