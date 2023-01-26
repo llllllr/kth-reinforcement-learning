@@ -4,7 +4,7 @@ from typing import Any
 from el2805.agents.rl.rl_agent import RLAgent
 from el2805.agents.rl.utils import get_epsilon, Experience
 from el2805.envs import TabularRLProblem
-from el2805.utils import random_decide
+from el2805.utils import decide_random
 
 
 class QAgent(RLAgent, ABC):
@@ -144,7 +144,7 @@ class QAgent(RLAgent, ABC):
             epsilon = None
 
         # Epsilon-greedy policy (or greedy policy if explore=False)
-        if explore and random_decide(self._rng, epsilon):
+        if explore and decide_random(self._rng, epsilon):
             action = self._rng.choice(valid_actions)
         else:
             s = self.environment.state_index(state)

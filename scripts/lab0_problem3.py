@@ -20,7 +20,7 @@ import torch
 import matplotlib.pyplot as plt
 from collections import deque
 from el2805.agents.rl import RLAgent
-from el2805.agents.rl.deep.utils import MultiLayerPerceptron, get_device
+from el2805.agents.rl.utils import MultiLayerPerceptron, get_device
 
 
 class Agent(RLAgent):

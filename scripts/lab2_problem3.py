@@ -1,8 +1,8 @@
 import gym
 import torch
 from pathlib import Path
-from el2805.agents.rl.deep import PPO
-from el2805.agents.rl.deep.utils import get_device
+from el2805.agents.rl import PPO
+from el2805.agents.rl.utils import get_device
 from utils import plot_training_stats, analyze_lunar_lander_agent, analyze_hyperparameter, compare_rl_agent_with_random
 
 SEED = 1

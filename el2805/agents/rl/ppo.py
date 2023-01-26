@@ -3,8 +3,7 @@ import numpy as np
 import torch
 from collections import defaultdict
 from el2805.agents.rl.rl_agent import RLAgent
-from el2805.agents.rl.utils import Experience
-from el2805.agents.rl.deep.utils import MultiLayerPerceptron, normal_pdf
+from el2805.agents.rl.utils import Experience, MultiLayerPerceptron, normal_pdf
 
 
 class PPO(RLAgent):

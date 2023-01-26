@@ -26,12 +26,12 @@ Available algorithms:
 
 - [x] [Dynamic programming](el2805/agents/mdp/dynamic_programming.py)
 - [x] [Value iteration](el2805/agents/mdp/value_iteration.py)
-- [x] [Tabular Q-learning](el2805/agents/rl/tabular/q_learning.py)
-- [x] [Tabular SARSA](el2805/agents/rl/tabular/sarsa.py)
+- [x] [Q-learning](el2805/agents/rl/q_learning.py)
+- [x] [SARSA](el2805/agents/rl/sarsa.py)
 - [ ] λ-SARSA
-- [x] [DQN](el2805/agents/rl/deep/dqn.py)
+- [x] [DQN](el2805/agents/rl/dqn.py)
 - [ ] DDPG
-- [x] [PPO](el2805/agents/rl/deep/ppo.py)
+- [x] [PPO](el2805/agents/rl/ppo.py)
 
 The missing algorithms have been implemented by my lab partner and can be found
 in [his repository](https://github.com/afcarzero1/ReinforcementLearning).

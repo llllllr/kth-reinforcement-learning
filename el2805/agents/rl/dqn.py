@@ -4,9 +4,8 @@ import torch
 from collections import deque
 from copy import deepcopy
 from el2805.agents.rl.rl_agent import RLAgent
-from el2805.agents.rl.utils import Experience, get_epsilon
-from el2805.agents.rl.deep.utils import MultiLayerPerceptron
-from el2805.utils import random_decide
+from el2805.agents.rl.utils import Experience, get_epsilon, MultiLayerPerceptron
+from el2805.utils import decide_random
 
 
 class DQN(RLAgent):
@@ -212,7 +211,7 @@ class DQN(RLAgent):
             epsilon = None
 
         # Epsilon-greedy policy (or greedy policy if explore=False)
-        if explore and random_decide(self._rng, epsilon):   # exploration (probability eps)
+        if explore and decide_random(self._rng, epsilon):   # exploration (probability eps)
             action = self._rng.choice(self._n_actions)
         else:                                               # exploitation (probability 1-eps)
             with torch.no_grad():

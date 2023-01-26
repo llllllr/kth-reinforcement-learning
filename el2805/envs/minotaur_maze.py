@@ -6,7 +6,7 @@ from enum import Enum, IntEnum
 from termcolor import colored
 from el2805.envs.maze import Maze, MazeCell
 from el2805.envs.grid_world import Move, Position
-from el2805.utils import random_decide
+from el2805.utils import decide_random
 
 
 class Progress(IntEnum):
@@ -151,7 +151,7 @@ class MinotaurMaze(Maze):
             pass    # state stays the same (absorbing state)
         else:
             if minotaur_move is None:
-                chase = self.minotaur_chase and random_decide(self._rng, self._probability_chase_move)
+                chase = self.minotaur_chase and decide_random(self._rng, self._probability_chase_move)
                 valid_minotaur_moves = self._valid_minotaur_moves(state, chase=chase)
                 minotaur_move = self._rng.choice(valid_minotaur_moves)
 
@@ -238,7 +238,7 @@ class MinotaurMaze(Maze):
     def _horizon_reached(self) -> bool:
         # random time horizon geometrically distributed
         if self.probability_poison_death > 0:
-            horizon_reached = random_decide(self._rng, self.probability_poison_death)
+            horizon_reached = decide_random(self._rng, self.probability_poison_death)
         else:
             horizon_reached = super()._horizon_reached()
         return horizon_reached

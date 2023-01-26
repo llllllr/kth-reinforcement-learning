@@ -19,8 +19,8 @@ import numpy as np
 import gym
 import torch
 from pathlib import Path
-from el2805.agents.rl.deep import PPO
-from el2805.agents.rl.deep.utils import get_device
+from el2805.agents.rl import PPO
+from el2805.agents.rl.utils import get_device
 from utils import test
 
 
