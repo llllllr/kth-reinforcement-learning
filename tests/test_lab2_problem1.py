@@ -20,7 +20,7 @@ import torch
 from pathlib import Path
 from el2805.agents.rl import DQN
 from el2805.agents.rl.utils import get_device
-from utils import test
+from tests.utils import test
 
 
 class DQNTestCase(unittest.TestCase):
