@@ -84,7 +84,7 @@ class DQNTestCase(unittest.TestCase):
         test(self, self.environment, compute_action)
 
     def test_saved_model(self):
-        model_path = Path(__file__).parent.parent / "results" / "lab2" / "problem1" / "neural-network-1.pth"
+        model_path = Path(__file__).parent.parent / "results" / "lab2" / "problem1" / "task_c" / "neural-network-1.pth"
         model = torch.load(model_path)
 
         def compute_action(state):

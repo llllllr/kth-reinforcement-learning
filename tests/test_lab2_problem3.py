@@ -81,7 +81,8 @@ class PPOTestCase(unittest.TestCase):
         test(self, self.environment, compute_action)
 
     def test_saved_model(self):
-        model_path = Path(__file__).parent.parent / "results" / "lab2" / "problem3" / "neural-network-3-actor.pth"
+        model_path = \
+            Path(__file__).parent.parent / "results" / "lab2" / "problem3" / "task_c" / "neural-network-3-actor.pth"
         model = torch.load(model_path)
 
         def compute_action(state):
