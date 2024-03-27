@@ -33,6 +33,7 @@ class MotionSimulationPlatform(gym.Env):
 
     # next_state, reward, done, _ = self.environment.step(action), 
     def step(self, action):
+        # version2 add tilt-coordinate
         # states are [0] accel, [1] vel, [2] position
         # action: change of the acceleration, delte_a
         next_state = np.zeros(3)
