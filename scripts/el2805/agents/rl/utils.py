@@ -75,6 +75,7 @@ class MultiLayerPerceptron(torch.nn.Module):
         self.hidden_layer_activation = hidden_layer_activation
         self.output_size = output_size
         self.output_layer_activation = output_layer_activation
+        
         self.include_top = include_top
 
         # Hidden layers

@@ -30,10 +30,10 @@ class Move(IntEnum):
         return s
 
 
-Position = tuple[int, int]
+Position = tuple[int, int]  # 用于指定一个名为 Position 的新类型。在这个声明中，Position 是一个元组类型，其中包含两个整数元素
 
 
-class GridWorld(TabularMDP, ABC):
+class GridWorld(TabularMDP, ABC): # 继承自表格MDP
     action_space = gym.spaces.Discrete(len(Move))
 
     def __init__(self, map_filepath: Path, horizon: int | None = None):
@@ -55,20 +55,21 @@ class GridWorld(TabularMDP, ABC):
     def _load_map(self, filepath: Path) -> None:
         raise NotImplementedError
 
+    # 把每个某个特定action apply之后, 
     def step(self, action: int) -> tuple[Position, float, bool, dict]:
         # update state
         previous_state = self._current_state
         new_state = self._next_state(previous_state, action)
         self._current_state = new_state
 
-        # calculate reward
+        # calculate reward , 对上一个state来计算reward
         reward = self.reward(previous_state, action)
 
-        # check end of episode
+        # check end of episode, 
         self._n_steps += 1
         done = self._horizon_reached() or self.terminal_state(self._current_state)
 
-        # additional info
+        # additional info, dict
         info = {}
 
         return self._current_state, reward, done, info
@@ -78,8 +79,10 @@ class GridWorld(TabularMDP, ABC):
         self._n_steps = 0
         return self._current_state
 
+    # 这个方法用于渲染当前环境状态，以便用户可视化观察。
     def render(self, mode: str = "human", policy: np.ndarray = None) -> None:
         assert mode == "human" or (mode == "policy" and policy is not None)
+        # map_是保存每个state对应的最优action对应的string的 array
         map_ = self.map.copy()
         if mode == "human":
             map_[self._current_state] = colored("P", color="blue")
@@ -92,11 +95,13 @@ class GridWorld(TabularMDP, ABC):
             raise ValueError
         self._render(map_)
 
+    # 返回如果p是probabilistic transition, 那么某个state某个action之后的下一个 可能的states,以及对应的可能性
+    # 返回一个元组, 第一个元素是下一个可能的states们, 第二个元素是 对应的probability.
     def next_states(self, state: Position, action: int) -> tuple[list[Position], np.ndarray]:
         next_state = self._next_state(state, action)
         return ([next_state]), np.asarray([1])  # deterministic
 
-    def _next_state(self, state: Position, action: int) -> Position:
+    def _next_state(self, state: Position, action: int) -> Position: # 对一个单个的state, take一个单个的action, 得到新state
         x, y = state
         if action == Move.UP:
             x -= 1

@@ -18,7 +18,7 @@ class Agent(ABC):
         self.environment = deepcopy(environment)
 
     @abstractmethod
-    def compute_action(self, **kwargs) -> Union[int, np.array]:
+    def compute_action(self, **kwargs) -> Union[int, np.array]: # Union[int, np.array] 表示返回值可以是 int 类型或者 np.array 类型中的一种。
         """Calculates the best action according to the agent's policy. The parameters depend on the algorithm.
 
         :return: action

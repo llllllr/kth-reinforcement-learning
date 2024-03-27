@@ -17,6 +17,7 @@ def best_maze_path(env, agent):
     env.seed(1)
     state = env.reset()
     while not done:
+        # 从 t = 0 开始找最优action , state = initial_state
         action = agent.compute_action(state=state, time_step=time_step)
         s = env.state_index(state)
         best_path_[s] = Move(action)
@@ -45,6 +46,7 @@ def minotaur_maze_exit_probability(environment, agent):
 
 def train_rl_agent_one_episode(environment, agent, episode):
     done = False
+    # init the start state of env.
     state = environment.reset()
     while not done:
         action = agent.compute_action(state=state, episode=episode)
@@ -162,7 +164,8 @@ def plot_training_stats(stats, results_dir, label=None, figures=None):
         metric_name_readable = metric_name.replace("_", " ")
         x = np.arange(1, len(metric_values) + 1)
         x_label = "episode" if metric_name.startswith("episode") else "update"
-
+        if metric_name == "episode_reward":
+            metric_values = np.concatenate(metric_values)
         plots = axes.plot(x, running_average(metric_values), label=label)
         color = plots[0].get_color()
         axes.plot(x, metric_values, alpha=.2, color=color)

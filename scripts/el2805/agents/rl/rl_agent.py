@@ -24,6 +24,27 @@ class RLAgent(Agent, ABC):
         self._rng = None
         self.seed(seed)
 
+    def seed(self, seed: int | None) -> None:
+        """Sets the seed of the agent's internal RNG.
+
+        :param seed: seed
+        :type seed: int, optional
+        """
+        self._rng = np.random.RandomState(seed)
+        self.environment.seed(seed)
+        if seed is not None:
+            torch.manual_seed(seed)
+            if torch.cuda.is_available():
+                torch.cuda.manual_seed_all(seed)
+
+    def reset(self, seed: int | None = None) -> None:
+        """Resets the agent and optionally sets a new seed.
+
+        :param seed: seed
+        :type seed: int, optional
+        """
+        self.seed(seed)
+
     @abstractmethod
     def update(self) -> dict:
         """Updates the policy (or value function, or Q-function) from stored observations. This function is called
@@ -75,18 +96,7 @@ class RLAgent(Agent, ABC):
         )
         return stats
 
-    def seed(self, seed: int | None) -> None:
-        """Sets the seed of the agent's internal RNG.
 
-        :param seed: seed
-        :type seed: int, optional
-        """
-        self._rng = np.random.RandomState(seed)
-        self.environment.seed(seed)
-        if seed is not None:
-            torch.manual_seed(seed)
-            if torch.cuda.is_available():
-                torch.cuda.manual_seed_all(seed)
 
     def _train_or_test(
             self,
@@ -108,11 +118,11 @@ class RLAgent(Agent, ABC):
             if render:
                 self.environment.render()
 
-            # Run episode
+            # Run the whole episode, from T=0 to T=1000
             while not done:
                 # Interact with the environment
                 action = self.compute_action(state=state, episode=episode, explore=train)
-                next_state, reward, done, _ = self.environment.step(action)
+                next_state, reward, done = self.environment.step(action)
                 if render:
                     self.environment.render()
 
@@ -126,31 +136,39 @@ class RLAgent(Agent, ABC):
                         next_state=next_state,
                         done=done
                     )
-                    self.record_experience(experience)
+                    self.record_experience(experience)  #     def record_experience(self, experience: Experience) -> None: self._episodic_buffer.append(experience)
+                    #  stats["critic_loss"] = [loss for episode1_epoche1, loss for episode1_epoche2 ,..... loss for epoche10]
+                    #  stats["actor_loss"].append(actor_loss.item()), 
+                    #  type: dict: ['loss'] -> list of loss in one epoche.
+                    # in update()-function, onlyif episode is done, then do 10 times updates for params in both NNs
                     update_stats = self.update()
 
-                    # Update stats
+                    # Update stats, enumerate key and value in dict
                     for k, v in update_stats.items():
                         if isinstance(v, list):
                             stats[k].extend(v)
                         else:
-                            stats[k].append(v)
-                episode_reward += reward
+                            stats[k].append(v) # update one-episode statistics in the total-statistics
+                
+                episode_reward += reward # sum the reward for each step in environment
                 episode_length += 1
 
                 # Update state
                 state = next_state
 
             # Update stats
+            
             stats["episode_reward"].append(episode_reward)
             stats["episode_length"].append(episode_length)
 
             # Show progress
             avg_episode_length = running_average(stats["episode_length"])[-1]
-            avg_episode_reward = running_average(stats["episode_reward"])[-1]
+            # print(stats["episode_reward"]), return array in list:  [array([-2160091.79174874])]
+            avg_episode_reward = running_average(np.concatenate(stats["episode_reward"]))[-1]
+            # avg_episode_reward = running_average(stats["episode_reward"])[-1]
             episodes.set_description(
                 f"Episode {episode} - "
-                f"Reward: {episode_reward:.1f} - "
+                f"Reward: {episode_reward[0]:.1f} - "
                 f"Length: {episode_length} - "
                 f"Avg reward: {avg_episode_reward:.1f} - "
                 f"Avg length: {avg_episode_length:.1f}"

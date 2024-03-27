@@ -1,5 +1,12 @@
 # Reinforcement Learning
 
+1. 从windows打开anaconda, 选择Powershell Prompt的launch
+2. 激活i2dl环境:  conda activate i2dl
+3. cd到练习的文件夹:  cd .\Documents\SS23_I2DL\exercise_03\
+4. 打开IDE: `jupyter notebook`或者 vscode : `code .`
+5. 做练习期间不能关闭这个terminal!!!!
+6. 下载需要的包:`pip install -r requirements.txt` 
+   
 Assignments of the Reinforcement Learning course (EL2805) at KTH.
 
 The repository provides a [Python package](el2805), which includes:

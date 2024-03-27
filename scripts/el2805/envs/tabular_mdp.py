@@ -5,7 +5,7 @@ from el2805.envs.tabular_rl_problem import TabularRLProblem
 
 
 class TabularMDP(TabularRLProblem, ABC):
-    """Interface for a homogeneous Markov Decision Process with discrete state and action spaces."""
+    """Interface for a homogeneous(stationary) Markov Decision Process with discrete state and action spaces."""
 
     @abstractmethod
     def reward(self, state: Any, action: int, mean: bool = False) -> float:

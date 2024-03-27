@@ -79,7 +79,7 @@ class Agent(RLAgent):
         return stats
 
     def seed(self, seed: int | None = None) -> None:
-        super().seed(seed)
+        # super().reset(seed) 
         torch.manual_seed(seed)
 
     def record_experience(self, experience):
@@ -87,6 +87,7 @@ class Agent(RLAgent):
 
     def compute_action(self, state, **kwargs):
         _ = kwargs
+        state = np.array(state)
         state = torch.tensor(state.reshape((1,) + state.shape))
         output = self.neural_network(state)
         assert output.shape[0] == 1
@@ -97,8 +98,8 @@ class Agent(RLAgent):
 def main():
     seed = 2
 
-    environment = gym.make("CartPole-v0")
-    environment.seed(seed)
+    environment = gym.make("CartPole-v1")
+    environment.reset(seed=seed)
 
     agent = Agent(
         environment=environment,

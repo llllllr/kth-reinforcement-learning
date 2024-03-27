@@ -29,6 +29,7 @@ class DQN(RLAgent):
             gradient_max_norm: float,
             hidden_layer_sizes: list[int],
             hidden_layer_activation: str,
+            
             cer: bool,
             dueling: bool,
             device: str,
@@ -94,11 +95,15 @@ class DQN(RLAgent):
         self.dueling = dueling
         self.device = device
 
+# check the state space should be contiguous, the 
         assert isinstance(environment.observation_space, gym.spaces.Box)
         state_dim = len(environment.observation_space.low)
+# the number of discrete value of the action_space
         assert isinstance(environment.action_space, gym.spaces.Discrete)
         self._n_actions = environment.action_space.n
 
+
+        # define the NN, that approcimate value-function, 
         self.q_network = QNetwork(
             state_dim=state_dim,
             n_actions=self._n_actions,
@@ -226,7 +231,7 @@ class DQN(RLAgent):
 
         return action
 
-
+# 
 class QNetwork(torch.nn.Module):
     def __init__(
             self,
@@ -244,6 +249,8 @@ class QNetwork(torch.nn.Module):
         self.hidden_layer_activation = hidden_layer_activation
         self.dueling = dueling
 
+# input of the NN will be state with 8 dimens, two hidden layer with 64 Neuronen,
+        # output should be the 
         self._hidden_layers = MultiLayerPerceptron(
             input_size=self.state_dim,
             hidden_layer_sizes=self.hidden_layer_sizes,
@@ -259,6 +266,7 @@ class QNetwork(torch.nn.Module):
         else:
             self._v_layer = None
             self._advantage_layer = None
+            # output should be three q-value with respect to three discrete actions.
             self._output_layer = torch.nn.Linear(input_size, self.n_actions)
 
     def forward(self, x):

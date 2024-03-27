@@ -32,7 +32,7 @@ class MDPAgent(Agent, ABC):
         :type state: any
         :param action: action
         :type action: int
-        :param v: value function or, for dynamic programming, u*_{t+1}
+        :param v: value function(for all states) or, for dynamic programming, u*_{t+1}
         :return: Q(state,action)
         :rtype: float
         """
@@ -40,5 +40,6 @@ class MDPAgent(Agent, ABC):
         next_states, transition_probabilities = self.environment.next_states(state, action)
         s_next = [self.environment.state_index(next_state) for next_state in next_states]    # indices of next states
         v = v[s_next]   # V(s',a) for all the possible next states
+        # q = reward_for_current_state + 0.9* (transition一一对应乘以v(s') )
         q = self.environment.reward(state, action, mean=True) + self.discount * transition_probabilities.dot(v)
         return q

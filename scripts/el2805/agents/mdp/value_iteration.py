@@ -9,7 +9,7 @@ class ValueIteration(MDPAgent):
         super().__init__(environment=environment, discount=discount)
         self.discount = discount
         self.precision = precision
-        self._v = np.zeros(len(self.environment.states))     # V(s) for each s in S
+        self._v = np.zeros(len(self.environment.states))     # V(s) for each s in S, 初始化都为0
 
     def solve(self) -> None:
         # value improvement
@@ -19,16 +19,19 @@ class ValueIteration(MDPAgent):
             # update V(s)
             v_old = self._v.copy()
             for s, state in enumerate(self.environment.states):
+                # 计算当前state对应的所有可能action对应的 q值, [q(up), q(down), q(left)...]
                 q = np.asarray([self.q(state, action, self._v) for action in self.environment.valid_actions(state)])
+                # 更新value-function的值, _v = max(q), 不停得更新v的值, 直到收敛
                 self._v[s] = max(q)
 
             # calculate value improvement
             delta = np.linalg.norm(self._v - v_old, ord=np.inf)
 
-        # store eps-optimal policy
+        # store eps-optimal policy, 从每个
         self.policy = np.zeros(n_states, dtype=np.int32)    # eps-optimal policy (stationary)
         for s, state in enumerate(self.environment.states):
             valid_actions = self.environment.valid_actions(state)
+            # 利用最新的_v值来计算最大q, 以及对应的最优action
             q = np.asarray([self.q(state, action, self._v) for action in valid_actions])
             a_best = q.argmax()     # index of best action for valid actions in this state
             self.policy[s] = valid_actions[a_best]
