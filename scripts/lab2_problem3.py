@@ -6,8 +6,8 @@ from el2805.agents.rl.utils import get_device
 from utils import plot_training_stats, analyze_lunar_lander_agent, analyze_hyperparameter, compare_rl_agent_with_random
 from MotionSimulationPlatform import MotionSimulationPlatform
 SEED = 1
-N_TRAIN_EPISODES = 600
-EARLY_STOP_REWARD = 250
+N_TRAIN_EPISODES = 800
+EARLY_STOP_REWARD = -500
 MSPenv = MotionSimulationPlatform(total_time=10, dt=0.01)
 AGENT_CONFIG = {
     "seed": SEED,
@@ -26,7 +26,7 @@ AGENT_CONFIG = {
     "actor_shared_hidden_layer_sizes": [64],
     "actor_mean_hidden_layer_sizes": [32],
     "actor_var_hidden_layer_sizes": [32],
-    "actor_hidden_layer_activation": "relu",
+    "actor_hidden_layer_activation": "tanh",
     "gradient_max_norm": 1,
     "device": get_device(),
 }

@@ -52,7 +52,7 @@ def normal_pdf(x, mean, var):
 class Experience(NamedTuple):
     episode: int
     state: np.ndarray
-    action: int
+    action: np.ndarray # action: int
     reward: float
     next_state: np.ndarray
     done: bool
@@ -83,6 +83,7 @@ class MultiLayerPerceptron(torch.nn.Module):
         input_size = self.input_size
         for hidden_layer_size in self.hidden_layer_sizes:
             self._hidden_layers.append(torch.nn.Linear(input_size, hidden_layer_size))
+            self._hidden_layers.append(torch.nn.BatchNorm1d(hidden_layer_size))
             if hidden_layer_activation == "relu":
                 self._hidden_layers.append(torch.nn.ReLU())
             elif hidden_layer_activation == "tanh":
@@ -91,6 +92,8 @@ class MultiLayerPerceptron(torch.nn.Module):
                 raise NotImplementedError
             input_size = hidden_layer_size
         self._hidden_layers = torch.nn.Sequential(*self._hidden_layers)
+
+
 
         # Output layer
         assert not (include_top and output_size is None)

@@ -96,6 +96,10 @@ class RLAgent(Agent, ABC):
         )
         return stats
 
+    # def test_plot_example(n: int):  # 10
+    #     for i in range(n):
+
+
 
 
     def _train_or_test(
@@ -113,6 +117,7 @@ class RLAgent(Agent, ABC):
             # Reset environment data and initialize variables
             done = False
             state = self.environment.reset()
+            assert state[0] == 0.0
             episode_reward = 0
             episode_length = 0
             if render:
@@ -123,6 +128,8 @@ class RLAgent(Agent, ABC):
                 # Interact with the environment
                 action = self.compute_action(state=state, episode=episode, explore=train)
                 next_state, reward, done = self.environment.step(action)
+                
+
                 if render:
                     self.environment.render()
 
@@ -136,11 +143,12 @@ class RLAgent(Agent, ABC):
                         next_state=next_state,
                         done=done
                     )
-                    self.record_experience(experience)  #     def record_experience(self, experience: Experience) -> None: self._episodic_buffer.append(experience)
-                    #  stats["critic_loss"] = [loss for episode1_epoche1, loss for episode1_epoche2 ,..... loss for epoche10]
-                    #  stats["actor_loss"].append(actor_loss.item()), 
-                    #  type: dict: ['loss'] -> list of loss in one epoche.
+                    self.record_experience(experience)  #   def record_experience(self, experience: Experience) -> None: self._episodic_buffer.append(experience)
+
+                    # update_stats的type: dict: ['loss'] -> list of loss in one epoche.
+                    #  stats["critic_loss"] 以及stats["actor_loss"] 对应一个列表, 包含了每个episode运行了m次epoches,每个epoches的loss
                     # in update()-function, onlyif episode is done, then do 10 times updates for params in both NNs
+
                     update_stats = self.update()
 
                     # Update stats, enumerate key and value in dict
@@ -150,7 +158,7 @@ class RLAgent(Agent, ABC):
                         else:
                             stats[k].append(v) # update one-episode statistics in the total-statistics
                 
-                episode_reward += reward # sum the reward for each step in environment
+                episode_reward += reward # sum the reward for each step from environment
                 episode_length += 1
 
                 # Update state
@@ -158,17 +166,17 @@ class RLAgent(Agent, ABC):
 
             # Update stats
             
-            stats["episode_reward"].append(episode_reward)
+            stats["episode_reward"].append(episode_reward) 
             stats["episode_length"].append(episode_length)
 
             # Show progress
             avg_episode_length = running_average(stats["episode_length"])[-1]
             # print(stats["episode_reward"]), return array in list:  [array([-2160091.79174874])]
-            avg_episode_reward = running_average(np.concatenate(stats["episode_reward"]))[-1]
-            # avg_episode_reward = running_average(stats["episode_reward"])[-1]
+            # avg_episode_reward = running_average(np.concatenate(stats["episode_reward"]))[-1]
+            avg_episode_reward = running_average(stats["episode_reward"])[-1]
             episodes.set_description(
                 f"Episode {episode} - "
-                f"Reward: {episode_reward[0]:.1f} - "
+                f"Reward: {episode_reward:.1f} - "
                 f"Length: {episode_length} - "
                 f"Avg reward: {avg_episode_reward:.1f} - "
                 f"Avg length: {avg_episode_length:.1f}"
