@@ -110,6 +110,7 @@ def task_g(results_dir, agent_path):
 
 
 def main():
+
     results_dir = Path(__file__).parent.parent / "results" / "lab2" / "problem3"
     agent_path = results_dir / "task_c" / "ppo.pickle"
 
@@ -117,21 +118,21 @@ def main():
     task_c(results_dir / "task_c", agent_path)
     print()
 
-    print("Task (e2)")
-    task_e2(results_dir / "task_e2")
-    print()
+    # print("Task (e2)")
+    # task_e2(results_dir / "task_e2")
+    # print()
 
-    print("Task (e3)")
-    task_e3(results_dir / "task_e3")
-    print()
+    # print("Task (e3)")
+    # task_e3(results_dir / "task_e3")
+    # print()
 
-    print("Task (f)")
-    task_f(results_dir / "task_f", agent_path)
-    print()
+    # print("Task (f)")
+    # task_f(results_dir / "task_f", agent_path)
+    # print()
 
-    print("Task (g)")
-    task_g(results_dir / "task_g", agent_path)
-    print()
+    # print("Task (g)")
+    # task_g(results_dir / "task_g", agent_path)
+    # print()
 
 
 if __name__ == "__main__":

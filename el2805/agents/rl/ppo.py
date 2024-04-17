@@ -91,6 +91,8 @@ class PPO(RLAgent):
             dtype=torch.float64,
             device=self.device
         )
+        print(f"minimal states: {torch.min(states, 0)}, maximal states: {torch.max(states, 0)}")
+        print(f"min actions: {torch.min(actions, 0)}, maximal action: {torch.max(actions, 0)}")
 
         # Compute Monte Carlo targets
         g = []
