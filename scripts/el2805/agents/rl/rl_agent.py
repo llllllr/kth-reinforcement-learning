@@ -112,7 +112,7 @@ class RLAgent(Agent, ABC):
         for episode in episodes:
             # Reset environment data and initialize variables
             done = False
-            state = self.environment.reset()
+            _, state = self.environment.reset()
             episode_reward = 0
             episode_length = 0
             if render:

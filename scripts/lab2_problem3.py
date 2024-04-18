@@ -4,6 +4,9 @@ from pathlib import Path
 from el2805.agents.rl import PPO
 from el2805.agents.rl.utils import get_device
 from utils import plot_training_stats, analyze_lunar_lander_agent, analyze_hyperparameter, compare_rl_agent_with_random
+import pickle
+import matplotlib.pyplot as plt
+import numpy as np
 from MotionSimulationPlatform import MotionSimulationPlatform
 SEED = 1
 N_TRAIN_EPISODES = 600
@@ -113,14 +116,60 @@ def task_c(results_dir, agent_path):
 #         results_dir=results_dir
 #     )
 
+def reload_nn_and_test():
+    nn_dir =Path(__file__).parent.parent / "results_version1" / "withvariantAccelerations" / "ppo_MSP"/ "task_c"
+    with open(nn_dir / "ppo.pickle", "rb") as f:
+        ppo_model = pickle.load(f)
+        done = False
+        ref_acc, state = ppo_model.environment.reset()
+        traj_acc = [state[0]]
+        traj_vel = [state[1]]
+        traj_pos = [state[2]]
+        total_reward = 0
+        while not done:
+            action = ppo_model.compute_action(state=state)
+            next_state, reward, done = ppo_model.environment.step(action)
+            traj_acc.append(next_state[0])
+            traj_vel.append(next_state[1])
+            traj_pos.append(next_state[2])
+            total_reward += reward
+        plt.subplot(3, 1, 1)        
+        plt.plot(np.arange(0, 10.0, 0.01), ref_acc[:-1], color='blue', label='reference')
+        plt.plot(np.arange(0, 10.0, 0.01), traj_acc[:-1], color='red', label='trajectory')          
+        plt.xlabel('Time')
+        plt.ylabel('Acceleration')
+        plt.title('Acceleration difference with reward: '+str(total_reward))
+
+        plt.subplot(3, 1, 2) 
+        plt.plot(np.arange(0, 10.0, 0.01), traj_pos[:-1])
+        plt.xlabel('Time')
+        plt.ylabel('Position')
+
+        plt.subplot(3, 1, 3) 
+        plt.plot(np.arange(0, 10.0, 0.01), traj_vel[:-1])
+        plt.xlabel('Time')
+        plt.ylabel('Velocity')
+
+        plt.grid(True)
+        plt.show()
+
+
+
+
+
+
 
 def main():
-    results_dir = Path(__file__).parent.parent / "results" / "withvariantAccelerations" / "ppo_MSP"
+    results_dir = Path(__file__).parent.parent / "results_version1" / "withvariantAccelerations" / "ppo_MSP"
     agent_path = results_dir / "task_c" / "ppo.pickle"
 
     print("Task (c)")
     task_c(results_dir / "task_c", agent_path)
     print()
+
+    reload_nn_and_test()
+
+
 
     # print("Task (e2)")
     # task_e2(results_dir / "task_e2")

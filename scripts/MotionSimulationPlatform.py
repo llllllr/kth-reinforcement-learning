@@ -28,7 +28,7 @@ class MotionSimulationPlatform(gym.Env):
         self.current_step = 0
         self.ref_accelerations = self.compute_random_reference()
         self.done = False
-        return state
+        return self.ref_accelerations, state
 
 
     # next_state, reward, done, _ = self.environment.step(action), 
@@ -41,7 +41,7 @@ class MotionSimulationPlatform(gym.Env):
         next_state[2] = self.current_state[2] + self.current_state[1] * self.dt
 
         # compute the reward, w.r.t the reference-accelaration & angular-velocity
-        weight_accel = 0.9
+        weight_accel = 100
         weight_posi = 0.9
         weight_action = 0.9  # weight_action = np.array([0.9, 0.9])
         reward = 1 - weight_accel*abs(next_state[0] - self.ref_accelerations[self.current_step+1]) \
