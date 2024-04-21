@@ -169,7 +169,7 @@ class PPO(RLAgent):
             pi = self._compute_actions_likelihood(states, actions)
             r = pi / pi_old # r就是 现在从actor得到的两个分布中抽中当前action的可能性/旧的actor分布抽中的可能性, 其中pi_old是常数
             assert r.shape == (n,)
-            r_clipped = r.clip(min=1-self.epsilon, max=1 + self.epsilon) # 剪裁掉超出范围的一部部分, 那么相当于有些r_clipped是一个常数, 不是通过圣经网络计算得到
+            r_clipped = r.clip(min=1-self.epsilon, max=1 + self.epsilon) # 剪裁掉超出范围的一部部分, 那么相当于有些r_clipped是一个常数, 不是通过神经网络计算得到
             assert r_clipped.shape == (n,)
             actor_loss = - torch.minimum(r * psi, r_clipped * psi).mean() # loss如果没被剪裁就是 真r(含actor网络参数)*state对应的advantage_value, 要么就是一个常数*state对应的advantage_value
             # 结果是一个标量!!!! 本来所有的都是(1000, ), mean之后变成了一个值
