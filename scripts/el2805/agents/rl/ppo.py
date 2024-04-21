@@ -107,7 +107,7 @@ class PPO(RLAgent):
         var_state = torch.var(states, 0)
         # print(f"max value in 1000 experiences: {max_state}, min of 1000 states: {min_state}")
         # print(f"mean value in 1000 experiences: {mean_state}, var of 1000 states: {var_state}")
-        # torch.size = ([1000, 2])
+        # actions: torch.size = ([1000, 2])
         actions = torch.as_tensor(
             data=np.asarray([e.action for e in self._episodic_buffer]),
             dtype=torch.float64,

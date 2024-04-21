@@ -143,9 +143,9 @@ class RLAgent(Agent, ABC):
                         next_state=next_state,
                         done=done
                     )
-                    self.record_experience(experience)  #   def record_experience(self, experience: Experience) -> None: self._episodic_buffer.append(experience)
+                    self.record_experience(experience)  #   def record_experience(self, experience: Experience) -> None:    self._episodic_buffer.append(experience)
 
-                    # update_stats的type: dict: ['loss'] -> list of loss in one epoche.
+                    # update_stats的type: dict: ['name_loss'] -> list of loss in one epoche.
                     #  stats["critic_loss"] 以及stats["actor_loss"] 对应一个列表, 包含了每个episode运行了m次epoches,每个epoches的loss
                     # in update()-function, onlyif episode is done, then do 10 times updates for params in both NNs
 
