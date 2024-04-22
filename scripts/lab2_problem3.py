@@ -1,9 +1,22 @@
+import sys
+import os
+
+# 获取当前工作目录路径
+current_path = os.getcwd()
+
+# 将当前路径添加到 Python 搜索路径中
+sys.path.append(current_path)
+
+
 import gym
 import torch
 from pathlib import Path
 from el2805.agents.rl import PPO
 from el2805.agents.rl.utils import get_device
 from utils import plot_training_stats, analyze_lunar_lander_agent, analyze_hyperparameter, compare_rl_agent_with_random
+import pickle
+import matplotlib.pyplot as plt
+import numpy as np
 
 SEED = 1
 N_TRAIN_EPISODES = 1600
@@ -108,15 +121,74 @@ def task_g(results_dir, agent_path):
         results_dir=results_dir
     )
 
+def reload_nn_and_test():
+
+
+    nn_dir =Path(__file__).parent.parent / "results" / "lab2" / "problem3" / "task_c"
+    with open(nn_dir / "ppo.pickle", "rb") as f:
+        ppo_model = pickle.load(f)
+        reward_per_episode = []
+        length_per_episode = []
+        for i in range(200):
+                
+            done = False
+            state = ppo_model.environment.reset()
+            # x_posi = [state[0]]
+            # y_posi = [state[1]]
+            total_reward = 0
+            length = 0
+
+            while not done:
+                with torch.no_grad():
+                    state = torch.as_tensor(
+                    data=state.reshape((1,) + state.shape),
+                    dtype=torch.float64,
+                    device="cpu")
+                    mean, var = ppo_model.actor(state)
+                    mean, var = mean.reshape(-1), var.reshape(-1)  
+                    action = torch.normal(mean, torch.sqrt(var))
+                    action = action.numpy()
+
+                next_state, reward, done, _ = ppo_model.environment.step(action)
+                # x_posi.append(next_state[0])
+                # y_posi.append(next_state[1])
+                state = next_state
+                total_reward += reward
+                length +=1
+
+            reward_per_episode.append(total_reward)
+            length_per_episode.append(length)
+            # if length % 5 == 0:
+                # print(f"The current states are: {next_state}\n The current actions are: {action}. \n ")
+                # print(f"The mean and var of the distribution, m: {mean.numpy()}, v: {var.numpy()}. \n")
+        plt.subplot(2, 1, 1) 
+        plt.plot(np.arange(len(reward_per_episode)), reward_per_episode, color='blue')
+        plt.xlabel('episoden')
+        plt.ylabel('reward_per_episode')
+        # plt.title('With total reward: '+str(total_reward) + " totel length: "+str(length))
+
+        plt.subplot(2, 1, 2) 
+        plt.plot(np.arange(len(length_per_episode)), length_per_episode)
+        plt.xlabel('Episoden')
+        plt.ylabel('length ')
+
+
+        plt.grid(True)
+        plt.show()
+
 
 def main():
+    print("reload the pre-trained NN")
+    reload_nn_and_test()
+    print("end of programm")
 
-    results_dir = Path(__file__).parent.parent / "results" / "lab2" / "problem3"
-    agent_path = results_dir / "task_c" / "ppo.pickle"
 
-    print("Task (c)")
-    task_c(results_dir / "task_c", agent_path)
-    print()
+    # results_dir = Path(__file__).parent.parent / "results" / "lab2" / "problem3"
+    # agent_path = results_dir / "task_c" / "ppo.pickle"
+
+    # print("Task (c)")
+    # task_c(results_dir / "task_c", agent_path)
+    # print()
 
     # print("Task (e2)")
     # task_e2(results_dir / "task_e2")
