@@ -44,8 +44,8 @@ def task_c(results_dir, agent_path):
 
     # Save results
     agent.save(agent_path)
-    torch.save(agent.actor, results_dir / "neural-network-3-actor.pth")
-    torch.save(agent.critic, results_dir / "neural-network-3-critic.pth")
+    # torch.save(agent.actor, results_dir / "neural-network-3-actor.pth")
+    # torch.save(agent.critic, results_dir / "neural-network-3-critic.pth")
     plot_training_stats(training_stats, results_dir)
 
 
@@ -115,11 +115,11 @@ def task_c(results_dir, agent_path):
 
 
 def main():
-    results_dir = Path(__file__).parent.parent / "results" / "withvariantAccelerations" / "ppo_MSP"
-    agent_path = results_dir / "task_c" / "ppo.pickle"
+    results_dir = Path(__file__).parent.parent / "results_version1_backup_to_0327_2" 
+    agent_path = results_dir  / "ppo.pickle"
 
     print("Task (c)")
-    task_c(results_dir / "task_c", agent_path)
+    task_c(results_dir, agent_path)
     print()
 
     # print("Task (e2)")

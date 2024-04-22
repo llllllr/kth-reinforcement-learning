@@ -7,7 +7,7 @@ from collections import defaultdict
 from el2805.agents.agent import Agent
 from el2805.agents.utils import running_average
 from el2805.agents.rl.utils import Experience
-
+from pathlib import Path
 
 class RLAgent(Agent, ABC):
     """Interface for a RL algorithm."""
@@ -108,13 +108,17 @@ class RLAgent(Agent, ABC):
         assert not (train and render)
         stats = defaultdict(list)
         episodes = trange(1, n_episodes + 1, desc='Episode: ', leave=True)
-
+        max_reward = 0
+        max_episode = 1
         for episode in episodes:
             # Reset environment data and initialize variables
             done = False
-            state = self.environment.reset()
+            ref_accels, state = self.environment.reset()
             episode_reward = 0
             episode_length = 0
+            episode_diff_between_ref_a_and_traj_a = [abs(ref_accels[episode_length] - state[0])]
+            episode_posi_from_zero = [abs(state[2])]
+
             if render:
                 self.environment.render()
 
@@ -156,22 +160,39 @@ class RLAgent(Agent, ABC):
                 # Update state
                 state = next_state
 
+                episode_diff_between_ref_a_and_traj_a += abs(ref_accels[episode_length] - state[0])
+                episode_posi_from_zero += abs(state[2])
+                
+            if episode == 1:
+                max_reward = episode_reward
+            if episode_reward > max_reward:
+                max_reward = episode_reward
+                max_episode = episode
+                torch.save(self.actor, Path(__file__).parent.parent.parent.parent.parent / "results_version1_backup_to_0327_2"  / "actor_with_max_reward.pth")
+                torch.save(self.critic, Path(__file__).parent.parent.parent.parent.parent / "results_version1_backup_to_0327_2"  / "critic_with_max_reward.pth")
+
             # Update stats
             
-            stats["episode_reward"].append(episode_reward)
+            stats["episode_reward"].append(episode_reward.item())
             stats["episode_length"].append(episode_length)
+            stats["episode_diff_between_ref_a_and_traj_a"].append((episode_diff_between_ref_a_and_traj_a/episode_length).item())
+            stats["episode_posi_from_zero"].append((episode_posi_from_zero/episode_length).item())
+            assert len(stats["episode_diff_between_ref_a_and_traj_a"]) == len(stats["episode_length"])
 
             # Show progress
             avg_episode_length = running_average(stats["episode_length"])[-1]
             # print(stats["episode_reward"]), return array in list:  [array([-2160091.79174874])]
-            avg_episode_reward = running_average(np.concatenate(stats["episode_reward"]))[-1]
-            # avg_episode_reward = running_average(stats["episode_reward"])[-1]
+            # avg_episode_reward = running_average(np.concatenate(stats["episode_reward"]))[-1]
+            avg_episode_reward = running_average(stats["episode_reward"])[-1]
+            avg_ref = running_average(stats["episode_diff_between_ref_a_and_traj_a"])[-1]
+
             episodes.set_description(
                 f"Episode {episode} - "
-                f"Reward: {episode_reward[0]:.1f} - "
+                f"Reward: {episode_reward.item():.1f} - "
                 f"Length: {episode_length} - "
                 f"Avg reward: {avg_episode_reward:.1f} - "
-                f"Avg length: {avg_episode_length:.1f}"
+                f"Avg length: {avg_episode_length:.1f} - "
+                f"Max reward Episode: {max_episode}"
             )
 
             if early_stop_reward is not None and avg_episode_reward >= early_stop_reward:

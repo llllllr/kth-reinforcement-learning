@@ -164,11 +164,15 @@ def plot_training_stats(stats, results_dir, label=None, figures=None):
         metric_name_readable = metric_name.replace("_", " ")
         x = np.arange(1, len(metric_values) + 1)
         x_label = "episode" if metric_name.startswith("episode") else "update"
-        if metric_name == "episode_reward":
-            metric_values = np.concatenate(metric_values)
+        # if metric_name == "episode_reward":
+            # metric_values = np.concatenate(metric_values)
+            # metric_values = - metric_values
+            # metric_values = np.log(metric_values - min(metric_values) + 1)
         plots = axes.plot(x, running_average(metric_values), label=label)
         color = plots[0].get_color()
         axes.plot(x, metric_values, alpha=.2, color=color)
+        # if metric_name == "episode_reward":
+        #     axes.set_yscale('log')
         axes.set_xlabel(x_label)
         axes.set_ylabel(metric_name_readable)
         if label is not None:

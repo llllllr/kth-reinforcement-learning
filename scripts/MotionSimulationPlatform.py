@@ -28,7 +28,7 @@ class MotionSimulationPlatform(gym.Env):
         self.current_step = 0
         self.ref_accelerations = self.compute_random_reference()
         self.done = False
-        return state
+        return self.ref_accelerations, state
 
 
     # next_state, reward, done, _ = self.environment.step(action), 
@@ -60,7 +60,8 @@ class MotionSimulationPlatform(gym.Env):
         direction = random.choice([1, -1])
         ref_acceleration = 0
         ref_accelerations = np.zeros(len(self.timesteps)+1)
-        delta_accel = random.uniform(0.04, 0.06)
+        # delta_accel = random.uniform(0.04, 0.06)
+        delta_accel = 0.05
         for i, t in enumerate(self.timesteps):
             if t >= start_time and t < start_time + 0.5:
                 ref_acceleration += delta_accel 
