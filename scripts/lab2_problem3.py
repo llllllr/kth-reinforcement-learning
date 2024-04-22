@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from MotionSimulationPlatform import MotionSimulationPlatform
 SEED = 1
-N_TRAIN_EPISODES = 600
+N_TRAIN_EPISODES = 900
 EARLY_STOP_REWARD = 250
 MSPenv = MotionSimulationPlatform(total_time=10, dt=0.01)
 AGENT_CONFIG = {
@@ -44,6 +44,14 @@ def task_c(results_dir, agent_path):
         n_episodes=N_TRAIN_EPISODES,
         early_stop_reward=EARLY_STOP_REWARD
     )
+
+    # with open(Path(__file__).parent.parent / "results_version1" / "withvariantAccelerations" / "ppo_MSP"/ "task_c" / "ppo.pickle", "rb") as f:
+    #     agent = pickle.load(f)
+    #     training_stats = agent.train(
+    #     n_episodes=N_TRAIN_EPISODES,
+    #     early_stop_reward=EARLY_STOP_REWARD
+    # )
+
 
     # Save results
     agent.save(agent_path)
@@ -117,7 +125,7 @@ def task_c(results_dir, agent_path):
 #     )
 
 def reload_nn_and_test():
-    nn_dir =Path(__file__).parent.parent / "results_version1" / "withvariantAccelerations" / "ppo_MSP"/ "task_c"
+    nn_dir = Path(__file__).parent.parent / "results_version1" / "withvariantAccelerations" / "ppo_MSP"/ "task_c"
     with open(nn_dir / "ppo.pickle", "rb") as f:
         ppo_model = pickle.load(f)
         done = False
@@ -133,6 +141,7 @@ def reload_nn_and_test():
             traj_vel.append(next_state[1])
             traj_pos.append(next_state[2])
             total_reward += reward
+            state = next_state
         plt.subplot(3, 1, 1)        
         plt.plot(np.arange(0, 10.0, 0.01), ref_acc[:-1], color='blue', label='reference')
         plt.plot(np.arange(0, 10.0, 0.01), traj_acc[:-1], color='red', label='trajectory')          
@@ -160,14 +169,14 @@ def reload_nn_and_test():
 
 
 def main():
-    results_dir = Path(__file__).parent.parent / "results_version1" / "withvariantAccelerations" / "ppo_MSP"
+    results_dir = Path(__file__).parent.parent / "results_version1_more_episoden" / "withvariantAccelerations" / "ppo_MSP"
     agent_path = results_dir / "task_c" / "ppo.pickle"
 
     print("Task (c)")
     task_c(results_dir / "task_c", agent_path)
     print()
 
-    reload_nn_and_test()
+    # reload_nn_and_test()
 
 
 

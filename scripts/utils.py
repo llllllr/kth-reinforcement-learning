@@ -166,9 +166,11 @@ def plot_training_stats(stats, results_dir, label=None, figures=None):
         x_label = "episode" if metric_name.startswith("episode") else "update"
         if metric_name == "episode_reward":
             metric_values = np.concatenate(metric_values)
+            # indexes = [i for i in enumerate()]
         plots = axes.plot(x, running_average(metric_values), label=label)
         color = plots[0].get_color()
         axes.plot(x, metric_values, alpha=.2, color=color)
+        axes.plot()
         axes.set_xlabel(x_label)
         axes.set_ylabel(metric_name_readable)
         if label is not None:

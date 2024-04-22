@@ -41,8 +41,8 @@ class MotionSimulationPlatform(gym.Env):
         next_state[2] = self.current_state[2] + self.current_state[1] * self.dt
 
         # compute the reward, w.r.t the reference-accelaration & angular-velocity
-        weight_accel = 100
-        weight_posi = 0.9
+        weight_accel = 0.9
+        weight_posi = 10
         weight_action = 0.9  # weight_action = np.array([0.9, 0.9])
         reward = 1 - weight_accel*abs(next_state[0] - self.ref_accelerations[self.current_step+1]) \
                     - weight_posi*abs(next_state[2]) - weight_action * abs(action)
@@ -60,7 +60,8 @@ class MotionSimulationPlatform(gym.Env):
         direction = random.choice([1, -1])
         ref_acceleration = 0
         ref_accelerations = np.zeros(len(self.timesteps)+1)
-        delta_accel = random.uniform(0.04, 0.06)
+        # delta_accel = random.uniform(0.04, 0.06)
+        delta_accel = 0.05
         for i, t in enumerate(self.timesteps):
             if t >= start_time and t < start_time + 0.5:
                 ref_acceleration += delta_accel 

@@ -112,9 +112,12 @@ class RLAgent(Agent, ABC):
         for episode in episodes:
             # Reset environment data and initialize variables
             done = False
-            _, state = self.environment.reset()
+            ref_accel, state = self.environment.reset()
+            
             episode_reward = 0
             episode_length = 0
+            episode_diff_ref_accel = abs(ref_accel[episode_length] - state[0])
+            episode_posi = abs(state[2])
             if render:
                 self.environment.render()
 
@@ -152,23 +155,26 @@ class RLAgent(Agent, ABC):
                 
                 episode_reward += reward # sum the reward for each step in environment
                 episode_length += 1
-
                 # Update state
                 state = next_state
+                episode_diff_ref_accel += abs(ref_accel[episode_length] - state[0])
+                episode_posi += abs(state[2])
+
 
             # Update stats
-            
+            stats["episode_difference_between_ref_a_and_true_a"].append(episode_diff_ref_accel/episode_length)
+            stats["episode_position_from_zero"].append(episode_posi/episode_length)
             stats["episode_reward"].append(episode_reward)
             stats["episode_length"].append(episode_length)
 
             # Show progress
-            avg_episode_length = running_average(stats["episode_length"])[-1]
+            avg_episode_length = running_average(stats["episode_length"])[-1] # the lastest average_length
             # print(stats["episode_reward"]), return array in list:  [array([-2160091.79174874])]
             avg_episode_reward = running_average(np.concatenate(stats["episode_reward"]))[-1]
             # avg_episode_reward = running_average(stats["episode_reward"])[-1]
             episodes.set_description(
                 f"Episode {episode} - "
-                f"Reward: {episode_reward[0]:.1f} - "
+                f"Reward: {episode_reward.item():.1f} - "
                 f"Length: {episode_length} - "
                 f"Avg reward: {avg_episode_reward:.1f} - "
                 f"Avg length: {avg_episode_length:.1f}"
