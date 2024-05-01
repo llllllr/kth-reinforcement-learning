@@ -41,11 +41,16 @@ class MotionSimulationPlatform(gym.Env):
         next_state[2] = self.current_state[2] + self.current_state[1] * self.dt
 
         # compute the reward, w.r.t the reference-accelaration & angular-velocity
-        weight_accel = 0.9
+        weight_accel = 10
         weight_posi = 0.9
         weight_action = 0.9  # weight_action = np.array([0.9, 0.9])
         reward = 1 - weight_accel*abs(next_state[0] - self.ref_accelerations[self.current_step+1]) \
                     - weight_posi*abs(next_state[2]) - weight_action * abs(action)
+        # reward_x_lim = 0
+        # if (abs(next_state[2] > 5.0)):
+        #     reward_x_lim = - 10000
+        # reward = 1 - weight_accel*abs(next_state[0] - self.ref_accelerations[self.current_step+1]) \
+        #              - weight_action * abs(action) + reward_x_lim
         # np.dot(weight_action, action)
 
         self.current_step += 1
@@ -53,7 +58,7 @@ class MotionSimulationPlatform(gym.Env):
         if self.current_step >= len(self.timesteps):
             self.done = True
         return next_state, reward, self.done
-    
+            
 
     def compute_random_reference(self):
         start_time = round(random.uniform(0.0, 7.9), 2)

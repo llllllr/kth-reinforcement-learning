@@ -152,9 +152,15 @@ class PPO(RLAgent):
             pi = self._compute_actions_likelihood(states, actions)
             r = pi / pi_old
             assert r.shape == (n,)
-            r_clipped = r.clip(min=1-self.epsilon, max=1 + self.epsilon)
+            r_clipped = r.clip(min=1-self.epsilon, max=1 + self.epsilon)  # 这里的clip相当于原来的r乘上一个系数,使得它能够继续对pi求导, 而不是直接变成一个常数1.4
             assert r_clipped.shape == (n,)
-            actor_loss = - torch.minimum(r * psi, r_clipped * psi).mean()
+            actor_loss = - torch.minimum(r * psi, r_clipped * psi).mean()  
+            # 所以不是为了r来更新, r只是一个系数来控制更新的幅度不要太大? psi也是一个系数确定更新的幅度: psi=g-v代表当前真实的当前collected的return - v的critic预测值.
+            # 实际上是 r = pi/pi_old, 是pi代表概率p是真正含有actor_param的项, 也是d_p/d_theta = d_log(p)/d_theta是grad的更新方向
+            # G = average of [all possible discounted return from current_state to the end]
+            # 原来的更新方式就是 loss = log(生成这条traj的总概率p) * q_value_function_from_this_picking_a_s
+            # 现在 loss = log(生成这一步的概率p) * (g-v)
+
 
             # Backward pass by actor
             self._actor_optimizer.zero_grad()
@@ -164,7 +170,7 @@ class PPO(RLAgent):
 
             # Save stats, for each episode, for each epoch(update) of current-episode, save the loss-value
             # print(critic_loss.item())
-            # print(actor_loss.item()) ,for every epoches, obtain one critic-loss, one actor-loss
+            # print(actor_loss.item   ()) ,for every epoches, obtain one critic-loss, one actor-loss
             stats["critic_loss"].append(critic_loss.item())
             stats["actor_loss"].append(actor_loss.item())
 
