@@ -142,7 +142,7 @@ class PPO(RLAgent):
             # Backward pass by critic, reset the gradiant 
             self._critic_optimizer.zero_grad()
             critic_loss.backward()  # compute gradiant w.r.t critic-loss
-            # clip the gradient of the NN
+            # clip the gradient of the NN, not to 
             torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=self.gradient_max_norm)
             self._critic_optimizer.step()  # update grad w.r.t loss
 
@@ -205,6 +205,17 @@ class PPO(RLAgent):
             action = torch.normal(mean, torch.sqrt(var))
             action = action.numpy()
         return action
+    
+    def compute_action_test(self, state):
+        with torch.no_grad():
+            state = torch.as_tensor(
+                data=state.reshape((1,) + state.shape),
+                dtype=torch.float64,
+                device=self.device
+            ) 
+            mean, var = self.actor(state)
+            mean = mean.reshape(-1).numpy()
+            return mean
 
     def _compute_actions_likelihood(self, states, actions):
         assert len(states) == len(actions)

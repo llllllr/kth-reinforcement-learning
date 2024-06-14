@@ -4,10 +4,6 @@ import random
 from gym.utils.seeding import np_random
 import gym
 
-# class Normalized_Ob(nev : Env, ):
-
-
-
 class MotionSimulationPlatform(gym.Env):
                   
     def __init__(self, total_time=10.0, dt=0.01):
@@ -91,21 +87,3 @@ class MotionSimulationPlatform(gym.Env):
         :type seed: int, optional
         """
         pass
-        # self._rng, seed = np_random(seed)
-        # return [seed]
-    
-
-
-        # we have 8 dimensions: in x-direction: x-accel, y-accel,
-        #                                       x-vel, y-vel,                         
-        #                                       x-pos, y-pos, 
-        #                                       w-yaw, phi-yaw
-        
-        # # update states: [0:2] x-accel, y-accel, [2:4] x-vel, y-vel, [4:6]  x-pos, y-pos, 
-        # # [6] angular velocity in yaw, [7] yaw-angular 
-        # next_state = np.zeros(8)
-        # next_state[0:2] = self.current_state[0:2] + actions[0:2]
-        # next_state[2:4] = self.current_state[2:4] + self.current_state[0:2] * self.dt
-        # next_state[4:6] = self.current_state[4:6] + self.current_state[2:4] * self.dt
-        # next_state[6] = self.current_state[6] + actions[2]
-        # next_state[7] = self.current_state[7] + self.current_state[6]

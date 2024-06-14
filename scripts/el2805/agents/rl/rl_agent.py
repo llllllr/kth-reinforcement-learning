@@ -169,8 +169,8 @@ class RLAgent(Agent, ABC):
             if episode_reward > max_reward:
                 max_reward = episode_reward
                 max_episode = episode
-                torch.save(self.actor, Path(__file__).parent.parent.parent.parent.parent / "results_version1_backup_to_0327_3"  / "actor_with_max_reward.pth")
-                torch.save(self.critic, Path(__file__).parent.parent.parent.parent.parent / "results_version1_backup_to_0327_3"  / "critic_with_max_reward.pth")
+                torch.save(self.actor, Path(__file__).parent.parent.parent.parent.parent / "results_version1_with_limit_3"   / "actor_with_max_reward.pth")
+                torch.save(self.critic, Path(__file__).parent.parent.parent.parent.parent / "results_version1_with_limit_3"   / "critic_with_max_reward.pth")
 
             # Update stats
             
