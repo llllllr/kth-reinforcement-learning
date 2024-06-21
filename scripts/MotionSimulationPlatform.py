@@ -24,13 +24,16 @@ class MotionSimulationPlatform(gym.Env):
 
     def reset(self):
         # reset the env to a random initial state, type: nparray
+        self.current_step = 0
+        self.done = False
+        self.ref_accelerations = self.compute_random_reference()
+
         state = np.zeros(3) 
         state[1] = random.uniform(-2.0, 2.0)  # randomrize the initial vel of each episode
         state[2] = random.uniform(-2.0, 2.0)  # randomrize the initial pos of each episode
         self.current_state = state
-        self.current_step = 0
-        self.ref_accelerations = self.compute_random_reference()
-        self.done = False
+    
+        
         return self.ref_accelerations, state
 
 
@@ -59,6 +62,7 @@ class MotionSimulationPlatform(gym.Env):
         # np.dot(weight_action, action)
 
         self.current_step += 1
+        
         self.current_state = next_state
         if self.current_step >= len(self.timesteps):
             self.done = True

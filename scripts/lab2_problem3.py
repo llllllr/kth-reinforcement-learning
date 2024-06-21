@@ -5,15 +5,22 @@ from el2805.agents.rl import PPO
 from el2805.agents.rl.utils import get_device
 from utils import plot_training_stats, analyze_lunar_lander_agent, analyze_hyperparameter, compare_rl_agent_with_random
 from MotionSimulationPlatform import MotionSimulationPlatform
+from MSP_no_boundry import MSP
+from MSP_with_boundry import MSP_bound
+from MSP_tilt import MSP_tilt
 import matplotlib.pyplot as plt
 from el2805.agents.utils import running_average
 import pickle
 import numpy as np
 
 SEED = 1
-N_TRAIN_EPISODES = 1500
+N_TRAIN_EPISODES = 800
 EARLY_STOP_REWARD = 250
-MSPenv = MotionSimulationPlatform(total_time=10, dt=0.01)
+# MSPenv = MotionSimulationPlatform(total_time=10, dt=0.01)
+# MSPenv = MSP(total_time=10, dt=0.01)
+# MSPenv = MSP_bound(total_time=10, dt=0.01)
+MSPenv = MSP_tilt(total_time=10, dt=0.01)
+
 AGENT_CONFIG = {
     "seed": SEED,
     # "environment": gym.make("LunarLanderContinuous-v2"),
@@ -34,6 +41,9 @@ AGENT_CONFIG = {
     "actor_hidden_layer_activation": "relu",
     "gradient_max_norm": 1,
     "device": get_device(),
+    "state_dim" : 7,
+    "action_dim" : 2
+    
 }
 
 
@@ -44,13 +54,12 @@ def task_c(results_dir, agent_path):
     agent = PPO(**AGENT_CONFIG)
     training_stats = agent.train(
         n_episodes=N_TRAIN_EPISODES,
-        early_stop_reward=EARLY_STOP_REWARD
+        early_stop_reward=EARLY_STOP_REWARD,
+        result_dir_name=results_dir
     )
 
     # Save results
     agent.save(agent_path)
-    # torch.save(agent.actor, results_dir / "neural-network-3-actor.pth")
-    # torch.save(agent.critic, results_dir / "neural-network-3-critic.pth")
     plot_training_stats(training_stats, results_dir)
 
 def train_more(result_dir):
@@ -100,21 +109,21 @@ def reload_nn_and_test():
             t = np.arange(0, 10.0, 0.01)
             plt.subplot(3, 5, (i+1))    
             traj_acc = running_average(traj_acc)
-            plt.plot(t, ref_acc[:-1], color='blue', label='reference')
-            plt.plot(t, traj_acc[:-1], color='red', label='trajectory')          
+            plt.plot(t, ref_acc[:len(t)], color='blue', label='reference')
+            plt.plot(t, traj_acc[:len(t)], color='red', label='trajectory')          
             plt.xlabel('Time')
             plt.ylabel('Acceleration')
-            plt.title('Reward: '+str(total_reward))
+            plt.title('Reward: '+str(round(total_reward)))
             plt.grid(True)
 
             plt.subplot(3, 5, 5 + (i+1)) 
-            plt.plot(t, traj_vel[:-1])
+            plt.plot(t, traj_vel[:len(t)])
             plt.xlabel('Time')
             plt.ylabel('Velocity')
             plt.grid(True)
 
             plt.subplot(3, 5, 10 + (i+1)) 
-            plt.plot(t, traj_pos[:-1])
+            plt.plot(t, traj_pos[:len(t)])
             plt.xlabel('Time')
             plt.ylabel('Position')
             plt.grid(True)
@@ -124,19 +133,19 @@ def reload_nn_and_test():
 
 
 def main():
-    # result_dir = Path(__file__).parent.parent / "results_version1_with_limit_0614_small_learnrate_more_train" 
+    # result_dir = Path(__file__).parent.parent / "results_MSP_noboundry_only_follow_reference0619" 
     # train_more(result_dir)
 
-    print("start of programm")
-    reload_nn_and_test()
-    print("end of programm")
+    # print("start of programm")
+    # reload_nn_and_test()
+    # print("end of programm")
 
 
-    # results_dir = Path(__file__).parent.parent / "results_version1_with_limit_0614_small_learnrate" 
-    # agent_path = results_dir  / "ppo.pickle"
-    # print("Task (c)")
-    # task_c(results_dir, agent_path)
-    # print()
+    results_dir = Path(__file__).parent.parent / "results_MSP_with_tilt_0620" 
+    agent_path = results_dir  / "ppo.pickle"
+    print("Task (c)")
+    task_c(results_dir, agent_path)
+    print("end programm")
 
     # print("Task (e2)")
     # task_e2(results_dir / "task_e2")

@@ -29,7 +29,9 @@ class PPO(RLAgent):
             gradient_max_norm: float,
 
             device: str,
-            seed: int | None = None
+            seed: int | None = None,
+            state_dim : int,
+            action_dim :int
     ):
         super().__init__(environment=environment, seed=seed)
         self.discount = discount
@@ -47,8 +49,8 @@ class PPO(RLAgent):
         self.device = device
 
 # conti state & conti action 
-        state_dim = 3
-        self._action_dim = 1
+        self._state_dim = state_dim
+        self._action_dim = action_dim
 
         # assert isinstance(environment.observation_space, gym.spaces.Box)
         # state_dim = len(environment.observation_space.low)
@@ -56,17 +58,16 @@ class PPO(RLAgent):
         # assert isinstance(environment.action_space, gym.spaces.Box)
         # self._action_dim = len(environment.action_space.low)
 
-
 # input is the current real state(8 dimension), N samples in batch. 
 # Output is the single value: V(s)
         self.critic = PPOCritic(
-            state_dim=state_dim,
+            state_dim=self._state_dim,
             hidden_layer_sizes=self.critic_hidden_layer_sizes,
             hidden_layer_activation=self.critic_hidden_layer_activation
         ).double().to(self.device)
 
         self.actor = PPOActor(
-            state_dim=state_dim,
+            state_dim=self._state_dim,
             action_dim=self._action_dim,
             shared_hidden_layer_sizes=self.actor_shared_hidden_layer_sizes,
             mean_hidden_layer_sizes=self.actor_mean_hidden_layer_sizes,

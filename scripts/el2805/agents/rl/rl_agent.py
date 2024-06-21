@@ -8,6 +8,7 @@ from el2805.agents.agent import Agent
 from el2805.agents.utils import running_average
 from el2805.agents.rl.utils import Experience
 from pathlib import Path
+import matplotlib.pyplot as plt
 
 class RLAgent(Agent, ABC):
     """Interface for a RL algorithm."""
@@ -64,7 +65,7 @@ class RLAgent(Agent, ABC):
         """
         raise NotImplementedError
 
-    def train(self, n_episodes: int, early_stop_reward: float | None = None) -> dict:
+    def train(self, result_dir_name: str, n_episodes: int, early_stop_reward: float | None = None ) -> dict:
         """Trains the RL agent for the specified number of episodes.
 
         :param n_episodes: number of training episodes
@@ -75,6 +76,7 @@ class RLAgent(Agent, ABC):
         :rtype: dict
         """
         stats = self._train_or_test(
+            result_dir_name=result_dir_name,
             n_episodes=n_episodes,
             train=True,
             early_stop_reward=early_stop_reward
@@ -100,6 +102,7 @@ class RLAgent(Agent, ABC):
 
     def _train_or_test(
             self,
+            result_dir_name: str,
             n_episodes: int,
             train: bool,
             render: bool = False,
@@ -110,7 +113,8 @@ class RLAgent(Agent, ABC):
         episodes = trange(1, n_episodes + 1, desc='Episode: ', leave=True)
         max_reward = 0
         max_episode = 1
-        
+        figure, axes = plt.subplots(nrows=3, ncols=int(n_episodes/100))
+
         for episode in episodes:
             # Reset environment data and initialize variables
             done = False
@@ -142,7 +146,7 @@ class RLAgent(Agent, ABC):
                         done=done
                     )
                     self.record_experience(experience)  #     def record_experience(self, experience: Experience) -> None: self._episodic_buffer.append(experience)
-                    #  stats["critic_loss"] = [loss for episode1_epoche1, loss for episode1_epoche2 ,..... loss for epoche10]
+                    #  stats["critic_loss"] = [loss for episode1_epoche1, loss for episode1_epoche2 ,.....loss for epoche10]同一道轨迹, 训练十次
                     #  stats["actor_loss"].append(actor_loss.item()), 
                     #  type: dict: ['loss'] -> list of loss in one epoche.
                     # in update()-function, onlyif episode is done, then do 10 times updates for params in both NNs
@@ -169,8 +173,49 @@ class RLAgent(Agent, ABC):
             if episode_reward > max_reward:
                 max_reward = episode_reward
                 max_episode = episode
-                torch.save(self.actor, Path(__file__).parent.parent.parent.parent.parent / "results_version1_with_limit_3"   / "actor_with_max_reward.pth")
-                torch.save(self.critic, Path(__file__).parent.parent.parent.parent.parent / "results_version1_with_limit_3"   / "critic_with_max_reward.pth")
+                current_path = Path(__file__).parent.parent.parent.parent.parent
+
+                torch.save(self.actor, current_path / result_dir_name / "actor_with_max_reward.pth")
+                torch.save(self.critic, current_path / result_dir_name / "critic_with_max_reward.pth")
+            if episode % 100 == 0:
+                done = False
+                ref_accels, state = self.environment.reset()
+                test_reward = 0
+                traj_acc = [state[0]]
+                traj_vel = [state[1]]
+                traj_pos = [state[2]]
+                while not done:
+                    action = self.compute_action_test(state=state)
+                    next_state, reward, done = self.environment.step(action)
+                    traj_acc.append(next_state[0])
+                    traj_vel.append(next_state[1])
+                    traj_pos.append(next_state[2])
+
+                    test_reward += reward
+                    state = next_state
+
+                ax = axes[0, int(episode/100) - 1]
+                t = np.arange(0, 10.0, 0.01)
+                ax.plot(t, ref_accels[:len(t)], color='blue', label='reference')
+                ax.plot(t, traj_acc[:len(t)], color='red', label='real_accl')
+                ax.set_xlabel('Time')
+                ax.set_ylabel('Acceleration')
+                ax.set_title('Reward: '+str(round(test_reward)))
+                ax.grid(True)
+                ax.legend()
+                
+                ax = axes[1, int(episode/100) - 1]
+                ax.plot(t, traj_vel[:len(t)])
+                ax.set_xlabel('Time')
+                ax.set_ylabel('Velocity')
+                ax.grid(True)
+
+                ax = axes[2, int(episode/100) - 1]
+                ax.plot(t, traj_pos[:len(t)])
+                ax.set_xlabel('Time')
+                ax.set_ylabel('Position')
+                ax.grid(True)
+
 
             # Update stats
             
@@ -199,5 +244,47 @@ class RLAgent(Agent, ABC):
             if early_stop_reward is not None and avg_episode_reward >= early_stop_reward:
                 print("Early stopping: environment solved!")
                 break
+        figure.savefig(result_dir_name / "test_during_train.png")
+        plt.show()
+        figure2, axes2 = plt.subplots(nrows=3, ncols=5)
+        for i in range(5):
+            done = False
+            ref_accels, state = self.environment.reset()
+            test_reward = 0
+            traj_acc = [state[0]]
+            traj_vel = [state[1]]
+            traj_pos = [state[2]]
+            while not done:
+                action = self.compute_action_test(state=state)
+                next_state, reward, done = self.environment.step(action)
+                traj_acc.append(next_state[0])
+                traj_vel.append(next_state[1])
+                traj_pos.append(next_state[2])
 
+                test_reward += reward
+                state = next_state
+
+            ax = axes2[0, i]
+            t = np.arange(0, 10.0, 0.01)
+            ax.plot(t, ref_accels[:len(t)], color='blue', label='reference')
+            ax.plot(t, traj_acc[:len(t)], color='red', label='real_accl')
+            ax.set_xlabel('Time')
+            ax.set_ylabel('Acceleration')
+            ax.set_title('Reward: '+str(round(test_reward)))
+            ax.grid(True)
+            ax.legend()
+            
+            ax = axes2[1, i]
+            ax.plot(t, traj_vel[:len(t)])
+            ax.set_xlabel('Time')
+            ax.set_ylabel('Velocity')
+            ax.grid(True)
+
+            ax = axes2[2, i]
+            ax.plot(t, traj_pos[:len(t)])
+            ax.set_xlabel('Time')
+            ax.set_ylabel('Position')
+            ax.grid(True)
+        figure2.savefig(result_dir_name / "test_after_train.png")
+        plt.show()
         return stats
