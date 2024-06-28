@@ -115,10 +115,11 @@ class PPO(RLAgent):
             dtype=torch.float64,
             device=self.device
         )
-        # print(f"the length of monto-carlo-target of an episode: {g.shape}")
-        # print(f"the length of rewards of an episode: {rewards.shape}")
-        # print(f"the length of states of an episode: {states.shape}")
-        # print(f"the length of actions of an episode: {actions.shape}")
+        # print(f"\n size of State: {states.size()}, size of actions : {actions.size()} \n size of G-values : {g.size()}")
+        # size of State: torch.Size([1000, 8]), size of actions : torch.Size([1000, 2])
+        # size of G-values : torch.Size([1000])
+        # print(f"\n print 10 states : {states[500:510, :]}")
+        # print(f"\n print 10 actions : {actions[500:510, :]}")
 
         g = g.reshape(-1)
         assert g.shape == (n, ) # assert g.shape == (n, )
@@ -128,7 +129,7 @@ class PPO(RLAgent):
             v = self.critic(states)
             assert v.shape == (n, 1)  # result size should be (1000, 1)
             v = v.reshape(-1)  # reshape to 1 dimension tensor
-            psi = g - v  
+            psi = g - v  # 真实的return 减去当前的state value值, 代表选择了一对state,action组合之后, 得到的优势
 
             # Compute action likelihood from old policy, for each abserved pair (s_i, a_i) , i = 0...T 
             pi_old = self._compute_actions_likelihood(states, actions)
@@ -145,7 +146,12 @@ class PPO(RLAgent):
             critic_loss.backward()  # compute gradiant w.r.t critic-loss
             # clip the gradient of the NN, not to 
             torch.nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=self.gradient_max_norm)
+            # for param in self.critic.parameters():
+            #     if param.grad is not None:
+            #         print(f"\n Gradient of critic : {param.grad}")
+
             self._critic_optimizer.step()  # update grad w.r.t loss
+
 
             # Forward pass by actor
             # what is the probability density value of given states and actions? 
@@ -153,10 +159,15 @@ class PPO(RLAgent):
             pi = self._compute_actions_likelihood(states, actions)
             r = pi / pi_old
             assert r.shape == (n,)
-            r_clipped = r.clip(min=1-self.epsilon, max=1 + self.epsilon)  # 这里的clip相当于原来的r乘上一个系数,使得它能够继续对pi求导, 而不是直接变成一个常数1.4
+            r_clipped = r.clip(min=1-self.epsilon, max=1 + self.epsilon) 
+            # print(f"\n print 这一轮的action的可能性pi/pi_old的比值再clip掉一部分 : {r_clipped[500:510]}")
+
+            # 被clip了的值, 其params的grad等于0, 也就是说这个param在这一轮不更新
             assert r_clipped.shape == (n,)
             actor_loss = - torch.minimum(r * psi, r_clipped * psi).mean()  
-            # 所以不是为了r来更新, r只是一个系数来控制更新的幅度不要太大? psi也是一个系数确定更新的幅度: psi=g-v代表当前真实的当前collected的return - v的critic预测值.
+
+            # r 是含有真正actor params的数值, 但是我们不希望r的变化太大? psi是一个系数,确定更新的幅度: psi=g-v代表当前真实的当前collected的return - v的critic预测值.也就是说如果当前step对应的state value比较大,就应该顺着这个step更新得更多一些.
+
             # 实际上是 r = pi/pi_old, 是pi代表概率p是真正含有actor_param的项, 也是d_p/d_theta = d_log(p)/d_theta是grad的更新方向
             # G = average of [all possible discounted return from current_state to the end]
             # 原来的更新方式就是 loss = log(生成这条traj的总概率p) * q_value_function_from_this_picking_a_s
@@ -167,6 +178,11 @@ class PPO(RLAgent):
             self._actor_optimizer.zero_grad()
             actor_loss.backward()
             torch.nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=self.gradient_max_norm)
+
+            # for param in self.actor.parameters():
+            #     if param.grad is not None:
+            #         print(f"\n Gradient of actor : {param.grad}")
+
             self._actor_optimizer.step()
 
             # Save stats, for each episode, for each epoch(update) of current-episode, save the loss-value

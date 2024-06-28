@@ -7,11 +7,12 @@ from utils import plot_training_stats, analyze_lunar_lander_agent, analyze_hyper
 from MotionSimulationPlatform import MotionSimulationPlatform
 from MSP_no_boundry import MSP
 from MSP_with_boundry import MSP_bound
-from MSP_tilt import MSP_tilt
+from MSP_tilt import MSP_tilt, NormalizeObservation
 import matplotlib.pyplot as plt
 from el2805.agents.utils import running_average
 import pickle
 import numpy as np
+
 
 SEED = 1
 N_TRAIN_EPISODES = 800
@@ -20,28 +21,30 @@ EARLY_STOP_REWARD = 250
 # MSPenv = MSP(total_time=10, dt=0.01)
 # MSPenv = MSP_bound(total_time=10, dt=0.01)
 MSPenv = MSP_tilt(total_time=10, dt=0.01)
+MSPenv_normalized = NormalizeObservation(MSPenv)
+
 
 AGENT_CONFIG = {
     "seed": SEED,
     # "environment": gym.make("LunarLanderContinuous-v2"),
-    "environment" : MSPenv,
+    "environment" : MSPenv_normalized,
     "discount": .99,
     "n_epochs_per_step": 10,
     "epsilon": .2,
 
-    "critic_learning_rate": 5*1e-4,
+    "critic_learning_rate": 1e-3,
     
-    "critic_hidden_layer_sizes": [64, 32],
+    "critic_hidden_layer_sizes": [64, 64],
     "critic_hidden_layer_activation": "relu",
 
-    "actor_learning_rate": 5*1e-6,
+    "actor_learning_rate": 1e-4,
     "actor_shared_hidden_layer_sizes": [64],
-    "actor_mean_hidden_layer_sizes": [32],
-    "actor_var_hidden_layer_sizes": [32],
+    "actor_mean_hidden_layer_sizes": [64],
+    "actor_var_hidden_layer_sizes": [64],
     "actor_hidden_layer_activation": "relu",
     "gradient_max_norm": 1,
     "device": get_device(),
-    "state_dim" : 7,
+    "state_dim" : 8,
     "action_dim" : 2
     
 }
@@ -141,7 +144,7 @@ def main():
     # print("end of programm")
 
 
-    results_dir = Path(__file__).parent.parent / "results_MSP_with_tilt_0620" 
+    results_dir = Path(__file__).parent.parent / "results_MSP_with_tilt_wrapper" 
     agent_path = results_dir  / "ppo.pickle"
     print("Task (c)")
     task_c(results_dir, agent_path)
