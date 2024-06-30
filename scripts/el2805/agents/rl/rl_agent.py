@@ -123,7 +123,7 @@ class RLAgent(Agent, ABC):
             episode_length = 0
             episode_diff_between_ref_a_and_traj_a = [abs(ref_accels[episode_length] - state[0])]
             episode_posi_from_zero = [abs(state[2])]
-            if episode == 0 or episode % 50 == 0:
+            if episode == 1 or episode % 50 == 0:
                 print(f"\n In episode {episode}: RESET STATE :{state}.")
 
             if render:
@@ -166,7 +166,7 @@ class RLAgent(Agent, ABC):
 
                 # Update state
                 state = next_state
-                if episode == 0 or episode % 50 == 0:
+                if episode == 1 or episode % 50 == 0:
                     print(f"\n In episode {episode}: STATE :{state}, ACTION : {action}, sample from mean {mean} and var {var}.")
 
 
