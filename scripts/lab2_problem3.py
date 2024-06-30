@@ -18,8 +18,8 @@ N_TRAIN_EPISODES = 800
 EARLY_STOP_REWARD = 250
 # MSPenv = MotionSimulationPlatform(total_time=10, dt=0.01)
 # MSPenv = MSP(total_time=10, dt=0.01)
-# MSPenv = MSP_bound(total_time=10, dt=0.01)
-MSPenv = MSP_tilt(total_time=10, dt=0.01)
+MSPenv = MSP_bound(total_time=10, dt=0.01)
+# MSPenv = MSP_tilt(total_time=10, dt=0.01)
 
 AGENT_CONFIG = {
     "seed": SEED,
@@ -41,8 +41,8 @@ AGENT_CONFIG = {
     "actor_hidden_layer_activation": "relu",
     "gradient_max_norm": 1,
     "device": get_device(),
-    "state_dim" : 7,
-    "action_dim" : 2
+    "state_dim" : 4,
+    "action_dim" : 1
     
 }
 
@@ -141,7 +141,7 @@ def main():
     # print("end of programm")
 
 
-    results_dir = Path(__file__).parent.parent / "results_MSP_with_tilt_0620" 
+    results_dir = Path(__file__).parent.parent / "results_MSP_boundry_0701" 
     agent_path = results_dir  / "ppo.pickle"
     print("Task (c)")
     task_c(results_dir, agent_path)

@@ -205,7 +205,7 @@ class PPO(RLAgent):
             # for every action-dim, we should choose a action-value, we shoose it from a normal disturbution
             action = torch.normal(mean, torch.sqrt(var))
             action = action.numpy()
-        return action
+        return action, mean.numpy(), var.numpy()
     
     def compute_action_test(self, state):
         with torch.no_grad():
