@@ -14,7 +14,7 @@ import pickle
 import numpy as np
 
 SEED = 1
-N_TRAIN_EPISODES = 800
+N_TRAIN_EPISODES = 1000
 EARLY_STOP_REWARD = 250
 # MSPenv = MotionSimulationPlatform(total_time=10, dt=0.01)
 # MSPenv = MSP(total_time=10, dt=0.01)
@@ -29,12 +29,12 @@ AGENT_CONFIG = {
     "n_epochs_per_step": 10,
     "epsilon": .2,
 
-    "critic_learning_rate": 5*1e-4,
+    "critic_learning_rate": 1e-5,
     
     "critic_hidden_layer_sizes": [64, 32],
     "critic_hidden_layer_activation": "relu",
 
-    "actor_learning_rate": 5*1e-6,
+    "actor_learning_rate": 1e-6,
     "actor_shared_hidden_layer_sizes": [64],
     "actor_mean_hidden_layer_sizes": [32],
     "actor_var_hidden_layer_sizes": [32],
@@ -43,7 +43,6 @@ AGENT_CONFIG = {
     "device": get_device(),
     "state_dim" : 4,
     "action_dim" : 1
-    
 }
 
 
@@ -141,7 +140,7 @@ def main():
     # print("end of programm")
 
 
-    results_dir = Path(__file__).parent.parent / "results_MSP_boundry_0701" 
+    results_dir = Path(__file__).parent.parent / "results_MSP_boundry_lower_than_3_keineAhnung" 
     agent_path = results_dir  / "ppo.pickle"
     print("Task (c)")
     task_c(results_dir, agent_path)

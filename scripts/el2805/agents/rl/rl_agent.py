@@ -113,7 +113,7 @@ class RLAgent(Agent, ABC):
         episodes = trange(1, n_episodes + 1, desc='Episode: ', leave=True)
         max_reward = 0
         max_episode = 1
-        figure, axes = plt.subplots(nrows=3, ncols=int(n_episodes/100))
+        # figure, axes = plt.subplots(nrows=3, ncols=int(n_episodes/100))
 
         for episode in episodes:
             # Reset environment data and initialize variables

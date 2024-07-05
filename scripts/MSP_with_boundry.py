@@ -39,16 +39,25 @@ class MSP_bound(gym.Env):
         # define reward for current state, 这里只使用加速度的差值, 以确保加速度一定verfolgen
         weight_accel = 0.9
         reward_x_lim = 0
-        if (abs(next_state[2]) > 5.0):
-            reward_x_lim = -10000
-        reward = 1 - weight_accel * abs(self.current_state[0] - self.ref_accelerations[self.current_step - 1]) + reward_x_lim
+        weight_posi = 100
+        if (abs(next_state[2]) > 3.0):
+            reward_x_lim = -100
+        elif (abs(next_state[2]) > 30.0):
+            reward_x_lim = -500
+        elif (abs(next_state[2]) > 100.0):
+            reward_x_lim = -1000
+        elif (abs(next_state[2]) > 200.0):
+            reward_x_lim = -5000
+
+        reward = 1 - weight_accel * abs(self.current_state[0] - self.ref_accelerations[self.current_step - 1]) + reward_x_lim 
+        - weight_posi * abs(self.current_state[2])
         self.current_state = next_state
         if self.current_step >= len(self.timesteps):
             self.done = True
         return next_state, reward, self.done
     
     def compute_random_reference(self):
-        start_time = round(random.uniform(0.0, 7.9), 2)
+        start_time = round(random.uniform(0.0, 7.9), 2) 
         direction = random.choice([1, -1])
         ref_acceleration = 0
         ref_accelerations = np.zeros(len(self.timesteps)+2)
@@ -64,6 +73,23 @@ class MSP_bound(gym.Env):
             ref_accelerations[i] = ref_acceleration        
 
         return ref_accelerations*direction
+    
+    def compute_random_reference_stepsignal(self):
+        start_time = round(random.uniform(0.0, 7.9), 2) 
+        direction = random.choice([1, -1])
+        ref_acceleration = 0
+        ref_accelerations = np.zeros(len(self.timesteps)+2)
+        # delta_accel = random.uniform(0.04, 0.06)
+        delta_accel = 0.05
+        for i, t in enumerate(self.timesteps):
+            if t >= start_time and t < start_time + 0.5:
+                ref_acceleration += delta_accel 
+            elif t >= start_time + 0.5:
+                ref_acceleration = ref_acceleration
+            ref_accelerations[i] = ref_acceleration        
+
+        return ref_accelerations*direction
+
 
     def seed(self, seed: int | None = None) -> list[int]: # 返回一个包含seed的列表?
         pass

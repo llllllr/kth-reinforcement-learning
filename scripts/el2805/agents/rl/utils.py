@@ -57,6 +57,14 @@ class Experience(NamedTuple):
     next_state: np.ndarray
     done: bool
 
+def init_weights(module):
+    if isinstance(module, torch.nn.Linear):
+        # 对Linear层进行Xavier初始化
+        torch.nn.init.xavier_uniform_(module.weight)
+        # 将bias初始化为0
+        if module.bias is not None:
+            torch.nn.init.zeros_(module.bias)
+
 
 class MultiLayerPerceptron(torch.nn.Module):
     def __init__(
@@ -91,11 +99,14 @@ class MultiLayerPerceptron(torch.nn.Module):
                 raise NotImplementedError
             input_size = hidden_layer_size
         self._hidden_layers = torch.nn.Sequential(*self._hidden_layers)
+        self._hidden_layers.apply(init_weights)
 
         # Output layer
         assert not (include_top and output_size is None)
         if self.include_top:
             self._output_layer = torch.nn.Linear(input_size, self.output_size)
+            torch.nn.init.zeros_(self._output_layer.weight)
+            torch.nn.init.zeros_(self._output_layer.bias)
 
             if self.output_layer_activation == "sigmoid":
                 output_activation = torch.nn.Sigmoid()
