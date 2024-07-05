@@ -39,18 +39,20 @@ class MSP_bound(gym.Env):
         # define reward for current state, 这里只使用加速度的差值, 以确保加速度一定verfolgen
         weight_accel = 0.9
         reward_x_lim = 0
-        weight_posi = 100
-        if (abs(next_state[2]) > 3.0):
-            reward_x_lim = -100
-        elif (abs(next_state[2]) > 30.0):
-            reward_x_lim = -500
-        elif (abs(next_state[2]) > 100.0):
-            reward_x_lim = -1000
-        elif (abs(next_state[2]) > 200.0):
-            reward_x_lim = -5000
+        if (abs(next_state[2]) > 5.0):
+            reward_x_lim = -10000
+        # weight_posi = 100
+        # if (abs(next_state[2]) > 3.0):
+        #     reward_x_lim = -100
+        # elif (abs(next_state[2]) > 30.0):
+        #     reward_x_lim = -500
+        # elif (abs(next_state[2]) > 100.0):
+        #     reward_x_lim = -1000
+        # elif (abs(next_state[2]) > 200.0):
+        #     reward_x_lim = -5000
 
         reward = 1 - weight_accel * abs(self.current_state[0] - self.ref_accelerations[self.current_step - 1]) + reward_x_lim 
-        - weight_posi * abs(self.current_state[2])
+        # - weight_posi * abs(self.current_state[2])
         self.current_state = next_state
         if self.current_step >= len(self.timesteps):
             self.done = True

@@ -99,14 +99,14 @@ class MultiLayerPerceptron(torch.nn.Module):
                 raise NotImplementedError
             input_size = hidden_layer_size
         self._hidden_layers = torch.nn.Sequential(*self._hidden_layers)
-        self._hidden_layers.apply(init_weights)
+        # self._hidden_layers.apply(init_weights)
 
         # Output layer
         assert not (include_top and output_size is None)
         if self.include_top:
             self._output_layer = torch.nn.Linear(input_size, self.output_size)
-            torch.nn.init.zeros_(self._output_layer.weight)
-            torch.nn.init.zeros_(self._output_layer.bias)
+            # torch.nn.init.zeros_(self._output_layer.weight)
+            # torch.nn.init.zeros_(self._output_layer.bias)
 
             if self.output_layer_activation == "sigmoid":
                 output_activation = torch.nn.Sigmoid()

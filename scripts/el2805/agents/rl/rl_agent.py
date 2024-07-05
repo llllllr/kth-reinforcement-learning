@@ -113,7 +113,7 @@ class RLAgent(Agent, ABC):
         episodes = trange(1, n_episodes + 1, desc='Episode: ', leave=True)
         max_reward = 0
         max_episode = 1
-        # figure, axes = plt.subplots(nrows=3, ncols=int(n_episodes/100))
+        figure, axes = plt.subplots(nrows=3, ncols=int(n_episodes/100))
 
         for episode in episodes:
             # Reset environment data and initialize variables
@@ -167,7 +167,7 @@ class RLAgent(Agent, ABC):
                 # Update state
                 state = next_state
                 if episode == 1 or episode % 50 == 0:
-                    print(f"\n In episode {episode}: STATE :{state}, ACTION : {action}, sample from mean {mean} and var {var}.")
+                    print(f"\n In episode {episode} step {episode_length}: STATE :{state}, ACTION : {action}, sample from mean {mean} and var {var}.")
 
 
                 episode_diff_between_ref_a_and_traj_a += abs(ref_accels[episode_length] - state[0])
@@ -183,44 +183,44 @@ class RLAgent(Agent, ABC):
                 torch.save(self.actor, current_path / result_dir_name / "actor_with_max_reward.pth")
                 torch.save(self.critic, current_path / result_dir_name / "critic_with_max_reward.pth")
 
-            # if episode % 100 == 0:
-            #     done = False
-            #     ref_accels, state = self.environment.reset()
-            #     test_reward = 0
-            #     traj_acc = [state[0]]
-            #     traj_vel = [state[1]]
-            #     traj_pos = [state[2]]
-            #     while not done:
-            #         action = self.compute_action_test(state=state)
-            #         next_state, reward, done = self.environment.step(action)
-            #         traj_acc.append(next_state[0])
-            #         traj_vel.append(next_state[1])
-            #         traj_pos.append(next_state[2])
+            if episode % 100 == 0:
+                done = False
+                ref_accels, state = self.environment.reset()
+                test_reward = 0
+                traj_acc = [state[0]]
+                traj_vel = [state[1]]
+                traj_pos = [state[2]]
+                while not done:
+                    action = self.compute_action_test(state=state)
+                    next_state, reward, done = self.environment.step(action)
+                    traj_acc.append(next_state[0])
+                    traj_vel.append(next_state[1])
+                    traj_pos.append(next_state[2])
 
-            #         test_reward += reward
-            #         state = next_state
+                    test_reward += reward
+                    state = next_state
 
-            #     ax = axes[0, int(episode/100) - 1]
-            #     t = np.arange(0, 10.0, 0.01)
-            #     ax.plot(t, ref_accels[:len(t)], color='blue', label='reference')
-            #     ax.plot(t, traj_acc[:len(t)], color='red', label='real_accl')
-            #     ax.set_xlabel('Time')
-            #     ax.set_ylabel('Acceleration')
-            #     ax.set_title('Reward: '+str(round(test_reward)))
-            #     ax.grid(True)
-            #     ax.legend()
+                ax = axes[0, int(episode/100) - 1]
+                t = np.arange(0, 10.0, 0.01)
+                ax.plot(t, ref_accels[:len(t)], color='blue', label='reference')
+                ax.plot(t, traj_acc[:len(t)], color='red', label='real_accl')
+                ax.set_xlabel('Time')
+                ax.set_ylabel('Acceleration')
+                ax.set_title('Reward: '+str(round(test_reward)))
+                ax.grid(True)
+                ax.legend()
                 
-            #     ax = axes[1, int(episode/100) - 1]
-            #     ax.plot(t, traj_vel[:len(t)])
-            #     ax.set_xlabel('Time')
-            #     ax.set_ylabel('Velocity')
-            #     ax.grid(True)
+                ax = axes[1, int(episode/100) - 1]
+                ax.plot(t, traj_vel[:len(t)])
+                ax.set_xlabel('Time')
+                ax.set_ylabel('Velocity')
+                ax.grid(True)
 
-            #     ax = axes[2, int(episode/100) - 1]
-            #     ax.plot(t, traj_pos[:len(t)])
-            #     ax.set_xlabel('Time')
-            #     ax.set_ylabel('Position')
-            #     ax.grid(True)
+                ax = axes[2, int(episode/100) - 1]
+                ax.plot(t, traj_pos[:len(t)])
+                ax.set_xlabel('Time')
+                ax.set_ylabel('Position')
+                ax.grid(True)
 
             # Update stats
             stats["episode_reward"].append(episode_reward.item())
@@ -249,8 +249,8 @@ class RLAgent(Agent, ABC):
             if early_stop_reward is not None and avg_episode_reward >= early_stop_reward:
                 print("Early stopping: environment solved!")
                 break
-        # figure.savefig(result_dir_name / "test_during_train.png")
-        # plt.show()
+        figure.savefig(result_dir_name / "test_during_train.png")
+        plt.show()
 
         figure2, axes2 = plt.subplots(nrows=3, ncols=5)
         for i in range(5):
